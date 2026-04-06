@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sterling OMS 9.3 → Microservices — Modernization Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --bg-card: #161b22; --bg-hover: #1c2128;
+      --border: #30363d; --text: #e6edf3; --text-muted: #8b949e;
+      --accent: #58a6ff; --accent2: #3fb950; --warn: #d29922;
+      --danger: #f85149; --tag-bg: #1f6feb33;
+      --mono: 'JetBrains Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; min-width: 250px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .sidebar-sub { font-size: 10px; color: var(--accent); padding: 10px 20px 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .nav-item { display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none; font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer; }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #23863622; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363322; color: var(--danger); border: 1px solid #da363344; }
+    .section { margin-bottom: 60px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success{ background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 600; }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; gap: 12px; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; flex: 1; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 14px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; color: #cdd9e5; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 13px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .phase-strip { display: flex; gap: 0; margin: 20px 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .phase-step { flex: 1; padding: 14px 16px; background: var(--bg-card); border-right: 1px solid var(--border); font-size: 12px; }
+    .phase-step:last-child { border-right: none; }
+    .phase-step .ps-num { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+    .phase-step .ps-label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .phase-step .ps-time { color: var(--warn); font-size: 11px; font-family: var(--mono); }
+    .phase-step.active-phase { background: #1f6feb11; border-top: 2px solid var(--accent); }
+    .risk-high { color: var(--danger); font-weight: 600; }
+    .risk-med  { color: var(--warn); font-weight: 600; }
+    .risk-low  { color: var(--accent2); font-weight: 600; }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid, .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Sterling OMS → MSA</div>
+    <div class="sidebar-sub">Guide</div>
+    <a class="nav-item active" onclick="goTo('s1')"><span class="num">01</span>Executive Summary</a>
+    <a class="nav-item" onclick="goTo('s2')"><span class="num">02</span>Requirements</a>
+    <a class="nav-item" onclick="goTo('s3')"><span class="num">03</span>High-Level Architecture</a>
+    <a class="nav-item" onclick="goTo('s4')"><span class="num">04</span>Component Design</a>
+    <a class="nav-item" onclick="goTo('s5')"><span class="num">05</span>Data Architecture</a>
+    <a class="nav-item" onclick="goTo('s6')"><span class="num">06</span>Tech Stack / Build vs Buy</a>
+    <a class="nav-item" onclick="goTo('s7')"><span class="num">07</span>Migration Strategy</a>
+    <a class="nav-item" onclick="goTo('s8')"><span class="num">08</span>Cloud Migration (6 Rs)</a>
+    <a class="nav-item" onclick="goTo('s9')"><span class="num">09</span>Operational Excellence</a>
+    <a class="nav-item" onclick="goTo('s10')"><span class="num">10</span>Security & Compliance</a>
+    <a class="nav-item" onclick="goTo('s11')"><span class="num">11</span>ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="goTo('s12')"><span class="num">12</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <header class="doc-header">
+      <h1>Sterling OMS 9.3 <span>→ Microservices Modernization</span></h1>
+      <p style="color:var(--text-muted);font-size:14px;">Practitioner's guide for deconstructing IBM Sterling Order Management into cloud-native, domain-driven microservices for a retail enterprise</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Retail / Omnichannel</span>
+        <span class="badge badge-yellow">IBM Sterling OMS 9.3</span>
+        <span class="badge badge-green">Domain-Driven Decomposition</span>
+        <span class="badge badge-red">PCI-DSS · DPDP</span>
+        <span class="badge badge-blue">AWS / Kubernetes</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted)">Generated: <span id="gen-date"></span></span>
+      </div>
+    </header>
+
+    <!-- S1 EXECUTIVE SUMMARY -->
+    <section class="section" id="s1">
+      <div class="section-header"><span class="section-num">01</span><h2>Executive Summary</h2></div>
+      <div class="content">
+        <p><strong>Problem:</strong> IBM Sterling OMS 9.3 is a Java EE monolith running on WebSphere Application Server. For most retailers, it has become the epicenter of deployment bottlenecks, expensive IBM licensing, slow feature velocity, and brittle integrations with WMS, TMS, POS, and eCommerce. Scaling is all-or-nothing; a surge in BOPIS (Buy Online, Pick Up In-Store) traffic brings down fulfillment APIs too. The application's XML-heavy pipeline architecture and tight coupling to DB2 make horizontal scaling practically impossible.</p>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠ Sterling Reality Check</div>
+          Sterling's internal architecture — Agent Framework, time-triggered agents, condition trees, YCD/YFS API layers — is deeply stateful and difficult to decompose naively. This guide treats Sterling as an <strong>anti-corruption layer problem</strong>, not just a rewrite. The wrong approach is a big-bang rewrite. The right approach is strangler-fig with aggressive event sourcing.
+        </div>
+
+        <h3>Key Constraints &amp; Scale Targets</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4>Scale Targets</h4>
+            <ul>
+              <li>Order ingestion: <strong>5,000–50,000 orders/hour</strong> (peak sale events 10x)</li>
+              <li>Order status API: P99 &lt; 150ms</li>
+              <li>Fulfillment decisions: P99 &lt; 500ms (SLA-sensitive)</li>
+              <li>Availability: 99.95% for order capture; 99.9% for fulfillment</li>
+              <li>RPO: 0 (zero data loss on order records)</li>
+              <li>RTO: &lt; 15 minutes for order capture path</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Constraints</h4>
+            <ul>
+              <li>IBM license cost: eliminate or reduce to minimal Sterling footprint</li>
+              <li>Zero-downtime migration — orders must never be lost</li>
+              <li>Multi-channel: eCommerce, POS, marketplace, call center</li>
+              <li>Existing WMS / 3PL integrations must be preserved during transition</li>
+              <li>Audit trail requirement: every order state transition logged (PCI + internal audit)</li>
+              <li>India DPDP Act compliance for customer PII</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Primary Architectural Decision</h3>
+        <p>Decompose Sterling using <strong>Strangler Fig + Event-Driven Saga Pattern</strong>. Sterling remains authoritative for active in-flight orders during transition, while new microservices capture all new order traffic. A Kafka-based event backbone replaces Sterling's internal agent-to-agent messaging. CQRS is applied to Order Management and Inventory to handle mixed read/write traffic patterns. The Sterling DB2 schema is incrementally migrated domain-by-domain using CDC (Debezium).</p>
+      </div>
+    </section>
+
+    <!-- S2 REQUIREMENTS -->
+    <section class="section" id="s2">
+      <div class="section-header"><span class="section-num">02</span><h2>Requirements</h2></div>
+      <div class="content">
+        <h3>Functional Requirements — Core OMS Domains</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Domain</th><th>Sterling Module Today</th><th>Target Microservice</th><th>Priority</th></tr>
+          <tr><td>Order Capture</td><td>YCD Order API / createOrder</td><td>Order Capture Service</td><td class="rec">P0</td></tr>
+          <tr><td>Order Orchestration</td><td>Pipeline/Condition Trees</td><td>Order Orchestrator (Saga)</td><td class="rec">P0</td></tr>
+          <tr><td>Fulfillment Assignment</td><td>Sterling Sourcing Rules Engine</td><td>Fulfillment Sourcing Service</td><td class="rec">P0</td></tr>
+          <tr><td>Inventory Visibility</td><td>YFS Inventory Module</td><td>Inventory Service</td><td class="rec">P0</td></tr>
+          <tr><td>Returns &amp; Exchanges</td><td>YCD Returns APIs</td><td>Returns Management Service</td><td>P1</td></tr>
+          <tr><td>Notifications</td><td>Alert Framework / Agent</td><td>Notification Service</td><td>P1</td></tr>
+          <tr><td>Payments</td><td>Payment Collection Agent</td><td>Payment Service (abstraction)</td><td class="rec">P0</td></tr>
+          <tr><td>Customer Order History</td><td>YFS getOrderList</td><td>Order Query Service (CQRS read)</td><td>P1</td></tr>
+          <tr><td>Store Ops / BOPIS</td><td>Store Fulfillment Module</td><td>Store Fulfillment Service</td><td>P1</td></tr>
+          <tr><td>Carrier / Ship Labels</td><td>Carrier Integration Agent</td><td>Shipping Service</td><td>P2</td></tr>
+        </table></div>
+
+        <h3>Non-Functional Requirements</h3>
+        <ul>
+          <li><strong>Order Capture API:</strong> P99 &lt; 200ms, P50 &lt; 80ms</li>
+          <li><strong>Fulfillment sourcing decision:</strong> P99 &lt; 500ms (sync), async fallback within 2s</li>
+          <li><strong>Inventory read API:</strong> P99 &lt; 50ms (cache-backed)</li>
+          <li><strong>Throughput:</strong> 15,000 orders/hour sustained; 100,000/hour burst (Big Sale)</li>
+          <li><strong>Data durability:</strong> Orders must be persisted before ACK — no in-memory-only paths</li>
+          <li><strong>Saga compensation:</strong> All distributed transactions must have rollback/compensating actions &lt; 5s</li>
+        </ul>
+
+        <h3>Explicitly Out of Scope (v1)</h3>
+        <ul>
+          <li>ERP (SAP) integration rewrite — Sterling ↔ SAP adapter retained as-is during Phase 1–2</li>
+          <li>Product catalog management (owned by separate PIM team)</li>
+          <li>B2B/EDI order intake (deferred to Phase 3)</li>
+          <li>Complete elimination of Sterling in Phase 1 — it remains as shadow for 18 months</li>
+        </ul>
+
+        <div class="callout callout-info">
+          <div class="callout-title">🇮🇳 India DPDP Act Context</div>
+          Customer PII (name, phone, address) in order records falls under India's Digital Personal Data Protection Act. All microservices handling customer data must implement data minimisation, purpose limitation, and deletion pipelines. Do not replicate raw PII into Kafka topics — use tokenisation or reference IDs in events.
+        </div>
+      </div>
+    </section>
+
+    <!-- S3 HIGH-LEVEL ARCHITECTURE -->
+    <section class="section" id="s3">
+      <div class="section-header"><span class="section-num">03</span><h2>High-Level Architecture</h2></div>
+      <div class="content">
+
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <button class="arch-tab active" onclick="switchArch('as-is')" style="flex:1;padding:12px 16px;background:#1f6feb22;border:none;color:var(--accent);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;border-right:1px solid var(--border);letter-spacing:0.02em;">
+            🏛 As-Is — Sterling OMS 9.3 (Current State)
+          </button>
+          <button class="arch-tab" onclick="switchArch('transition')" style="flex:1;padding:12px 16px;background:var(--bg-card);border:none;color:var(--text-muted);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;border-right:1px solid var(--border);letter-spacing:0.02em;">
+            🔀 Transition — Strangler Fig (Dual Path)
+          </button>
+          <button class="arch-tab" onclick="switchArch('target')" style="flex:1;padding:12px 16px;background:var(--bg-card);border:none;color:var(--text-muted);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.02em;">
+            ⚙️ Target — Full Microservices (Future State)
+          </button>
+        </div>
+
+        <!-- AS-IS VIEW -->
+        <div id="arch-as-is" class="arch-panel">
+          <div class="callout callout-warn" style="margin-bottom:16px;">
+            <div class="callout-title">📌 Current State Context</div>
+            Sterling OMS 9.3 uses <strong>IBM MQ as its primary async ingestion backbone</strong>. Order capture channels (eCommerce, POS, marketplaces) drop order XML messages onto dedicated MQ queues. The <code>createOrder</code> agent (a time-triggered or continuous JMS listener) picks these up, validates, and calls the <code>createOrder</code> YFS API internally. Direct synchronous API calls to Sterling's HTTP endpoint exist but are a secondary path — primarily used by call centre integrations and some internal systems.
+          </div>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig 1a — As-Is: Sterling OMS 9.3 Order Capture via IBM MQ</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#9e6700', 'edgeLabelBackground': '#1c2128', 'lineColor': '#d29922'}}}%%
+flowchart TD
+    subgraph Channels["Order Channels"]
+        WEB["eCommerce Platform\nATG Hybris SFCC"]
+        POS["POS Terminal\nin-store"]
+        MKT["Marketplace Adapters\nFlipkart Amazon"]
+        CC["Call Centre\nCRM Agent UI"]
+        B2B["B2B EDI\nOrders"]
+    end
+
+    subgraph MQLayer["IBM MQ Queues - Async Ingestion"]
+        MQ_CREATE["Queue: ORDER.CREATE\nprimary order drop"]
+        MQ_MODIFY["Queue: ORDER.MODIFY\namendments"]
+        MQ_STATUS["Queue: ORDER.STATUS.REQ\nstatus enquiry"]
+        MQ_DLQ["Dead Letter Queue\nORDER.DLQ"]
+    end
+
+    subgraph SterlingApp["Sterling OMS 9.3 - WebSphere Application Server"]
+        MQAGENT["createOrder Agent\nJMS Listener MDB"]
+        YFSAPI["YFS API Layer\ncreateOrder changeOrder"]
+        PIPELINE["Pipeline Engine\nCondition Trees"]
+        AGENT_FW["Agent Framework\ntime-triggered agents"]
+        PAY_AGENT["Payment Collection\nAgent"]
+        SOURCE_AGENT["Sourcing Agent\nSourcing Rules"]
+        RELEASE_AGENT["Release Agent\nWMS handoff"]
+        NOTIF_AGENT["Alert Agent\nemail SMS"]
+    end
+
+    subgraph DB2Layer["DB2 Sterling Schema"]
+        DB2[("DB2\nYFS_ORDER\nYFS_ORDER_LINE\nYFS_INVENTORY\nYFS_PERSON_INFO")]
+    end
+
+    subgraph External["Downstream Systems"]
+        WMS["WMS DC System\nvia MQ or FTP"]
+        SAP["SAP ERP\nfinance inventory"]
+        CARRIER["Carrier Systems\nFedEx BlueDart"]
+        PGWAY["Payment Gateway\nvia HTTPS"]
+        SMS["SMS Email\nGateway"]
+    end
+
+    WEB -->|"Order XML over HTTPS to MQ bridge"| MQ_CREATE
+    POS -->|"POS transaction as order XML"| MQ_CREATE
+    MKT -->|"Marketplace order feed batch"| MQ_CREATE
+    B2B -->|"EDI 850 XML transform"| MQ_CREATE
+    CC -->|"Direct HTTPS YFS createOrder API"| YFSAPI
+    MQ_MODIFY --> MQAGENT
+    MQ_STATUS --> MQAGENT
+    MQ_CREATE -->|"JMS consume continuous listener"| MQAGENT
+    MQAGENT -->|"Validates XML calls internally"| YFSAPI
+    YFSAPI --> PIPELINE
+    PIPELINE --> AGENT_FW
+    AGENT_FW --> PAY_AGENT
+    AGENT_FW --> SOURCE_AGENT
+    AGENT_FW --> RELEASE_AGENT
+    AGENT_FW --> NOTIF_AGENT
+    YFSAPI --> DB2
+    PIPELINE --> DB2
+    PAY_AGENT -->|"HTTPS"| PGWAY
+    SOURCE_AGENT --> DB2
+    RELEASE_AGENT -->|"MQ or FTP"| WMS
+    NOTIF_AGENT --> SMS
+    DB2 -.->|"batch extract"| SAP
+    RELEASE_AGENT -->|"carrier booking"| CARRIER
+    MQAGENT -->|"poison message or process failure"| MQ_DLQ
+
+    style SterlingApp fill:#2a1a0a,stroke:#d29922
+    style MQLayer fill:#1a1a2a,stroke:#8b949e
+    style DB2 fill:#1a1a2a,stroke:#8b949e
+    style MQ_DLQ fill:#da363322,stroke:#da3633
+    style MQAGENT fill:#9e670033,stroke:#d29922
+            </div>
+          </div>
+
+          <h3>Key As-Is Characteristics to Preserve</h3>
+          <div class="two-col">
+            <div class="card">
+              <h4>IBM MQ Async Ingestion — Why It Exists</h4>
+              <ul>
+                <li><strong>Decoupling:</strong> Channel systems (ATG, POS) are decoupled from Sterling availability — MQ acts as a durable buffer during Sterling restarts</li>
+                <li><strong>Backpressure:</strong> The createOrder agent controls processing rate; channels can burst-drop messages without overwhelming Sterling's pipeline</li>
+                <li><strong>Channel normalisation:</strong> Each channel adapter transforms its native format into Sterling XML before dropping to MQ — Sterling sees a single canonical schema</li>
+                <li><strong>DLQ handling:</strong> Failed messages go to ORDER.DLQ for ops triage — this is your current incident management hook</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Agents as Async Processors — Migration Targets</h4>
+              <ul>
+                <li><code>createOrder Agent</code> → <strong>Order Capture Service</strong> (Kafka consumer replacing JMS listener)</li>
+                <li><code>Payment Collection Agent</code> → <strong>Payment Service</strong> (triggered by Kafka saga event)</li>
+                <li><code>Sourcing Agent</code> → <strong>Fulfillment Sourcing Service</strong> (Drools engine)</li>
+                <li><code>Release Agent</code> → <strong>WMS Adapter Service</strong> (Kafka consumer → WMS API)</li>
+                <li><code>Alert Agent</code> → <strong>Notification Service</strong> (Kafka consumer → Twilio/SES)</li>
+                <li><strong>Note:</strong> Each agent that has a timer schedule must be mapped to a cron job or Temporal scheduled workflow — do not assume they're purely event-driven</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout callout-danger">
+            <div class="callout-title">⛔ Critical Discovery: Agent Inventory Before Phase 2</div>
+            Run this query on your Sterling DB2 to list all deployed agents before writing a line of new code:
+            <pre><code>SELECT AGENTNAME, AGENTCRITERIA, FREQUENCY, FREQUENCYINMINUTES,
+       NEXTSCHEDULEDEXECUTION, ISRUNNING
+FROM   YFS_AGENT_CRITERIA
+ORDER  BY FREQUENCY, AGENTNAME;</code></pre>
+            Every row here is a piece of business logic that needs a new-stack equivalent. Typical retailers have 30–60 active agents, many undocumented.
+          </div>
+        </div>
+
+        <!-- TRANSITION VIEW -->
+        <div id="arch-transition" class="arch-panel" style="display:none;">
+          <div class="callout callout-warn" style="margin-bottom:16px;">
+            <div class="callout-title">🔀 Transition Architecture — Dual Path (Phase 1–3)</div>
+            IBM MQ is <strong>retained as the ingestion backbone during transition</strong>. A new MQ-to-Kafka bridge service translates IBM MQ messages into Kafka events. The Sterling createOrder agent continues to process legacy channel traffic. New channels are onboarded directly to Kafka. Feature flags at the API Gateway control which path each channel uses. This preserves channel uptime — no channel system needs to change during Phase 1–2.
+          </div>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig 1b — Transition State: Strangler Fig with IBM MQ Bridge</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    subgraph Channels["Order Channels"]
+        WEB["eCommerce\nexisting - no change"]
+        POS["POS Terminal\nexisting - no change"]
+        MKT["Marketplace Adapters\nexisting - no change"]
+        CC_NEW["Call Centre\nNEW UI - migrated"]
+        NEW_CH["New Channels\ndirect to Kafka"]
+    end
+
+    subgraph IngestLayer["Ingestion Layer - Dual Path"]
+        IBMMQ["IBM MQ\nORDER.CREATE queue\nlegacy channels"]
+        BRIDGE["MQ-Kafka Bridge\nService - NEW\nConsumes MQ\nTransforms to Avro\nPublishes to Kafka"]
+        APIGW["API Gateway Kong\nwith Feature Flags"]
+    end
+
+    subgraph KafkaLayer["Kafka - Canonical Event Bus NEW"]
+        KF_IN["Topic: order.intake\nall sources unified here"]
+        KF_EVT["Topic: order.events\nlifecycle events"]
+    end
+
+    subgraph NewStack["New MSA Services"]
+        OCS["Order Capture\nService"]
+        OOS["Order Orchestrator\nTemporal"]
+        FSS["Fulfillment Sourcing\nService"]
+        INV["Inventory Service"]
+        PAY["Payment Service"]
+    end
+
+    subgraph Legacy["Sterling OMS 9.3 - Shadow tapering"]
+        MQAGENT["createOrder Agent\nstill running"]
+        STERLING_CORE["Sterling Pipeline\nSourcing Engine"]
+        DB2[("DB2\ndual-write target")]
+    end
+
+    subgraph NewData["New Data Layer"]
+        PG[("PostgreSQL\nnew primary")]
+        REDIS[("Redis\ninventory cache")]
+        MONGO[("MongoDB\norder read model")]
+    end
+
+    WEB -->|"unchanged - drops to MQ"| IBMMQ
+    POS -->|"unchanged - drops to MQ"| IBMMQ
+    MKT -->|"unchanged - drops to MQ"| IBMMQ
+    CC_NEW -->|"REST via API Gateway"| APIGW
+    NEW_CH -->|"REST via API Gateway"| APIGW
+
+    IBMMQ --> BRIDGE
+    BRIDGE -->|"Avro event"| KF_IN
+    APIGW -->|"feature flag: channel=new"| OCS
+    OCS --> KF_IN
+
+    KF_IN -->|"new traffic flag=msa"| OOS
+    KF_IN -->|"legacy traffic flag=sterling"| MQAGENT
+    MQAGENT --> STERLING_CORE
+    STERLING_CORE --> DB2
+    KF_IN -.->|"shadow copy all traffic"| OCS
+
+    OOS --> FSS
+    OOS --> PAY
+    FSS --> INV
+    INV --> REDIS
+    OOS --> PG
+    OCS --> PG
+    KF_EVT --> MONGO
+
+    DB2 -.->|"Debezium CDC"| KF_EVT
+
+    style Legacy fill:#2a1a0a,stroke:#d29922
+    style IBMMQ fill:#1a1a2a,stroke:#8b949e
+    style BRIDGE fill:#1a3a2a,stroke:#3fb950
+    style KF_IN fill:#1f3a1f,stroke:#3fb950
+    style KF_EVT fill:#1f3a1f,stroke:#3fb950
+            </div>
+          </div>
+
+          <h3>MQ → Kafka Bridge: Design Detail</h3>
+          <div class="card">
+            <p>The <strong>MQ-to-Kafka Bridge</strong> is the most critical new service in Phase 1. It must be deployed before any channel migration begins. It acts as a translation and normalization layer:</p>
+            <ul>
+              <li><strong>Input:</strong> Subscribes to IBM MQ queue <code>ORDER.CREATE</code> as a JMS MessageListener (Spring JMS or Camel)</li>
+              <li><strong>Transform:</strong> Parses Sterling XML order payload → validates against canonical Avro schema → enriches with <code>sourceChannel</code>, <code>ingestTimestamp</code>, <code>mqMessageId</code> (for deduplication)</li>
+              <li><strong>Output:</strong> Publishes to Kafka topic <code>order.intake</code> with order ID as partition key (ensures ordering per order)</li>
+              <li><strong>DLQ bridge:</strong> IBM MQ <code>ORDER.DLQ</code> messages are also bridged to Kafka topic <code>order.intake.dlq</code> for unified ops monitoring</li>
+              <li><strong>Idempotency:</strong> MQ message ID tracked in Redis (TTL=24h) to prevent duplicates on MQ redelivery</li>
+            </ul>
+            <pre><code>// MQ Bridge: canonical Kafka event shape
+{
+  "eventType": "ORDER_INTAKE",
+  "orderId":   null,              // assigned by Order Capture Svc
+  "sourceChannel": "WEB|POS|MKT|B2B",
+  "ingestPath":  "IBM_MQ|API_GW",  // audit: which path was used
+  "mqMessageId": "ID:...",          // MQ correlation ID for dedup
+  "orderPayload": { ... },          // canonical order (not Sterling XML)
+  "ingestTs":  "2026-04-03T10:00:00Z"
+}</code></pre>
+          </div>
+
+          <div class="callout callout-info">
+            <div class="callout-title">💡 Why Not Replace IBM MQ Immediately?</div>
+            Channel systems (ATG, POS software, marketplace adapters) are tightly coupled to IBM MQ — they use MQ client libraries, queue names, and message formats that took years to stabilize. Changing them requires separate projects for each channel. The bridge approach means <strong>zero changes to channel systems during the OMS migration</strong>. IBM MQ can be decommissioned as a separate initiative once all channels are migrated to direct Kafka producers (Phase 4+).
+          </div>
+        </div>
+
+        <!-- TARGET VIEW -->
+        <div id="arch-target" class="arch-panel" style="display:none;">
+          <div class="callout callout-success" style="margin-bottom:16px;">
+            <div class="callout-title">✅ Target State — Full MSA (Post Phase 4)</div>
+            IBM MQ is fully decommissioned. All channel systems publish directly to Kafka (or via the API Gateway for synchronous channels). Sterling OMS and WebSphere are sunset. The order lifecycle is driven entirely by Kafka events + Temporal sagas. Both sync (REST → API GW) and async (direct Kafka produce) ingestion paths are supported natively.
+          </div>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig 1c — Target State: Full Microservices Architecture (IBM MQ Decommissioned)</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    subgraph Channels["Order Channels"]
+        WEB["eCommerce\nNext.js BFF"]
+        POS["POS Terminal\nmigrated Kafka client"]
+        MKT["Marketplace Adapters\nmigrated Kafka client"]
+        CC["Call Centre\nAgent UI"]
+        B2B["B2B EDI\nAPI Gateway"]
+    end
+
+    subgraph IngestLayer["Dual Ingestion - Sync and Async"]
+        APIGW["API Gateway Kong\nSync path REST/GraphQL"]
+        KF_INTAKE["Kafka Topic\norder.intake\nAsync path direct produce"]
+    end
+
+    subgraph Core["Core Order Services"]
+        OCS["Order Capture Service\nKafka consumer\nREST endpoint"]
+        OOS["Order Orchestrator\nTemporal Saga Engine"]
+        FSS["Fulfillment\nSourcing Service\nDrools"]
+        INV["Inventory\nService"]
+        PAY["Payment\nService"]
+        SFS["Store Fulfillment\nService"]
+        SHIP["Shipping\nService"]
+        RMS["Returns Mgmt\nService"]
+        OQS["Order Query Service\nCQRS Read"]
+        NOTIF["Notification\nService"]
+    end
+
+    subgraph Events["Kafka Event Bus"]
+        KF_EVT["order.events\nlifecycle"]
+        KF_INV["inventory.events"]
+        KF_SHIP["shipment.events"]
+        KF_NOTIF["notification.events"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["PostgreSQL Aurora\nOrders and Saga State"]
+        REDIS["Redis Cluster\nInventory Cache"]
+        MONGO["MongoDB\nOrder Read Model"]
+        S3["S3\nAudit and Archive"]
+    end
+
+    subgraph External["External Systems"]
+        WMS["WMS\nManhattan Blue Yonder"]
+        SAP["SAP ERP"]
+        CARRIER["Carrier APIs\nFedEx BlueDart"]
+        PGWAY["Payment Gateway\nRazorPay Stripe"]
+    end
+
+    WEB -->|"REST POST /v1/orders\nsync 202 Accepted"| APIGW
+    CC -->|"REST POST /v1/orders"| APIGW
+    B2B -->|"REST bulk order API"| APIGW
+    POS -->|"Kafka produce\nasync fire and confirm"| KF_INTAKE
+    MKT -->|"Kafka produce\nasync batch feed"| KF_INTAKE
+
+    APIGW -->|"validated and enriched"| OCS
+    KF_INTAKE -->|"consumer group\norder-capture"| OCS
+
+    OCS -->|"persist + outbox"| PG
+    OCS -->|"publish order.created"| KF_EVT
+
+    KF_EVT --> OOS
+    OOS --> FSS
+    OOS --> PAY
+    OOS --> SFS
+    OOS --> SHIP
+    FSS --> INV
+    INV --> REDIS
+    INV --> PG
+    OOS --> PG
+    KF_EVT --> OQS
+    OQS --> MONGO
+    KF_EVT --> NOTIF
+    SFS --> KF_EVT
+    SHIP --> CARRIER
+    SHIP --> KF_SHIP
+    PAY --> PGWAY
+    OOS --> WMS
+    OOS --> SAP
+    PG --> S3
+    INV --> KF_INV
+    NOTIF --> KF_NOTIF
+
+    style APIGW fill:#1a2f4a,stroke:#58a6ff
+    style KF_INTAKE fill:#1f3a1f,stroke:#3fb950
+    style OCS fill:#1a2f4a,stroke:#58a6ff
+    style OOS fill:#1a2f4a,stroke:#58a6ff
+    style KF_EVT fill:#1f3a1f,stroke:#3fb950
+            </div>
+          </div>
+
+          <div class="callout callout-info">
+            <div class="callout-title">🔑 Dual Ingestion: Sync vs Async in Target State</div>
+            <p style="margin:8px 0 4px;font-size:14px;">The target architecture intentionally supports <strong>both ingestion patterns</strong> — the async MQ pattern that channel systems relied on is preserved in spirit, just with Kafka replacing IBM MQ:</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+              <div style="background:#1a2f4a22;border:1px solid #1f6feb44;border-radius:6px;padding:12px;">
+                <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Sync Path (API Gateway)</div>
+                <ul style="font-size:13px;color:#cdd9e5;padding-left:16px;">
+                  <li>eCommerce web checkout (user waiting)</li>
+                  <li>Call centre (agent needs immediate order ID)</li>
+                  <li>B2B API callers expecting sync ACK</li>
+                  <li>Returns 202 Accepted + orderId immediately</li>
+                  <li>Order Capture Svc handles via REST endpoint</li>
+                </ul>
+              </div>
+              <div style="background:#1f3a1f22;border:1px solid #3fb95044;border-radius:6px;padding:12px;">
+                <div style="font-size:11px;font-weight:600;color:var(--accent2);text-transform:uppercase;margin-bottom:8px;">Async Path (Direct Kafka)</div>
+                <ul style="font-size:13px;color:#cdd9e5;padding-left:16px;">
+                  <li>POS terminals (fire-and-confirm pattern)</li>
+                  <li>Marketplace batch feeds (Flipkart, Amazon)</li>
+                  <li>High-volume EDI order drops</li>
+                  <li>Producer gets Kafka ACK (offset committed)</li>
+                  <li>Order Capture Svc handles via consumer group</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S4 COMPONENT DESIGN -->
+    <section class="section" id="s4">
+      <div class="section-header"><span class="section-num">04</span><h2>Detailed Component Design</h2></div>
+      <div class="content">
+
+        <h3>Order Capture Service</h3>
+        <div class="card">
+          <h4>Responsibility</h4>
+          <p>The direct equivalent of Sterling's <strong>createOrder Agent + YFS createOrder API</strong> — but built for dual ingestion. It handles two entry points: a <strong>REST endpoint</strong> for synchronous channel callers (via API Gateway) and a <strong>Kafka consumer</strong> for async channel callers (via the MQ→Kafka bridge or direct producers). Both paths converge on the same core order validation, inventory soft-hold, and persistence logic. The service is the single authority for assigning an <code>orderId</code> and transitioning the order to <code>PENDING</code> state.</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">
+            <div style="background:#1a2f4a22;border:1px solid #1f6feb44;border-radius:6px;padding:14px;">
+              <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Sync Path (REST — replaces CC direct API call to Sterling)</div>
+              <pre style="margin:0;font-size:12px;background:transparent;border:none;padding:0;"><code>POST /v1/orders
+{
+  "channel": "WEB|CALLCENTER|B2B",
+  "customerId": "C-UUID",
+  "items": [{ "skuId": "...", "qty": 2, "price": 1299.00 }],
+  "fulfillmentType": "SHIP|BOPIS|SDD",
+  "shippingAddressRef": "ADDR-UUID",
+  "paymentTokenRef": "PAY-UUID"
+}
+
+→ 202 Accepted (immediate):
+{
+  "orderId": "ORD-2026-XXXXXX",
+  "status": "PENDING",
+  "estimatedConfirmation": "PT30S"
+}</code></pre>
+            </div>
+            <div style="background:#1f3a1f22;border:1px solid #3fb95044;border-radius:6px;padding:14px;">
+              <div style="font-size:11px;font-weight:600;color:var(--accent2);text-transform:uppercase;margin-bottom:8px;">Async Path (Kafka consumer — replaces MQ → createOrder Agent)</div>
+              <pre style="margin:0;font-size:12px;background:transparent;border:none;padding:0;"><code>Consumer group: order-capture-svc
+Topic: order.intake
+Partition key: channel + session_id
+                (ensures ordering per cart)
+
+On consume:
+1. Deserialise Avro → canonical order
+2. Validate schema + business rules
+3. Soft-hold inventory
+4. INSERT order (PENDING) + outbox
+5. Commit Kafka offset
+   (only after DB write succeeds)
+6. Status available via GET /v1/orders/{id}</code></pre>
+            </div>
+          </div>
+
+          <h4>Failure Modes &amp; Mitigation</h4>
+          <ul>
+            <li><strong>Sync path — inventory reserve fails:</strong> Return 409 with stockout reason; no Kafka event published</li>
+            <li><strong>Async path — consumer lag &gt; threshold:</strong> HPA triggers more pods; alert if lag &gt; 5,000 messages on <code>order.intake</code></li>
+            <li><strong>Both paths — DB write fails after inventory hold:</strong> Outbox pattern — order row + outbox row written atomically; hold released on rollback</li>
+            <li><strong>Async path — poison message (unparseable):</strong> Message sent to <code>order.intake.dlq</code>; ops alerted; does NOT block queue (unlike IBM MQ DLQ which could stall agents)</li>
+            <li><strong>Kafka unavailable (async path):</strong> MQ bridge buffers messages on IBM MQ — inherent durability preserved; no data loss</li>
+            <li><strong>Sync path — Kafka unavailable for downstream:</strong> Outbox relay queues events; sync caller already has 202 + orderId; no customer impact</li>
+          </ul>
+          <h4>Scaling Strategy</h4>
+          <p>Stateless; horizontal scale on EKS behind HPA triggered at 70% CPU or Kafka consumer lag &gt; 2,000. Target 50 pods during peak sale. REST endpoint behind Kong rate-limiting (10k req/min burst). Kafka consumer parallelism = number of <code>order.intake</code> partitions (set to 60 for peak throughput). Connection pool to PostgreSQL via PgBouncer (transaction mode, max 200 connections).</p>
+        </div>
+
+        <h3>Order Orchestrator (Saga Engine)</h3>
+        <div class="card">
+          <h4>Responsibility</h4>
+          <p>Implements the <strong>Choreography + Orchestration hybrid Saga</strong> for order lifecycle. Replaces Sterling's Pipeline/Condition Tree framework. Each order state transition is an event. The orchestrator holds the saga state machine and drives compensating transactions on failure.</p>
+
+          <div class="diagram-wrap" style="margin-top:16px;">
+            <div class="diagram-label">Fig 3 — Order Saga State Machine</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+stateDiagram-v2
+    [*] --> PENDING : order.created
+    PENDING --> PAYMENT_AUTHORISED : payment.authorised
+    PENDING --> CANCELLED : payment.failed - compensate inventory
+    PAYMENT_AUTHORISED --> SOURCED : fulfillment.sourced
+    PAYMENT_AUTHORISED --> CANCELLED : sourcing.failed - compensate payment
+    SOURCED --> CONFIRMED : wms.acknowledged
+    CONFIRMED --> PICK_PACK : wms.picking_started
+    PICK_PACK --> SHIPPED : shipment.created
+    PICK_PACK --> EXCEPTION : wms.exception
+    SHIPPED --> DELIVERED : carrier.delivered
+    DELIVERED --> RETURN_INITIATED : return.requested
+    RETURN_INITIATED --> RETURNED : return.completed
+    SHIPPED --> CANCELLED : cancellation.requested pre-ship only
+            </div>
+          </div>
+
+          <h4>Saga Compensation Chain</h4>
+          <ul>
+            <li><code>payment.failed</code> → publish <code>inventory.release</code> → mark order CANCELLED</li>
+            <li><code>sourcing.failed</code> → publish <code>payment.void</code> → publish <code>inventory.release</code></li>
+            <li><code>wms.exception</code> → pause saga, alert ops team, await manual intervention event</li>
+          </ul>
+        </div>
+
+        <h3>Fulfillment Sourcing Service</h3>
+        <div class="card">
+          <h4>Responsibility</h4>
+          <p>Implements the inventory sourcing / fulfillment optimization logic that was Sterling's most business-critical and hardest-to-replicate component. Routes orders to the optimal fulfillment node (DC, store, 3PL) based on inventory availability, proximity, cost, SLA, and store capacity. Replaces Sterling's <strong>Sourcing Rules Engine</strong>.</p>
+          <h4>Key Design Decisions</h4>
+          <ul>
+            <li>Rules engine: Use <strong>Drools / OpenL Tablets</strong> for declarative sourcing rules — business teams can configure without code deployment</li>
+            <li>Inventory data: Read from Inventory Service (Redis cache) — must tolerate ~30s staleness for performance</li>
+            <li>Response SLA: 500ms P99 (synchronous); async fallback publishes result to Kafka within 2s</li>
+            <li>Multi-node splits: Supports split shipments; publishes one <code>fulfillment.node.assigned</code> per shipment group</li>
+          </ul>
+        </div>
+
+        <h3>Inventory Service</h3>
+        <div class="card">
+          <h4>Responsibility</h4>
+          <p>Real-time available-to-promise (ATP) inventory. Replaces Sterling's YFS Inventory module. Three layers: <strong>physical</strong> inventory (from WMS via CDC), <strong>reserved</strong> inventory (soft-holds during order capture), and <strong>available</strong> inventory = physical − reserved − safety stock.</p>
+          <h4>Data Model Sketch</h4>
+          <pre><code>inventory_node {
+  sku_id, node_id, physical_qty,
+  reserved_qty, safety_stock_qty,
+  atp_qty (computed),
+  last_wms_sync_ts, version
+}
+
+soft_hold {
+  hold_id, sku_id, node_id, qty,
+  order_id, expires_at, status
+}</code></pre>
+          <h4>Scaling Strategy</h4>
+          <p>Write path: PostgreSQL with optimistic locking on <code>version</code> column. Read path: Redis with TTL=30s. Cache invalidated on every WMS CDC event. During flash sales, Redis read ratio is &gt;95% — this absorbs the spike without hitting Postgres.</p>
+        </div>
+
+        <h3>Critical Flow: Order Placement Sequence</h3>
+        <p>The Order Capture Service supports both ingestion paths. The downstream saga (payment → sourcing → WMS) is identical once the order is captured — only the ingestion leg differs.</p>
+
+        <!-- Sequence tab switcher -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+          <button class="seq-tab seq-active" onclick="switchSeq('sync')" style="flex:1;padding:10px 14px;background:#1f6feb22;border:none;color:var(--accent);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border-right:1px solid var(--border);">
+            🔵 Sync Path — Web/Call Centre (API Gateway)
+          </button>
+          <button class="seq-tab" onclick="switchSeq('async')" style="flex:1;padding:10px 14px;background:var(--bg-card);border:none;color:var(--text-muted);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;">
+            🟢 Async Path — POS/Marketplace (Kafka / MQ Bridge)
+          </button>
+        </div>
+
+        <div id="seq-sync">
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig 4a — Sync Order Placement: Web / Call Centre (REST → API GW → Order Capture Svc)</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    autonumber
+    participant C as Web or Call Centre
+    participant GW as API Gateway Kong
+    participant OCS as Order Capture Svc
+    participant INV as Inventory Svc
+    participant PG as PostgreSQL
+    participant KF as Kafka order.events
+    participant OOS as Order Orchestrator
+    participant PAY as Payment Svc
+    participant FSS as Fulfillment Sourcing
+    participant WMS as WMS
+
+    C->>GW: POST /v1/orders REST
+    Note over GW: Auth, rate-limit, schema validate
+    GW->>OCS: Enriched order request
+    OCS->>INV: soft_hold sku qty ttl=10m
+    INV-->>OCS: hold_id or 409 stockout
+    OCS->>PG: BEGIN TXN INSERT order PENDING + outbox row
+    PG-->>OCS: order_id assigned
+    OCS-->>C: 202 Accepted orderId status PENDING
+    Note over OCS,KF: Outbox relay publishes async after response
+    KF--)OOS: order.created orderId
+    OOS->>PAY: authorise paymentTokenRef amount
+    PAY-->>OOS: payment.authorised
+    OOS->>FSS: source orderId items fulfillmentType
+    FSS->>INV: available_nodes sku qty
+    INV-->>FSS: ranked node list
+    FSS-->>OOS: fulfillment.sourced nodeId=DC-MUM-01
+    OOS->>WMS: allocate orderId nodeId items
+    WMS-->>OOS: wms.acknowledged
+    OOS->>PG: UPDATE order to CONFIRMED
+    OOS->>KF: order.confirmed event
+    KF--)C: Push or websocket status update
+            </div>
+          </div>
+        </div>
+
+        <div id="seq-async" style="display:none;">
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig 4b — Async Order Placement: POS / Marketplace (IBM MQ → Bridge → Kafka → Order Capture Svc)</div>
+            <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    autonumber
+    participant POS as POS Terminal or Marketplace
+    participant MQ as IBM MQ ORDER.CREATE
+    participant BR as MQ-Kafka Bridge
+    participant KF_IN as Kafka order.intake
+    participant OCS as Order Capture Svc
+    participant INV as Inventory Svc
+    participant PG as PostgreSQL
+    participant KF as Kafka order.events
+    participant OOS as Order Orchestrator
+    participant PAY as Payment Svc
+    participant FSS as Fulfillment Sourcing
+    participant WMS as WMS
+
+    POS->>MQ: PUT order XML to ORDER.CREATE queue
+    Note over POS: POS gets MQ ACK - transaction closed at POS
+    MQ--)BR: JMS onMessage triggered
+    BR->>BR: Parse XML to Avro canonical schema
+    BR->>BR: Deduplicate via MQ msgId Redis check
+    BR->>KF_IN: Produce order.intake event Avro
+    KF_IN--)OCS: Consumer group offset poll
+    OCS->>INV: soft_hold sku qty ttl=10m
+    INV-->>OCS: hold_id or 409 stockout
+    Note over OCS: Stockout sends to DLQ and ops alert. Offset NOT committed.
+    OCS->>PG: BEGIN TXN INSERT order PENDING plus outbox row
+    PG-->>OCS: order_id assigned
+    OCS->>KF_IN: Commit offset only after DB write succeeds
+    Note over OCS,KF: Outbox relay publishes to order.events
+    KF--)OOS: order.created with orderId
+    OOS->>PAY: authorise paymentTokenRef amount
+    PAY-->>OOS: payment.authorised
+    OOS->>FSS: source orderId items fulfillmentType
+    FSS->>INV: available_nodes sku qty
+    INV-->>FSS: ranked node list
+    FSS-->>OOS: fulfillment.sourced nodeId=STORE-042
+    OOS->>WMS: allocate orderId nodeId items
+    WMS-->>OOS: wms.acknowledged
+    OOS->>PG: UPDATE order to CONFIRMED
+    OOS->>KF: order.confirmed event
+    Note over POS: POS polls GET /v1/orders/id or receives push via notification svc
+            </div>
+          </div>
+          <div class="callout callout-info" style="margin-top:12px;">
+            <div class="callout-title">💡 Key Difference from Sterling's createOrder Agent</div>
+            In Sterling, the createOrder Agent was a single-threaded (or lightly multi-threaded) JMS listener that processed messages sequentially per queue. The new Order Capture Svc Kafka consumer uses <strong>partition-level parallelism</strong> — 60 partitions = 60 concurrent processing threads, each independently offset-committed. This eliminates the head-of-line blocking problem that caused Sterling agent backlogs during peak events.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5 DATA ARCHITECTURE -->
+    <section class="section" id="s5">
+      <div class="section-header"><span class="section-num">05</span><h2>Data Architecture</h2></div>
+      <div class="content">
+
+        <h3>Data Store Assignments by Domain</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Domain</th><th>Primary Store</th><th>Read Cache</th><th>Event Store</th><th>Archive</th></tr>
+          <tr><td>Orders (write)</td><td>PostgreSQL 15 (RDS Aurora)</td><td>—</td><td>Kafka (7-day retention)</td><td>S3 Parquet (90 days)</td></tr>
+          <tr><td>Orders (read / customer-facing)</td><td>MongoDB Atlas</td><td>Redis (TTL 60s)</td><td>—</td><td>—</td></tr>
+          <tr><td>Inventory</td><td>PostgreSQL (optimistic lock)</td><td>Redis Cluster (TTL 30s)</td><td>Kafka</td><td>—</td></tr>
+          <tr><td>Saga State</td><td>PostgreSQL (saga_state table)</td><td>—</td><td>Kafka (compacted topic)</td><td>—</td></tr>
+          <tr><td>Fulfillment Nodes / Rules</td><td>PostgreSQL</td><td>Local in-memory (JVM)</td><td>—</td><td>—</td></tr>
+          <tr><td>Audit Log</td><td>Immutable append: OpenSearch</td><td>—</td><td>—</td><td>S3 (7 years)</td></tr>
+          <tr><td>Notifications / Templates</td><td>MongoDB</td><td>—</td><td>Kafka</td><td>—</td></tr>
+          <tr><td>Sterling DB2 (legacy)</td><td>DB2 on-prem (read-only after Phase 2)</td><td>—</td><td>Debezium CDC → Kafka</td><td>—</td></tr>
+        </table></div>
+
+        <h3>CDC Pipeline: Sterling DB2 → Kafka</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — Data Flow: Sterling CDC to New Services</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart LR
+    DB2["Sterling DB2\nYFS_ORDER YFS_LINE\nYFS_INVENTORY"]
+    CDC["Debezium CDC\nConnector"]
+    K1[("Kafka\nsterling.order.cdc")]
+    K2[("Kafka\nsterling.inventory.cdc")]
+    TRANS["Transform Service\nSterling to Domain Events"]
+    K3[("Kafka\norder.events canonical")]
+    OQS["Order Query\nService"]
+    INV["Inventory\nService"]
+    MONGO[("MongoDB\nOrder Read Model")]
+    PG[("PostgreSQL\nInventory")]
+
+    DB2 -->|"DB log"| CDC
+    CDC --> K1
+    CDC --> K2
+    K1 --> TRANS
+    K2 --> TRANS
+    TRANS --> K3
+    K3 --> OQS
+    K3 --> INV
+    OQS --> MONGO
+    INV --> PG
+
+    style DB2 fill:#da363322,stroke:#da3633
+    style TRANS fill:#9e670022,stroke:#d29922
+          </div>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠ Sterling Schema Warning</div>
+          Sterling DB2 schema uses generic column names (EXTN_FIELD1..20) for extensibility. The Transform Service must have a full mapping of your retailer's custom extensions to canonical domain event fields. This mapping is typically the most time-consuming discovery task — budget 4–6 weeks.
+        </div>
+
+        <h3>Schema Evolution Strategy</h3>
+        <ul>
+          <li><strong>Kafka topics:</strong> Confluent Schema Registry with Avro. Backward-compatible schema evolution enforced by registry. Consumers always read with a tolerant reader.</li>
+          <li><strong>PostgreSQL:</strong> Flyway migrations, expand-contract pattern. Never drop a column in the same release as adding the replacement.</li>
+          <li><strong>MongoDB:</strong> Schema versioning via <code>_schemaVersion</code> field. Migration scripts run as background jobs, not at startup.</li>
+          <li><strong>API versioning:</strong> URI versioning (<code>/v1/</code>, <code>/v2/</code>). Old versions supported for 12 months post-deprecation notice.</li>
+        </ul>
+
+        <h3>Dual-Write Pattern (Order Data Migration)</h3>
+        <div class="phase-strip">
+          <div class="phase-step active-phase">
+            <div class="ps-num">Phase 1</div>
+            <div class="ps-label">Dual Write</div>
+            <div class="ps-time">Weeks 1–4</div>
+            <p style="font-size:12px;color:#8b949e;margin-top:6px">Write to both Sterling DB2 and new PostgreSQL. Read from Sterling. Background sync historical orders.</p>
+          </div>
+          <div class="phase-step">
+            <div class="ps-num">Phase 2</div>
+            <div class="ps-label">Reconcile</div>
+            <div class="ps-time">Weeks 5–6</div>
+            <p style="font-size:12px;color:#8b949e;margin-top:6px">Row count, checksum, referential integrity checks run nightly. Alert on &gt;0.01% divergence.</p>
+          </div>
+          <div class="phase-step">
+            <div class="ps-num">Phase 3</div>
+            <div class="ps-label">Shadow Read</div>
+            <div class="ps-time">Weeks 7–8</div>
+            <p style="font-size:12px;color:#8b949e;margin-top:6px">Read from new DB, log discrepancies. Sterling still primary for 72-hour validation.</p>
+          </div>
+          <div class="phase-step">
+            <div class="ps-num">Phase 4</div>
+            <div class="ps-label">Write Cutover</div>
+            <div class="ps-time">Week 9</div>
+            <p style="font-size:12px;color:#8b949e;margin-top:6px">Stop writing to Sterling DB2. DB2 becomes read-only backup for 30 days.</p>
+          </div>
+          <div class="phase-step">
+            <div class="ps-num">Phase 5</div>
+            <div class="ps-label">Decommission</div>
+            <div class="ps-time">Week 13+</div>
+            <p style="font-size:12px;color:#8b949e;margin-top:6px">Archive DB2 to S3. Remove Sterling license from renewal.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6 TECH STACK -->
+    <section class="section" id="s6">
+      <div class="section-header"><span class="section-num">06</span><h2>Tech Stack — Build vs Buy</h2></div>
+      <div class="content">
+
+        <h3>Message Broker</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Dimension</th><th>Apache Kafka (MSK)</th><th>RabbitMQ</th><th>AWS SQS/SNS</th><th>Recommended</th></tr>
+          <tr><td>Throughput</td><td>Millions/sec</td><td>50k/sec per node</td><td>300 msg/s standard</td><td class="rec">Kafka (MSK)</td></tr>
+          <tr><td>Event replay</td><td>✅ Full log replay</td><td>❌ No</td><td>❌ No</td><td class="rec">—</td></tr>
+          <tr><td>Saga / event sourcing fit</td><td>Excellent (compacted topics)</td><td>Poor</td><td>Moderate</td><td class="rec">—</td></tr>
+          <tr><td>Operational overhead</td><td>Medium (MSK managed)</td><td>Low</td><td>Very Low</td><td class="rec">—</td></tr>
+          <tr><td>TCO (3-yr, 3-broker)</td><td>~$18k/yr MSK</td><td>~$8k/yr EC2</td><td>~$5k/yr at low vol</td><td class="rec">—</td></tr>
+          <tr><td>Sterling CDC integration</td><td>✅ Debezium native</td><td>Needs adapter</td><td>Needs custom</td><td class="rec">—</td></tr>
+          <tr><td>When to pick</td><td>Order events, CDC, saga</td><td>Simple task queues</td><td>Serverless / low-vol</td><td class="rec">—</td></tr>
+        </table></div>
+        <div class="callout callout-success"><div class="callout-title">✅ Recommendation</div>Apache Kafka via AWS MSK. The event-sourcing and CDC requirements make Kafka non-negotiable. Use MSK to avoid broker operations. Use Confluent Schema Registry (AWS Glue Schema Registry as OSS alternative).</div>
+
+        <h3>Saga / Workflow Engine</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Dimension</th><th>Custom Kafka Consumers</th><th>Temporal.io</th><th>AWS Step Functions</th><th>Recommended</th></tr>
+          <tr><td>Saga state visibility</td><td>Manual (DB table)</td><td>✅ Built-in UI</td><td>✅ Console</td><td class="rec">Temporal</td></tr>
+          <tr><td>Compensation logic</td><td>DIY</td><td>Native workflow</td><td>Express workflows</td><td class="rec">—</td></tr>
+          <tr><td>Long-running orders (days)</td><td>Complex</td><td>✅ Designed for this</td><td>✅ Standard workflows</td><td class="rec">—</td></tr>
+          <tr><td>Vendor lock-in</td><td>None</td><td>OSS (self-host)</td><td>High (AWS proprietary)</td><td class="rec">—</td></tr>
+          <tr><td>Sterling parity</td><td>High effort</td><td>Moderate effort</td><td>Moderate effort</td><td class="rec">—</td></tr>
+          <tr><td>When to pick</td><td>Simple 3-step sagas</td><td>Complex multi-day</td><td>AWS-committed shops</td><td class="rec">—</td></tr>
+        </table></div>
+
+        <h3>API Gateway</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Dimension</th><th>Kong Gateway (OSS)</th><th>AWS API Gateway</th><th>Apigee</th><th>Recommended</th></tr>
+          <tr><td>Rate limiting / auth</td><td>✅ Rich plugins</td><td>✅</td><td>✅ Enterprise</td><td class="rec">Kong (OSS)</td></tr>
+          <tr><td>Multi-cloud / portability</td><td>✅</td><td>AWS-only</td><td>✅</td><td class="rec">—</td></tr>
+          <tr><td>TCO</td><td>Low (OSS)</td><td>Per-request billing</td><td>High enterprise cost</td><td class="rec">—</td></tr>
+          <tr><td>Sterling adapter routing</td><td>✅ Custom plugin</td><td>Possible</td><td>✅</td><td class="rec">—</td></tr>
+        </table></div>
+
+        <h3>Observability Stack</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Pillar</th><th>OSS Option</th><th>Managed Option</th><th>Recommended</th></tr>
+          <tr><td>Metrics</td><td>Prometheus + Grafana</td><td>AWS CloudWatch / Datadog</td><td class="rec">Prometheus + Grafana (cost control)</td></tr>
+          <tr><td>Logs</td><td>ELK Stack (OpenSearch)</td><td>Datadog Logs</td><td class="rec">OpenSearch (managed AWS)</td></tr>
+          <tr><td>Traces</td><td>Jaeger / Tempo</td><td>AWS X-Ray / Datadog APM</td><td class="rec">Grafana Tempo + OTel</td></tr>
+          <tr><td>Alerting</td><td>Alertmanager</td><td>PagerDuty</td><td class="rec">Alertmanager → PagerDuty</td></tr>
+        </table></div>
+
+        <h3>Service Mesh</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Dimension</th><th>Istio</th><th>Linkerd</th><th>AWS App Mesh</th><th>Recommended</th></tr>
+          <tr><td>mTLS (service-to-service)</td><td>✅</td><td>✅</td><td>✅</td><td class="rec">Linkerd v2</td></tr>
+          <tr><td>Operational complexity</td><td>High</td><td>Low</td><td>Medium</td><td class="rec">—</td></tr>
+          <tr><td>Traffic splitting (canary)</td><td>✅ Rich</td><td>✅</td><td>✅</td><td class="rec">—</td></tr>
+          <tr><td>Retail order volume fit</td><td>Proven at scale</td><td>Proven at scale</td><td>AWS-only</td><td class="rec">—</td></tr>
+        </table></div>
+        <div class="callout callout-info"><div class="callout-title">Note on Service Mesh Timing</div>Do NOT introduce a service mesh on Day 1. Add it in Phase 2 once you have ≥5 services in production. Linkerd is recommended over Istio for smaller teams due to dramatically lower operational complexity.</div>
+
+        <h3>Container Orchestration &amp; CI/CD</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Component</th><th>Recommended</th><th>Notes</th></tr>
+          <tr><td>Orchestration</td><td class="rec">EKS (Amazon)</td><td>Managed K8s; ArgoCD for GitOps</td></tr>
+          <tr><td>Container Registry</td><td class="rec">ECR</td><td>Integrated with EKS IAM</td></tr>
+          <tr><td>CI Pipeline</td><td class="rec">GitHub Actions / Jenkins</td><td>Each microservice has its own pipeline</td></tr>
+          <tr><td>CD / GitOps</td><td class="rec">ArgoCD</td><td>One ArgoCD app per microservice</td></tr>
+          <tr><td>Secret Management</td><td class="rec">AWS Secrets Manager</td><td>No secrets in env vars or K8s secrets</td></tr>
+          <tr><td>Helm / Manifests</td><td class="rec">Helm 3 + Helmfile</td><td>Standardized chart per service</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- S7 MIGRATION STRATEGY -->
+    <section class="section" id="s7">
+      <div class="section-header"><span class="section-num">07</span><h2>Migration Strategy</h2></div>
+      <div class="content">
+
+        <div class="callout callout-danger">
+          <div class="callout-title">⛔ Anti-Pattern Warning</div>
+          Do NOT attempt a big-bang rewrite of Sterling. Retailers who have tried this have faced 18-month delays and catastrophic order loss events. Sterling's pipeline logic encodes years of edge cases (partial shipments, split tender, international addresses, marketplace-specific SLAs). These must be discovered, not assumed.
+        </div>
+
+        <h3>Phase 0 — Discovery &amp; Baseline (8 weeks)</h3>
+        <div class="card">
+          <ul>
+            <li><strong>Sterling API audit:</strong> Log every YFS API call for 30 days. Classify by domain, volume, caller system.</li>
+            <li><strong>Pipeline mapping:</strong> Export all Sterling pipeline/condition tree configurations. Map each to a business rule.</li>
+            <li><strong>Agent inventory:</strong> Identify all time-triggered agents (e.g., payment collection, release agent, purge agent) — each becomes a scheduled microservice job.</li>
+            <li><strong>DB2 schema reverse-engineering:</strong> Document all EXTN_FIELD customizations with business semantics.</li>
+            <li><strong>Bounded context analysis:</strong> Use Domain Storytelling or Event Storming workshop with business to draw context boundaries.</li>
+            <li><strong>Risk register:</strong> Identify top 10 failure scenarios from Sterling ops history (check incident log).</li>
+            <li><strong>Traffic profiling:</strong> Peak RPS per API, peak order volumes by channel, seasonal patterns.</li>
+          </ul>
+        </div>
+
+        <h3>Phase 1 — Strangler Proxy + Infrastructure (Months 1–3)</h3>
+        <div class="card">
+          <ul>
+            <li>Deploy Kong API Gateway in front of Sterling — all traffic proxied, zero logic change</li>
+            <li>Stand up Kafka (MSK), PostgreSQL (Aurora), Redis Cluster</li>
+            <li>Deploy Debezium CDC on Sterling DB2 → Kafka (read-only, no writes to new services yet)</li>
+            <li>Deploy Order Query Service reading from CDC events → MongoDB (shadow read model for validation)</li>
+            <li>Stand up EKS cluster, set up CI/CD pipelines, observability stack</li>
+            <li>Feature flag infrastructure (LaunchDarkly or AWS AppConfig)</li>
+            <li><strong>Rollback:</strong> Remove Kong proxy → 100% traffic to Sterling. Recovery: &lt;5 min</li>
+          </ul>
+          <div class="callout callout-success"><div class="callout-title">✅ Gate G1</div>Zero traffic disruption, P99 latency unchanged, CDC events flowing, shadow order read model &lt;5% divergence from Sterling DB2.</div>
+        </div>
+
+        <h3>Phase 2 — Extract Order Capture (Months 4–6)</h3>
+        <div class="card">
+          <ul>
+            <li>Deploy Order Capture Service, Inventory Service, Payment Service</li>
+            <li>Route 5% of WEB channel new orders to OCS (feature flag: channel=WEB, pct=5)</li>
+            <li>OCS publishes <code>order.created</code> to Kafka; Sterling subscribes and processes these orders too (dual-path)</li>
+            <li>Compare outcomes: Sterling processing result vs new service for same order</li>
+            <li>Ramp from 5% → 25% → 100% over 6 weeks as divergence approaches 0</li>
+            <li>POS and marketplace channels remain on Sterling until Phase 3</li>
+          </ul>
+        </div>
+
+        <h3>Phase 3 — Order Orchestration + Fulfillment (Months 7–12)</h3>
+        <div class="card">
+          <ul>
+            <li>Deploy Order Orchestrator (Temporal), Fulfillment Sourcing Service, Store Fulfillment Service</li>
+            <li>Shadow mode: run new sourcing engine in parallel with Sterling, log winner divergence</li>
+            <li>Onboard WEB + mobile channels to full new stack</li>
+            <li>Onboard POS after Store Fulfillment Service passes UAT</li>
+            <li>Data dual-write starts for order records (PostgreSQL + DB2)</li>
+            <li>Sterling transitions to read-only backup role for active orders</li>
+          </ul>
+        </div>
+
+        <h3>Phase 4 — Returns, Notifications, Shipping (Months 12–18)</h3>
+        <div class="card">
+          <ul>
+            <li>Deploy Returns Management Service, Shipping Service, Notification Service</li>
+            <li>Onboard all remaining channels (marketplace, B2B)</li>
+            <li>Sterling DB2 write cutover → new PostgreSQL primary</li>
+            <li>Begin IBM WebSphere decommission process (license savings materialize here)</li>
+          </ul>
+        </div>
+
+        <h3>Migration Gantt</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — Migration Timeline</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+gantt
+    title Sterling OMS Modernization Roadmap
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %Y
+
+    section Phase 0 Discovery
+    Sterling API Audit            :done, p0a, 2026-04-01, 4w
+    Event Storming / DDD Workshop :done, p0b, 2026-04-15, 2w
+    DB2 Schema Mapping            :done, p0c, 2026-04-15, 4w
+    Risk Register + Arch Sign-off :done, p0d, 2026-05-15, 2w
+
+    section Phase 1 Infrastructure
+    EKS + Kafka + Aurora Setup    :p1a, 2026-05-27, 4w
+    Kong Proxy + CDC Debezium     :p1b, 2026-06-10, 3w
+    Shadow Order Read Model       :p1c, 2026-06-24, 4w
+    G1 Gate Review                :milestone, 2026-07-24, 1d
+
+    section Phase 2 Order Capture
+    Order Capture + Inventory Svc :p2a, 2026-07-27, 6w
+    5% WEB Traffic Canary         :p2b, 2026-09-07, 2w
+    25% to 100% Ramp WEB Channel   :p2c, 2026-09-21, 4w
+    G2 Gate Review                :milestone, 2026-10-19, 1d
+
+    section Phase 3 Orchestration
+    Order Orchestrator (Temporal) :p3a, 2026-10-26, 6w
+    Fulfillment Sourcing Service  :p3b, 2026-11-09, 6w
+    POS Channel Onboarding        :p3c, 2027-01-04, 4w
+    DB2 Dual-Write Start          :p3d, 2027-01-18, 6w
+    G3 Gate Review                :milestone, 2027-03-01, 1d
+
+    section Phase 4 Completion
+    Returns + Shipping + Notif    :p4a, 2027-03-08, 8w
+    All Channels Migrated         :p4b, 2027-05-03, 4w
+    DB2 Write Cutover             :p4c, 2027-06-01, 2w
+    Sterling Decommission         :p4d, 2027-07-01, 4w
+          </div>
+        </div>
+
+        <h3>Risk Register</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Risk</th><th>Prob</th><th>Impact</th><th>Mitigation</th></tr>
+          <tr><td>Sterling agent logic hidden in DB config, not code</td><td class="risk-high">High</td><td class="risk-high">High</td><td>Phase 0 agent inventory mandatory. All agents must have a new-stack equivalent before Phase 3 starts.</td></tr>
+          <tr><td>Distributed transaction failures in Saga</td><td class="risk-high">High</td><td class="risk-high">High</td><td>Saga compensation chain tested with chaos injection. Every compensating action has a dead-letter queue + ops alert.</td></tr>
+          <tr><td>Peak sale event during migration window</td><td class="risk-med">Med</td><td class="risk-high">High</td><td>Freeze migration canary ramps during Diwali / EOSS sale windows. Feature flag to 0% instantly.</td></tr>
+          <tr><td>WMS integration breaks on new event schema</td><td class="risk-med">Med</td><td class="risk-high">High</td><td>WMS keeps Sterling adapter active until Phase 4. New WMS adapter built in shadow mode alongside.</td></tr>
+          <tr><td>Team skills gap (Kafka, K8s, Temporal)</td><td class="risk-med">Med</td><td class="risk-med">Med</td><td>6-month training programme before Phase 2 extraction. Platform team owns golden-path templates.</td></tr>
+          <tr><td>IBM license penalties for early exit</td><td class="risk-low">Low</td><td class="risk-med">Med</td><td>Review Sterling license terms in Phase 0. Plan decommission to align with renewal cycle.</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- S8 CLOUD MIGRATION 6Rs -->
+    <section class="section" id="s8">
+      <div class="section-header"><span class="section-num">08</span><h2>Cloud Migration — The 6 Rs Applied to Sterling</h2></div>
+      <div class="content">
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — 6 Rs Decision Tree for Sterling Workloads</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    START["Sterling OMS Component"] --> Q1{"Business\nstill needs it?"}
+    Q1 -->|No| RETIRE["RETIRE\nLegacy Print Agent\nSterling Reports to BI tool"]
+    Q1 -->|Yes| Q2{"Compliance or\ndata residency\nrequires on-prem?"}
+    Q2 -->|Yes| RETAIN["RETAIN\nDB2 archive during\ntransition, SAP adapter"]
+    Q2 -->|No| Q3{"Core order\nbusiness logic?"}
+    Q3 -->|Yes| REFACTOR["REFACTOR / RE-ARCHITECT\nOrder Capture, Orchestrator,\nFulfillment Sourcing, Inventory"]
+    Q3 -->|No| Q4{"Can a SaaS\nproduct replace it?"}
+    Q4 -->|Yes| REPURCHASE["REPURCHASE\nNotifications via Twilio/Sendgrid\nSearch via Algolia\nFraud via Signifyd"]
+    Q4 -->|No| Q5{"Config change\nonly, no code?"}
+    Q5 -->|Yes| REPLATFORM["REPLATFORM\nSterling App Server to EKS\ncontainerize, no code change"]
+    Q5 -->|No| REHOST["REHOST temp\nSterling WAS to EC2\nDuring Phase 1 only"]
+
+    style RETIRE fill:#da363322,stroke:#da3633
+    style RETAIN fill:#9e670022,stroke:#d29922
+    style REFACTOR fill:#23863622,stroke:#3fb950
+    style REPURCHASE fill:#1f6feb22,stroke:#58a6ff
+    style REPLATFORM fill:#1a3a2a,stroke:#3fb950
+    style REHOST fill:#1a1a2a,stroke:#8b949e
+          </div>
+        </div>
+
+        <h3>Workload Classification</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Sterling Component</th><th>R Strategy</th><th>Target</th><th>Timeline</th></tr>
+          <tr><td>createOrder / Order APIs</td><td class="rec">Refactor</td><td>Order Capture Service (EKS)</td><td>Phase 2</td></tr>
+          <tr><td>Pipeline / Condition Trees</td><td class="rec">Refactor</td><td>Temporal Saga Engine (EKS)</td><td>Phase 3</td></tr>
+          <tr><td>Sourcing Rules Engine</td><td class="rec">Refactor</td><td>Fulfillment Sourcing Svc (EKS + Drools)</td><td>Phase 3</td></tr>
+          <tr><td>YFS Inventory Module</td><td class="rec">Refactor</td><td>Inventory Service (EKS + Redis)</td><td>Phase 2</td></tr>
+          <tr><td>Alert / Notification Agent</td><td class="rec">Repurchase</td><td>Twilio / AWS SNS</td><td>Phase 4</td></tr>
+          <tr><td>Sterling Reports</td><td class="rec">Retire</td><td>Existing BI / Redshift (data already flows)</td><td>Phase 3</td></tr>
+          <tr><td>WebSphere App Server</td><td class="rec">Rehost→Retire</td><td>EC2 (Phase 1 only), then sunset</td><td>Phase 4</td></tr>
+          <tr><td>DB2 Database</td><td class="rec">Retain→Retire</td><td>Read-only on-prem through Phase 3, archive S3</td><td>Phase 4</td></tr>
+          <tr><td>Sterling Carrier Integration</td><td class="rec">Repurchase</td><td>EasyPost / ShipBob API</td><td>Phase 4</td></tr>
+          <tr><td>SAP Integration Adapter</td><td class="rec">Retain</td><td>Keep Sterling ↔ SAP adapter until ERP migration</td><td>Post-OMS</td></tr>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- S9 OPERATIONAL EXCELLENCE -->
+    <section class="section" id="s9">
+      <div class="section-header"><span class="section-num">09</span><h2>Operational Excellence</h2></div>
+      <div class="content">
+
+        <h3>Observability — Three Pillars</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4>Metrics (Prometheus + Grafana)</h4>
+            <ul>
+              <li>Order capture rate (orders/min per channel)</li>
+              <li>Saga success/failure/compensation rate</li>
+              <li>Inventory soft-hold hit rate vs stockout rate</li>
+              <li>Fulfillment sourcing decision latency P50/P95/P99</li>
+              <li>Kafka consumer lag per topic (alert at &gt;10k)</li>
+              <li>DB connection pool utilization (alert at &gt;80%)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Distributed Traces (Grafana Tempo + OTel)</h4>
+            <ul>
+              <li>Every order has a trace ID propagated through all services</li>
+              <li>Correlation: order_id → trace_id indexed in OpenSearch</li>
+              <li>Sampling: 100% for errors, 5% for success paths</li>
+              <li>Critical: Kafka producer/consumer spans must be instrumented</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>SLI → SLO → Error Budget</h3>
+        <div class="table-wrap"><table>
+          <tr><th>Service</th><th>SLI</th><th>SLO</th><th>Error Budget (30d)</th></tr>
+          <tr><td>Order Capture</td><td>% requests returning 2xx in &lt;200ms</td><td>99.95%</td><td>21.9 minutes</td></tr>
+          <tr><td>Order Orchestrator</td><td>% sagas completing without compensation</td><td>99.9%</td><td>43.2 minutes</td></tr>
+          <tr><td>Inventory Read</td><td>% reads &lt;50ms</td><td>99.99%</td><td>4.4 minutes</td></tr>
+          <tr><td>Fulfillment Sourcing</td><td>% decisions &lt;500ms</td><td>99.9%</td><td>43.2 minutes</td></tr>
+        </table></div>
+
+        <h3>Top 3 Failure Runbooks</h3>
+        <div class="card">
+          <h4>Runbook 1: Order Saga Stuck in PAYMENT_AUTHORISED</h4>
+          <p>Symptom: Kafka consumer lag on <code>order.events</code> rising; orders not progressing to SOURCED state.<br>
+          Action: Check Fulfillment Sourcing Service health → check Inventory Service Redis connection → check Drools rules load. If sourcing down &gt;2min, activate Sterling fallback via feature flag. Compensate any stale sagas via admin API <code>POST /v1/admin/sagas/{sagaId}/retry</code>.</p>
+        </div>
+        <div class="card">
+          <h4>Runbook 2: Inventory Redis Cache Stampede</h4>
+          <p>Symptom: Redis CPU &gt;90%, Inventory Service P99 &gt;500ms, orders failing soft-hold.<br>
+          Action: Enable <code>inventory.cache.bypass=false</code> feature flag to route all reads directly to PostgreSQL (short-term). Scale Redis cluster horizontally via ElastiCache console. Check for missing TTL on keys (common cause: deployment without eviction policy).</p>
+        </div>
+        <div class="card">
+          <h4>Runbook 3: Kafka Consumer Lag &gt; 50,000 (order.events)</h4>
+          <p>Symptom: Orders are captured but not being processed; Saga orchestrator not receiving events.<br>
+          Action: Check Temporal worker pod count → check Order Orchestrator deployment status → check MSK broker health. Scale up Order Orchestrator pods via <code>kubectl scale deployment order-orchestrator --replicas=20</code>. If &gt;5min lag, activate Sterling processing fallback for new orders.</p>
+        </div>
+
+        <h3>Cost Optimization</h3>
+        <ul>
+          <li>Use <strong>Spot Instances</strong> for Order Orchestrator workers (stateless, checkpoint-able in Temporal)</li>
+          <li>Reserved Instances (1-yr) for Order Capture, Inventory, PostgreSQL — always-on workloads</li>
+          <li>S3 Intelligent-Tiering for order archive (most objects &gt;90 days cold)</li>
+          <li>Kafka MSK: Use <code>tiered storage</code> to reduce broker disk cost for old topic data</li>
+          <li>Biggest saving: IBM WebSphere + Sterling license elimination = typically $200k–$500k/yr for mid-size retailers</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- S10 SECURITY -->
+    <section class="section" id="s10">
+      <div class="section-header"><span class="section-num">10</span><h2>Security &amp; Compliance</h2></div>
+      <div class="content">
+
+        <h3>Authentication &amp; Authorization</h3>
+        <ul>
+          <li><strong>External channels:</strong> OAuth2 / OIDC via Cognito or Auth0. JWT tokens with short TTL (15 min).</li>
+          <li><strong>Internal service-to-service:</strong> mTLS via Linkerd service mesh. Each service has a SPIFFE/SPIRE identity.</li>
+          <li><strong>RBAC:</strong> Order read vs order mutate vs admin roles. Store associates have node-scoped access only.</li>
+          <li><strong>Kafka:</strong> ACL per topic, service account per consumer group. No wildcard consumers.</li>
+        </ul>
+
+        <h3>PCI-DSS Compliance</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠ PCI Scope Reduction</div>
+          <ul style="margin-top:8px">
+            <li>Payment Card data must NEVER flow through Order Capture Service. Use <strong>tokenization only</strong> — the payment token reference is passed, not card data.</li>
+            <li>Payment Service sits in a separate PCI-scoped VPC subnet with WAF + dedicated egress.</li>
+            <li>All services that touch payment tokens are PCI-scoped for penetration testing.</li>
+            <li>Sterling DB2 may contain historic PAN data — run a data discovery tool (e.g., Macie) before CDC replication starts.</li>
+          </ul>
+        </div>
+
+        <h3>India DPDP Act (Data Protection)</h3>
+        <ul>
+          <li><strong>PII tokenization:</strong> Customer name, phone, email stored in a Customer Data Service. Order events carry only <code>customerId</code> (UUID). No PII in Kafka topics.</li>
+          <li><strong>Data residency:</strong> All order and customer data in AWS ap-south-1 (Mumbai). No cross-region replication of PII without explicit consent.</li>
+          <li><strong>Right to deletion:</strong> Deletion pipeline: <code>DELETE /v1/customers/{id}/data</code> triggers a saga that anonymizes all order records (name → "DELETED", address → lat/long centroid).</li>
+          <li><strong>Consent logging:</strong> Every marketing opt-in/out stored in immutable OpenSearch index with timestamp.</li>
+        </ul>
+
+        <h3>Audit Logging</h3>
+        <ul>
+          <li>Every order state transition logged to immutable OpenSearch index: <code>who, what, when, from_state, to_state, correlation_id</code></li>
+          <li>Audit logs shipped to S3 Glacier for 7-year retention (regulatory minimum)</li>
+          <li>WAF logs from Kong Gateway → OpenSearch for security analysis</li>
+        </ul>
+
+        <h3>Network Security</h3>
+        <ul>
+          <li>All services in private subnets. Only API Gateway has public-facing NLB.</li>
+          <li>VPC endpoints for S3, ECR, MSK (no public internet egress for data services)</li>
+          <li>Security Groups follow least-privilege: Order Capture only allows ingress from Kong, egress to PostgreSQL and Kafka.</li>
+          <li>AWS WAF on Kong: rate limiting per IP, SQL injection rules, geo-blocking for known fraud regions.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- S11 ADRs -->
+    <section class="section" id="s11">
+      <div class="section-header"><span class="section-num">11</span><h2>Architecture Decision Records</h2></div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Strangler Fig over Big-Bang Rewrite for Sterling Decomposition</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS handles 100% of order processing. A full rewrite would require feature-parity with years of accumulated business rules embedded in Pipeline configurations, condition trees, and DB-stored agent configs. Previous attempts at big-bang OMS rewrites in the industry (Macy's, Gap) ran 2–3 years over schedule.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Strangler Fig pattern with an API Gateway proxy layer in front of Sterling. Extract one bounded context at a time, route traffic incrementally via feature flags, maintain Sterling as a fallback path until new services achieve 99.9%+ reliability.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Zero-downtime migration; each extraction is independently rollback-able; value delivered incrementally from Month 6. <strong>Cons:</strong> Dual maintenance cost for 18 months; Kafka dual-path complexity; team must understand both Sterling and new stack simultaneously.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Big-bang rewrite:</strong> Rejected — unacceptable business risk, no rollback, feature-parity discovery takes 12 months alone. <strong>Lift-and-shift to cloud:</strong> Rejected — doesn't eliminate WebSphere/DB2 licensing or scalability constraints. Just moves the problem to EC2.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — Choreography + Orchestration Hybrid Saga (Temporal) over Pure Choreography</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Order lifecycle spans 8–12 services and can run for days (backorders, delayed shipments). Pure choreography (Kafka events only) produces spaghetti event dependencies and makes compensation debugging extremely difficult. Sterling's Pipeline model is effectively an orchestrator — business users expect clear state visibility.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Temporal.io as the saga orchestrator for the Order lifecycle. Individual domain events (payment.authorised, fulfillment.sourced) are still Kafka-based, but the Order Orchestrator service is a Temporal workflow that drives the sequence and manages compensations with explicit code, not implicit event chains.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Temporal provides built-in workflow history, retry logic, and a UI for ops visibility (near-equivalent to Sterling's pipeline monitor). Compensation is explicit code, not inferred. <strong>Cons:</strong> Adds Temporal cluster as new infrastructure dependency. Team needs to learn Temporal SDK (Go or Java).</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Pure Kafka choreography:</strong> Rejected — compensation logic becomes implicit and untraceable. Debugging a stuck order requires reading 8 different topics. <strong>AWS Step Functions:</strong> Rejected — vendor lock-in, limited to AWS, expensive at scale (&gt;1M state transitions/month), and lacks the Temporal developer ergonomics for complex long-running workflows.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — CQRS for Order Domain (Separate Write DB and Read Model)</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Order reads (customer order history, order status) have very different query patterns from order writes (create, state transitions). Customer-facing order history requires full-text search, date filtering, and status grouping — all terrible on a normalized transactional PostgreSQL schema. Mixing them causes lock contention during peak sale events.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Write path: PostgreSQL (normalized, ACID, saga state). Read path: MongoDB Atlas with a denormalized order document, populated via Kafka consumers. Order Query Service serves all customer-facing reads from MongoDB. Eventual consistency accepted (typically &lt;2s lag).</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Read path scales independently; MongoDB supports flexible querying for order history; write path is clean and ACID. <strong>Cons:</strong> Eventual consistency — customer may see stale status for 1–2s after state change. Read model is a derived projection — must be rebuildable from Kafka log if corrupt.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Single PostgreSQL for reads and writes:</strong> Rejected — read replicas do not solve the query flexibility problem; complex analytics queries would require full table scans on order lines. <strong>Elasticsearch for read model:</strong> Considered but rejected for primary read model — higher operational complexity than MongoDB for document-style access patterns.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-004 — Outbox Pattern for Order Capture → Kafka Reliability</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>If Order Capture Service writes to PostgreSQL and then publishes to Kafka, there is a window where the DB write succeeds but the Kafka publish fails — producing a ghost order that never gets processed. This is an unacceptable data loss scenario (RPO = 0 for order records).</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement Transactional Outbox Pattern: Order Capture writes the order row AND an outbox event row in a single PostgreSQL transaction. A separate Outbox Relay service (or Debezium) reads the outbox table and publishes to Kafka. The event is only published after it's durably written to the DB.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Zero risk of order loss; Kafka publish is eventually consistent but guaranteed. Replay is possible by re-processing outbox rows. <strong>Cons:</strong> Adds ~5ms latency to order capture. Outbox table grows and needs periodic cleanup (archive processed rows to S3).</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Direct Kafka publish then DB write:</strong> Rejected — inverse problem: published event with no DB record produces phantom orders. <strong>Two-phase commit (XA transactions):</strong> Rejected — PostgreSQL and Kafka do not support XA; WebSphere XA is exactly the complexity we're escaping from Sterling.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-005 — Drools Rules Engine for Fulfillment Sourcing (not hardcoded logic)</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling's Sourcing Rules Engine is configured by operations and supply chain teams via a UI — non-developers change sourcing priorities, node exclusions, SLA rules daily. This business agility must be preserved in the new stack. If we hardcode sourcing logic in Java, we reintroduce the Sterling deployment bottleneck for business rule changes.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Drools (OSS) or OpenL Tablets as the rules engine within the Fulfillment Sourcing Service. Business rules (node priorities, SLA tables, exclusion rules) are stored in a rules repository and hot-reloaded without service restart. Sourcing engineers can modify rules via a thin admin UI without engineer involvement.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Business agility preserved; non-developer rule changes without deployment; auditable rule change history. <strong>Cons:</strong> Rules engine is an additional dependency; complex rules are harder to unit test; Drools has a steep learning curve.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Hardcoded Java logic:</strong> Rejected — defeats the purpose; every sourcing rule change requires a developer and a deployment. <strong>ML-based sourcing:</strong> Considered for future phase — good for optimization, but not a replacement for deterministic rule-based sourcing that supply chain teams can audit and trust.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S12 INTERVIEW CHEAT SHEET -->
+    <section class="section" id="s12">
+      <div class="section-header"><span class="section-num">12</span><h2>Interview Cheat Sheet — Director / Principal Level</h2></div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🔍 Top 5 Clarifying Questions</h4>
+            <ul>
+              <li>What is the current order volume (orders/day) and what is the 3-year growth projection?</li>
+              <li>Are there active customizations in Sterling's pipeline/condition trees that the business owns? Who is the DRI for sourcing rules today?</li>
+              <li>What is the IBM Sterling license renewal date, and is there a hard deadline to eliminate it?</li>
+              <li>Do we need to maintain WMS/3PL integrations during migration, or can we renegotiate those interfaces?</li>
+              <li>What is the risk tolerance during migration — can we accept 30-second degraded performance windows, or is it strictly zero-downtime?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚖️ Trade-offs to Verbalize Proactively</h4>
+            <ul>
+              <li><strong>Eventual consistency in CQRS:</strong> Customer-facing order status may lag 1–2s. Acceptable for most retail, not for real-time POS.</li>
+              <li><strong>Temporal vs pure choreography:</strong> Orchestration gives visibility but adds infra; choreography is simpler but harder to debug at scale.</li>
+              <li><strong>18-month dual maintenance:</strong> Both Sterling and new stack run in parallel. This has a real cost — budget for it explicitly.</li>
+              <li><strong>Drools rules engine:</strong> Gives business agility but adds operational complexity. Right for sourcing; wrong for simple discount logic.</li>
+              <li><strong>DPDP tokenization:</strong> Adding a Customer Data Service adds a network hop to every order capture. Worth the PII compliance benefit.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>💀 Failure Modes Interviewers Probe For</h4>
+            <ul>
+              <li>"What happens if Kafka goes down mid-order-capture?" → Outbox pattern + circuit breaker to Sterling fallback</li>
+              <li>"How do you handle a saga that never completes?" → Temporal dead-letter workflow + ops alert + manual resolution API</li>
+              <li>"What if a service fails after payment auth but before fulfillment?" → Saga compensation: void payment, release inventory</li>
+              <li>"How do you prevent double-order on retry?" → Idempotency key (channel + client-generated UUID) checked before INSERT</li>
+              <li>"How do you test sourcing rule changes without breaking prod?" → Rules deployed in shadow mode, A/B tested against live traffic</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>✨ Principal-Level "Wow" Moments</h4>
+            <ul>
+              <li><strong>Outbox pattern knowledge:</strong> Most candidates forget the atomic DB+event write problem. Knowing outbox-pattern signals distributed systems depth.</li>
+              <li><strong>Sterling-specific gotchas:</strong> Mentioning EXTN_FIELD discovery, time-triggered agents inventory, and pipeline config export shows Sterling practitioner knowledge beyond generic OMS.</li>
+              <li><strong>DPDP tokenization in events:</strong> Proactively raising "we can't put PII in Kafka topics" shows compliance-aware architecture thinking specific to India retail context.</li>
+              <li><strong>Sourcing engine as a rules system:</strong> Proposing Drools/OpenL instead of hardcoded Java shows you understand the operational reality — supply chain teams change rules daily and can't wait for engineering sprints.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>❓ Questions to Ask the Interviewer</h4>
+            <ul>
+              <li>"Has the team run Event Storming workshops with the business yet, or is this greenfield architecture discovery?"</li>
+              <li>"What does the current on-call rotation look like for Sterling incidents — is there a platform team or does each team own ops?"</li>
+              <li>"Is the goal to fully eliminate IBM licensing costs, or is a hybrid Sterling + MSA acceptable long-term?"</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🏃 Quick Reference — Key Numbers</h4>
+            <ul>
+              <li>Order Capture P99: <strong>&lt;200ms</strong></li>
+              <li>Fulfillment decision: <strong>&lt;500ms</strong></li>
+              <li>Inventory read: <strong>&lt;50ms (cached)</strong></li>
+              <li>Saga compensation: <strong>&lt;5s</strong></li>
+              <li>Migration duration: <strong>18–24 months</strong></li>
+              <li>Phase 0 (discovery): <strong>8 weeks non-negotiable</strong></li>
+              <li>Peak order burst: <strong>10x normal; 50x flash sale</strong></li>
+              <li>Kafka consumer lag alert: <strong>&gt;10,000 messages</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb', primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d', lineColor: '#58a6ff',
+      secondaryColor: '#161b22', tertiaryColor: '#0d1117',
+      background: '#0d1117', mainBkg: '#161b22',
+      nodeBorder: '#30363d', clusterBkg: '#1c2128',
+      titleColor: '#e6edf3', edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+
+  // Capture raw sources BEFORE mermaid runs so we can re-render hidden panels later
+  const rawSources = new WeakMap();
+  document.querySelectorAll('.mermaid').forEach(el => rawSources.set(el, el.textContent.trim()));
+
+  // Render only currently visible .mermaid elements on initial load
+  function renderVisible() {
+    const visible = Array.from(document.querySelectorAll('.mermaid')).filter(el => {
+      return el.offsetParent !== null;
+    });
+    if (visible.length) mermaid.run({ nodes: visible });
+  }
+  renderVisible();
+
+  function goTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+
+  // ── ROBUST TAB RENDERING ──────────────────────────────────────────────
+  // Mermaid processes all .mermaid divs at startOnLoad, including hidden ones.
+  // Hidden divs render with 0-size and get marked data-processed="true", 
+  // so re-calling mermaid.run() skips them. Fix: store the raw source text
+  // before Mermaid touches it, then re-inject + re-render on tab switch.
+
+  // Re-render a panel's diagrams by replacing elements with fresh copies
+  function rerenderPanel(panelId) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.querySelectorAll('.mermaid').forEach(el => {
+      const src = rawSources.get(el) || el.textContent;
+      const fresh = document.createElement('div');
+      fresh.className = 'mermaid';
+      fresh.textContent = src;
+      rawSources.set(fresh, src);
+      el.replaceWith(fresh);
+    });
+    mermaid.run({ querySelector: '#' + panelId + ' .mermaid' });
+  }
+
+  // Architecture view tab switching (As-Is / Transition / Target)
+  const archPanels = ['as-is', 'transition', 'target'];
+  function switchArch(tab) {
+    archPanels.forEach(id => {
+      document.getElementById('arch-' + id).style.display = id === tab ? 'block' : 'none';
+    });
+    document.querySelectorAll('.arch-tab').forEach((btn, i) => {
+      const isActive = archPanels[i] === tab;
+      btn.style.background = isActive ? '#1f6feb22' : 'var(--bg-card)';
+      btn.style.color = isActive ? 'var(--accent)' : 'var(--text-muted)';
+    });
+    rerenderPanel('arch-' + tab);
+  }
+
+  // Sequence diagram tab switching (Sync / Async)
+  function switchSeq(tab) {
+    document.getElementById('seq-sync').style.display  = tab === 'sync'  ? 'block' : 'none';
+    document.getElementById('seq-async').style.display = tab === 'async' ? 'block' : 'none';
+    document.querySelectorAll('.seq-tab').forEach(btn => {
+      const isSync  = btn.textContent.includes('Sync');
+      const isActive = (tab === 'sync' && isSync) || (tab === 'async' && !isSync);
+      btn.style.background = isActive ? '#1f6feb22' : 'var(--bg-card)';
+      btn.style.color      = isActive ? 'var(--accent)' : 'var(--text-muted)';
+    });
+    rerenderPanel('seq-' + tab);
+  }
+
+</script>
+</body>
+</html>
