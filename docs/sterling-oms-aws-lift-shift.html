@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBM Sterling OMS 9.3 — AWS Lift & Shift Migration Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-hover:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --tag-bg:    #1f6feb33;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 250px; min-width: 250px; background: var(--bg-card);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted);
+      padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .sidebar-subtitle { font-size: 10px; color: var(--accent); font-family: var(--mono); padding: 4px 20px 8px; }
+    .nav-item {
+      display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none;
+      font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 28px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #238636aa; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .card h3 { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 10px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    td.warn-cell { color: var(--warn); }
+    td.danger-cell { color: var(--danger); }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; color: #cdd9e5; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .step-list { counter-reset: step-counter; list-style: none; padding-left: 0; }
+    .step-list li { counter-increment: step-counter; display: flex; gap: 16px; margin-bottom: 18px; align-items: flex-start; }
+    .step-list li::before { content: counter(step-counter); background: var(--accent); color: #0d1117; font-family: var(--mono); font-size: 12px; font-weight: 700; min-width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+    .step-body { flex: 1; }
+    .step-body strong { color: var(--text); font-size: 15px; display: block; margin-bottom: 4px; }
+    .step-body p { font-size: 14px; color: #cdd9e5; margin-bottom: 0; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .phase-block { border-left: 3px solid var(--accent); padding: 16px 20px; background: var(--bg-card); border-radius: 0 8px 8px 0; margin-bottom: 12px; }
+    .phase-block.phase-2 { border-left-color: var(--accent2); }
+    .phase-block.phase-3 { border-left-color: var(--warn); }
+    .phase-block.phase-4 { border-left-color: #bc8cff; }
+    .phase-title { font-weight: 600; color: var(--text); font-size: 15px; margin-bottom: 6px; }
+    .phase-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--mono); }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid, .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Sterling OMS 9.3</div>
+    <div class="sidebar-subtitle">AWS Lift &amp; Shift Guide</div>
+    <a class="nav-item active" onclick="navScrollTo(this,'s1')"><span class="num">01</span>Executive Summary</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s2')"><span class="num">02</span>Sterling 9.3 Architecture</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s3')"><span class="num">03</span>AWS Target Architecture</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s4')"><span class="num">04</span>AWS Infrastructure Setup</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s5')"><span class="num">05</span>EC2 Server Setup (WAS)</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s6')"><span class="num">06</span>Oracle RDS Setup</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s7')"><span class="num">07</span>Sterling Installation</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s8')"><span class="num">08</span>EAR Build &amp; Deployment</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s9')"><span class="num">09</span>Agent &amp; JMS Config</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s10')"><span class="num">10</span>Shared Storage &amp; EFS</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s11')"><span class="num">11</span>Migration Playbook</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s12')"><span class="num">12</span>Operational Excellence</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s13')"><span class="num">13</span>ADRs &amp; Trade-offs</a>
+    <a class="nav-item" onclick="navScrollTo(this,'s14')"><span class="num">14</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>IBM Sterling OMS 9.3 <span>→ AWS Cloud Migration</span></h1>
+      <p style="color:var(--text-muted); font-size:14px;">Lift-and-Shift Guide: Traditional WAS + smcfs.ear on EC2 with Oracle RDS — No Microservices, No Containers</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Retail / OMS</span>
+        <span class="badge badge-yellow">Sterling OMS 9.3</span>
+        <span class="badge badge-blue">AWS EC2 + RDS</span>
+        <span class="badge badge-green">Lift &amp; Shift (Rehost)</span>
+        <span class="badge badge-red">WAS ND 8.5.5</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">
+          Generated: <span id="gen-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- S1: Executive Summary -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>Executive Summary</h2>
+      </div>
+      <div class="content">
+        <p>This guide covers a <strong>Rehost (Lift &amp; Shift)</strong> migration of IBM Sterling Order Management System (OMS) version 9.3 — the traditional, non-containerized edition — from an on-premises data centre to AWS. The deployment preserves the original monolithic stack: <strong>IBM WebSphere Application Server ND 8.5.5 on EC2</strong>, the <code>smcfs.ear</code> application archive, Sterling Agents, IBM MQ (or Amazon MQ), and <strong>Oracle Database on Amazon RDS</strong>. No microservices are built. No containers are involved. The only structural change is that physical servers become EC2 instances and bare-metal Oracle becomes RDS Oracle.</p>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Important Context</div>
+          IBM officially re-architected Sterling OMS at v10.0 to use certified containers on OpenShift. The v9.3 traditional deployment (smcfs.ear on WAS) is the <strong>pre-container era stack</strong>. IBM's preferred cloud path from v9.3 is to upgrade to v10.0+ certified containers — but many GCC teams must first lift-and-shift 9.3 to AWS as a stepping stone, to gain cloud operational maturity before undertaking re-platforming. This guide addresses that specific scenario.
+        </div>
+
+        <h3>What Changes vs. What Stays the Same</h3>
+        <div class="two-col">
+          <div class="card">
+            <h3>✅ What Stays the Same</h3>
+            <ul>
+              <li>smcfs.ear build process and deployment</li>
+              <li>Sterling Installation Manager-based install</li>
+              <li>WAS ND cell topology (Dmgr + Node Agents + Cluster)</li>
+              <li>Oracle DB schema, JDBC config, Sterling DB XML</li>
+              <li>Agent framework (JVM-based agents)</li>
+              <li>IBM MQ queue definitions and JMS bindings</li>
+              <li>customeroverrides.properties customizations</li>
+              <li>IHS (IBM HTTP Server) as web tier</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🔄 What Changes on AWS</h3>
+            <ul>
+              <li>Physical servers → EC2 instances (RHEL 8.x on HVM)</li>
+              <li>On-prem Oracle → Amazon RDS for Oracle (EE or SE2)</li>
+              <li>Physical NAS/SAN → Amazon EFS (NFS mount)</li>
+              <li>Hardware load balancer → AWS ALB (Application Load Balancer)</li>
+              <li>DNS / hostname → Route 53 private hosted zones</li>
+              <li>VPN/MPLS → AWS VPC with Direct Connect or Site-to-Site VPN</li>
+              <li>Backup tapes → AWS Backup + S3 snapshots</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Key Constraints</h3>
+        <ul>
+          <li><strong>Zero new microservices:</strong> smcfs.ear deployed as-is onto WAS 8.5.5 on EC2</li>
+          <li><strong>Oracle RDS:</strong> Oracle EE or SE2, matching the on-prem Oracle version (11gR2 or 12c)</li>
+          <li><strong>IBM License continuity:</strong> WAS, MQ, Sterling OMS licenses must be transferred or BYOL on EC2</li>
+          <li><strong>Availability SLA:</strong> 99.9% (3 nines) minimum with Multi-AZ RDS and EC2 Auto-recovery</li>
+          <li><strong>RPO/RTO:</strong> RPO ≤ 1 hour, RTO ≤ 4 hours via RDS automated backups + AMI snapshots</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- S2: Sterling 9.3 On-Prem Architecture -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Sterling OMS 9.3 — On-Premises Architecture</h2>
+      </div>
+      <div class="content">
+        <p>Understanding the existing stack is the foundation of any lift-and-shift. Sterling OMS 9.3 (also known as the "traditional" or "non-containerized" edition, part of the Sterling Selling and Fulfillment Suite) runs on a classic J2EE three-tier architecture.</p>
+
+        <h3>Core Stack Components</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Layer</th><th>Component</th><th>Version (typical 9.3)</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td>Web Tier</td><td>IBM HTTP Server (IHS)</td><td>8.5.5</td><td>Reverse proxy, SSL termination, routes to WAS cluster</td></tr>
+              <tr><td>App Tier</td><td>IBM WebSphere Application Server ND</td><td>8.5.5.x</td><td>Hosts smcfs.ear; Deployment Manager + Node Agents + Cluster</td></tr>
+              <tr><td>App Tier</td><td>smcfs.ear</td><td>Sterling 9.3.x</td><td>Core OMS application EAR file (built via buildear.sh)</td></tr>
+              <tr><td>App Tier</td><td>Sterling Agents (JVM)</td><td>9.3.x</td><td>Async order processing, pipeline agents, integration agents</td></tr>
+              <tr><td>Messaging</td><td>IBM MQ</td><td>7.5 / 8.0</td><td>JMS broker for async inter-component communication</td></tr>
+              <tr><td>DB Tier</td><td>Oracle DB</td><td>11gR2 / 12c</td><td>Sterling schema (YFS_*, YCD_* tables); RAC optional</td></tr>
+              <tr><td>File System</td><td>NAS / SAN</td><td>—</td><td>Sterling install directory, log files, EAR staging, CDT files</td></tr>
+              <tr><td>Search</td><td>Elasticsearch (optional)</td><td>5.x / 6.x</td><td>Store inventory search, catalog indexing</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Sterling 9.3 Directory Structure (Typical On-Prem)</h3>
+        <pre><code>/opt/IBM/Sterling/                      # Sterling install root (SFO_HOME)
+├── repository/                          # IBM Installation Manager repository
+├── bin/                                 # buildear.sh, deployer.sh, agent scripts
+│   ├── buildear.sh                      # Builds smcfs.ear with customizations
+│   └── setupfiles/
+├── Extensions/                          # Custom code (Java extensions, XSL, XML)
+├── properties/
+│   ├── customer_overrides.properties    # Critical: DB URL, MQ, tuning params
+│   ├── jdbc.properties                  # JDBC datasource config
+│   └── sandbox.cfg                      # Environment-specific overrides
+├── eardata/                             # EAR staging directory
+├── smcfs.ear                            # Built application archive (deployed to WAS)
+└── logs/                                # Application logs
+
+/opt/IBM/WebSphere/AppServer/            # WAS ND install root
+├── profiles/
+│   ├── Dmgr01/                          # Deployment Manager profile
+│   └── AppSrv01/                        # Managed node profile
+└── bin/
+    ├── startManager.sh
+    └── startNode.sh</code></pre>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — Sterling OMS 9.3 Traditional On-Premises Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'fontSize': '14px'}}}%%
+flowchart TD
+    Browser([Browsers / POS / APIs]) --> IHS
+
+    subgraph WEB["Web Tier"]
+        IHS[IBM HTTP Server\nIHS 8.5.5\nPort 80/443]
+    end
+
+    subgraph APP["Application Tier — WAS ND Cell"]
+        DMGR[WAS Deployment Manager\nDmgr01 — Port 9060]
+        NODE1[WAS Node Agent 1\nAppSrv01]
+        NODE2[WAS Node Agent 2\nAppSrv02]
+        CLUSTER[WAS Cluster\nSterlingCluster]
+        SMCFS1[smcfs.ear\nApp Server 1]
+        SMCFS2[smcfs.ear\nApp Server 2]
+    end
+
+    subgraph AGENT["Agent Tier"]
+        AGT1[Order Pipeline Agent\nJVM Process]
+        AGT2[Integration Agent\nJVM Process]
+        AGT3[Alert Agent\nJVM Process]
+    end
+
+    subgraph MSG["Messaging"]
+        MQ[IBM MQ 7.5/8.0\nQueue Manager]
+    end
+
+    subgraph DB["Database Tier"]
+        ORA[Oracle DB 11gR2/12c\nYFS / YCD Schema]
+    end
+
+    NAS[(NAS/SAN\nShared Storage)]
+
+    IHS --> CLUSTER
+    DMGR --> NODE1
+    DMGR --> NODE2
+    NODE1 --> SMCFS1
+    NODE2 --> SMCFS2
+    CLUSTER --> SMCFS1
+    CLUSTER --> SMCFS2
+    SMCFS1 <--> MQ
+    SMCFS2 <--> MQ
+    AGT1 <--> MQ
+    AGT2 <--> MQ
+    AGT3 <--> MQ
+    SMCFS1 --> ORA
+    SMCFS2 --> ORA
+    AGT1 --> ORA
+    AGT2 --> ORA
+    NAS -.->|Mount| SMCFS1
+    NAS -.->|Mount| SMCFS2
+    NAS -.->|Mount| AGT1
+          </div>
+        </div>
+
+        <h3>Key Sterling 9.3 Concepts for AWS Migration</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">📋 Critical Configuration Files</div>
+          <ul>
+            <li><strong>customer_overrides.properties</strong> — Contains DB connection strings, MQ hostnames, port overrides. This file changes when migrating to AWS (RDS endpoint replaces on-prem Oracle hostname).</li>
+            <li><strong>sandbox.cfg</strong> — Environment-specific properties including <code>ANT_OPTS</code>, DB vendor, JDBC driver class. Update Oracle JDBC URL to RDS endpoint.</li>
+            <li><strong>jdbc.properties</strong> — Primary JDBC datasource. Replace <code>host:port:sid</code> with RDS endpoint.</li>
+            <li><strong>WAS server.xml / resources.xml</strong> — WAS-level JDBC datasource definitions; must point to RDS endpoint post-migration.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: AWS Target Architecture -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>AWS Target Architecture</h2>
+      </div>
+      <div class="content">
+        <p>The target state maps each on-premises tier to an equivalent AWS construct, maintaining the WAS ND topology and Sterling smcfs.ear deployment model unchanged.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Sterling OMS 9.3 AWS Lift &amp; Shift Target Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'fontSize': '13px'}}}%%
+flowchart TD
+    Internet([Internet / Clients\nRetail Channels]) --> R53
+
+    subgraph AWS ["AWS Cloud — ap-south-1 (Mumbai) or us-east-1"]
+      subgraph VPC ["VPC: 10.0.0.0/16"]
+
+        R53[Route 53\nPrivate Hosted Zone]
+
+        subgraph PUB["Public Subnets (2 AZs)"]
+          ALB[AWS ALB\nApplication Load Balancer\nPort 443/80]
+        end
+
+        subgraph WEB_SN["Private Subnet — Web Tier"]
+          IHS_EC2[EC2: IBM HTTP Server\nm5.large — AZ-a\nRHEL 8]
+        end
+
+        subgraph APP_SN["Private Subnets — App Tier (Multi-AZ)"]
+          DMGR_EC2[EC2: WAS Dmgr\nr5.xlarge — AZ-a\nDeployment Manager]
+          APP1_EC2[EC2: WAS AppSrv-1\nr5.2xlarge — AZ-a\nsmcfs.ear Node 1]
+          APP2_EC2[EC2: WAS AppSrv-2\nr5.2xlarge — AZ-b\nsmcfs.ear Node 2]
+        end
+
+        subgraph AGENT_SN["Private Subnet — Agent Tier"]
+          AGT_EC2[EC2: Sterling Agents\nm5.xlarge — AZ-a\nPipeline + Integration Agents]
+        end
+
+        subgraph MSG_SN["Private Subnet — Messaging"]
+          AMZMQ[Amazon MQ\nActiveMQ or IBM MQ on EC2\nJMS Broker]
+        end
+
+        subgraph DB_SN["Private Subnet — Database (Multi-AZ)"]
+          RDS_PRIMARY[RDS Oracle EE/SE2\nPrimary — AZ-a\nr5.2xlarge / r5.4xlarge]
+          RDS_STANDBY[RDS Oracle Standby\nMulti-AZ Replica — AZ-b\nAutomatic Failover]
+        end
+
+        EFS[(Amazon EFS\nSterling Install Dir\nLogs / CDT / Extensions)]
+        S3[(S3 Bucket\nEAR Artifacts\nBackups / Reports)]
+        SSM[AWS Systems Manager\nParameter Store\nSecrets Manager]
+
+        R53 --> ALB
+        ALB --> IHS_EC2
+        IHS_EC2 --> APP1_EC2
+        IHS_EC2 --> APP2_EC2
+        APP1_EC2 <--> AMZMQ
+        APP2_EC2 <--> AMZMQ
+        AGT_EC2 <--> AMZMQ
+        APP1_EC2 --> RDS_PRIMARY
+        APP2_EC2 --> RDS_PRIMARY
+        AGT_EC2 --> RDS_PRIMARY
+        RDS_PRIMARY -.->|Sync Replication| RDS_STANDBY
+        EFS -.->|NFS Mount| APP1_EC2
+        EFS -.->|NFS Mount| APP2_EC2
+        EFS -.->|NFS Mount| AGT_EC2
+        DMGR_EC2 --> APP1_EC2
+        DMGR_EC2 --> APP2_EC2
+        SSM -.->|Secrets / Config| APP1_EC2
+        SSM -.->|Secrets / Config| APP2_EC2
+      end
+    end
+          </div>
+        </div>
+
+        <h3>EC2 Instance Sizing Guide</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Server Role</th><th>On-Prem Equiv.</th><th>AWS Instance</th><th>vCPU</th><th>RAM</th><th>Storage</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>WAS Dmgr</td><td>4-core, 8GB</td><td class="rec">r5.xlarge</td><td>4</td><td>32 GB</td><td>100 GB gp3</td><td>Deployment Manager only; low traffic</td></tr>
+              <tr><td>WAS App Server 1</td><td>8-core, 32GB</td><td class="rec">r5.2xlarge</td><td>8</td><td>64 GB</td><td>200 GB gp3</td><td>Hosts smcfs.ear; primary app node</td></tr>
+              <tr><td>WAS App Server 2</td><td>8-core, 32GB</td><td class="rec">r5.2xlarge</td><td>8</td><td>64 GB</td><td>200 GB gp3</td><td>Secondary cluster node; Multi-AZ</td></tr>
+              <tr><td>IBM HTTP Server</td><td>4-core, 8GB</td><td class="rec">m5.large</td><td>2</td><td>8 GB</td><td>50 GB gp3</td><td>Can be replaced by ALB+NginX</td></tr>
+              <tr><td>Sterling Agents</td><td>8-core, 16GB</td><td class="rec">m5.xlarge</td><td>4</td><td>16 GB</td><td>100 GB gp3</td><td>Async pipeline agents; separate from app</td></tr>
+              <tr><td>IBM MQ (if not Amazon MQ)</td><td>4-core, 8GB</td><td class="rec">m5.large</td><td>2</td><td>8 GB</td><td>100 GB gp3 (separate EBS for MQ data)</td><td>Queue Manager; consider Amazon MQ instead</td></tr>
+              <tr><td>Build Server (BLD)</td><td>4-core, 8GB</td><td class="rec">m5.large</td><td>2</td><td>8 GB</td><td>200 GB gp3</td><td>For buildear.sh; turn off when not in use</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout-info">
+          <div class="callout-title">💡 Sizing Tip</div>
+          Sterling OMS 9.3 WAS JVMs are typically sized with <strong>8–16 GB heap</strong>. EC2 instances must have total RAM ≥ JVM heap × 1.5 to account for OS + WAS overhead. Right-size based on your on-prem JVM heap settings in <code>jvm.options</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: AWS Infrastructure Setup -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>AWS Infrastructure Setup</h2>
+      </div>
+      <div class="content">
+        <h3>VPC and Networking Design</h3>
+        <pre><code># VPC CIDR Design
+VPC: 10.0.0.0/16
+
+# Subnets — recommend 6 subnets across 2 AZs (ap-south-1a, ap-south-1b)
+Public Subnet AZ-a:   10.0.1.0/24   # ALB, Bastion
+Public Subnet AZ-b:   10.0.2.0/24   # ALB (Multi-AZ required)
+
+App Subnet AZ-a:      10.0.11.0/24  # WAS Dmgr, AppSrv-1, IHS
+App Subnet AZ-b:      10.0.12.0/24  # WAS AppSrv-2
+
+Agent Subnet AZ-a:    10.0.21.0/24  # Sterling Agents, IBM MQ EC2
+
+DB Subnet AZ-a:       10.0.31.0/24  # RDS Primary
+DB Subnet AZ-b:       10.0.32.0/24  # RDS Standby (Multi-AZ)</code></pre>
+
+        <h3>Security Group Rules</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Security Group</th><th>Inbound</th><th>From</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td>sg-alb</td><td>443, 80</td><td>0.0.0.0/0</td><td>HTTPS from internet</td></tr>
+              <tr><td>sg-ihs</td><td>9080, 9443</td><td>sg-alb</td><td>ALB → IHS (WAS HTTP)</td></tr>
+              <tr><td>sg-was-app</td><td>9080, 9043, 9443, 2809, 7276, 7286</td><td>sg-ihs, sg-was-dmgr</td><td>WAS ports (app, admin, federation)</td></tr>
+              <tr><td>sg-was-dmgr</td><td>9060, 9043, 8879</td><td>sg-was-app, sg-bastion</td><td>WAS Dmgr admin console + SOAP connector</td></tr>
+              <tr><td>sg-agents</td><td>All TCP</td><td>sg-was-app</td><td>Agent ↔ App communication</td></tr>
+              <tr><td>sg-mq</td><td>1414, 9443</td><td>sg-was-app, sg-agents</td><td>IBM MQ listener port</td></tr>
+              <tr><td>sg-rds</td><td>1521</td><td>sg-was-app, sg-agents</td><td>Oracle JDBC port</td></tr>
+              <tr><td>sg-efs</td><td>2049 (NFS)</td><td>sg-was-app, sg-agents</td><td>EFS mount</td></tr>
+              <tr><td>sg-bastion</td><td>22</td><td>Corporate IP range</td><td>SSH jump box</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>IAM Roles for EC2 Instances</h3>
+        <pre><code># EC2 Instance Role — sterling-oms-ec2-role
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParametersByPath",
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:ssm:*:*:parameter/sterling/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::your-sterling-artifacts/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}</code></pre>
+
+        <h3>Parameter Store — Config Externalization</h3>
+        <pre><code># Store sensitive config in AWS SSM Parameter Store (SecureString)
+/sterling/prod/db/url          = jdbc:oracle:thin:@my-rds.xxxx.ap-south-1.rds.amazonaws.com:1521:ORCL
+/sterling/prod/db/username     = sterling_user
+/sterling/prod/db/password     = [SecureString — KMS encrypted]
+/sterling/prod/mq/host         = mq.internal.example.com
+/sterling/prod/mq/port         = 1414
+/sterling/prod/mq/qmgr         = STERLING.QM
+
+# Pull in EC2 bootstrap script during instance startup
+aws ssm get-parameter --name /sterling/prod/db/url --with-decryption</code></pre>
+      </div>
+    </section>
+
+    <!-- S5: EC2 Server Setup -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>EC2 Server Setup — WAS ND Installation</h2>
+      </div>
+      <div class="content">
+        <p>This section covers the step-by-step setup of the EC2 instances that will host the WAS ND cell for Sterling OMS 9.3.</p>
+
+        <h3>Base OS Configuration (RHEL 8 on EC2)</h3>
+        <pre><code># 1. Launch EC2 with RHEL 8 AMI (HVM, 64-bit)
+#    ami-0b4c7755cdf0d9219 (RHEL 8.x ap-south-1 — check latest)
+
+# 2. Mount EFS for Sterling shared directory
+sudo mkdir -p /opt/IBM/Sterling
+sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport \
+  fs-xxxxxxxx.efs.ap-south-1.amazonaws.com:/ /opt/IBM/Sterling
+# Add to /etc/fstab for persistence
+
+# 3. OS-level prerequisites for WAS 8.5.5 on RHEL 8
+sudo yum install -y \
+  libstdc++ glibc compat-libstdc++-33 libXp libXmu \
+  libXau libxcb libX11 libXext libXt libXtst \
+  gtk2 libgcc java-1.8.0-ibm
+
+# 4. Create sterling OS user (never run WAS as root)
+sudo useradd -m -s /bin/bash sterling
+sudo usermod -aG wheel sterling
+
+# 5. Set kernel parameters (ulimits for WAS JVMs)
+echo "sterling soft nofile 65536" >> /etc/security/limits.conf
+echo "sterling hard nofile 65536" >> /etc/security/limits.conf
+echo "sterling soft nproc 16384"  >> /etc/security/limits.conf
+
+# 6. Disable SELinux (WAS 8.5 requirement)
+sudo sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+
+# 7. Set hostname (WAS cell uses hostname — must be consistent)
+sudo hostnamectl set-hostname was-appsvr-1.sterling.internal</code></pre>
+
+        <h3>IBM WebSphere Application Server ND 8.5.5 Installation</h3>
+        <pre><code># IBM Installation Manager (IM) — required to install WAS
+# Download IM from IBM Passport Advantage and transfer to EC2 via S3
+
+# 1. Install IBM Installation Manager
+mkdir -p /opt/IBM/InstallationManager
+tar -xzf agent.installer.linux.gtk.x86_64_*.tar.gz -C /tmp/IM
+cd /tmp/IM
+sudo ./install --launcher.suppressErrors -acceptLicense \
+  -installationDirectory /opt/IBM/InstallationManager
+
+# 2. Install WAS ND 8.5.5 via IM
+/opt/IBM/InstallationManager/eclipse/tools/imcl install \
+  com.ibm.websphere.ND.v85 \
+  -repositories /mnt/was-repo/repository.config \
+  -installationDirectory /opt/IBM/WebSphere/AppServer \
+  -acceptLicense \
+  -preferences offering.service.repositories.areUsed=false
+
+# 3. Create WAS Deployment Manager profile (on Dmgr EC2 only)
+/opt/IBM/WebSphere/AppServer/bin/manageprofiles.sh -create \
+  -profileName Dmgr01 \
+  -profilePath /opt/IBM/WebSphere/AppServer/profiles/Dmgr01 \
+  -templatePath /opt/IBM/WebSphere/AppServer/profileTemplates/management \
+  -serverType DEPLOYMENT_MANAGER \
+  -hostName was-dmgr.sterling.internal \
+  -cellName SterlingCell \
+  -nodeName DmgrNode
+
+# 4. Start Deployment Manager
+/opt/IBM/WebSphere/AppServer/profiles/Dmgr01/bin/startManager.sh
+
+# 5. Create managed node profile on App Server EC2s
+/opt/IBM/WebSphere/AppServer/bin/manageprofiles.sh -create \
+  -profileName AppSrv01 \
+  -profilePath /opt/IBM/WebSphere/AppServer/profiles/AppSrv01 \
+  -templatePath /opt/IBM/WebSphere/AppServer/profileTemplates/managed \
+  -hostName was-appsvr-1.sterling.internal \
+  -cellName SterlingCell \
+  -nodeName AppNode01
+
+# 6. Federate managed node to Deployment Manager
+/opt/IBM/WebSphere/AppServer/profiles/AppSrv01/bin/addNode.sh \
+  was-dmgr.sterling.internal 8879 \
+  -username wasadmin -password waspassword</code></pre>
+
+        <h3>WAS Cluster Creation for Sterling</h3>
+        <pre><code"># Use wsadmin (Jython) to create WAS cluster
+# wsadmin.sh -lang jython -f create_sterling_cluster.py
+
+# create_sterling_cluster.py
+adminConfig = AdminConfig
+clusterMgmt = AdminClusterManagement
+
+# Create cluster
+cluster = adminConfig.create('ServerCluster', adminConfig.getid('/Cell:SterlingCell/'), 
+                              [['name', 'SterlingCluster']])
+# Add cluster members (one per App Server node)
+AdminClusterManagement.createClusterMember('SterlingCluster', 'AppNode01', 'server1')
+AdminClusterManagement.createClusterMember('SterlingCluster', 'AppNode02', 'server1')
+
+AdminConfig.save()</code></pre>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Hostname/DNS Critical Point</div>
+          WAS ND uses hostnames extensively for node federation, RMI/IIOP, and MQ connectivity. On AWS, you <strong>must</strong> configure Route 53 Private Hosted Zone entries matching the hostnames set during profile creation. Do not rely on EC2 public DNS names — they change on stop/start.
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: Oracle RDS Setup -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Oracle RDS Setup for Sterling OMS 9.3</h2>
+      </div>
+      <div class="content">
+        <p>Sterling OMS 9.3 uses Oracle Database extensively. The migration from on-prem Oracle to Amazon RDS for Oracle requires careful attention to character sets, Oracle parameters, and schema compatibility.</p>
+
+        <h3>RDS Oracle Configuration</h3>
+        <pre><code># Terraform for RDS Oracle (production-grade)
+resource "aws_db_instance" "sterling_oracle" {
+  identifier              = "sterling-oms-prod"
+  engine                  = "oracle-ee"          # Use oracle-se2 for SE2 license
+  engine_version          = "19.0.0.0.ru-2023-01.rur-2023-01.r1"  # Match on-prem version
+  instance_class          = "db.r5.2xlarge"      # Match existing hardware spec
+  allocated_storage       = 500                  # GB
+  max_allocated_storage   = 2000                 # Enable autoscaling
+  storage_type            = "gp3"
+  storage_encrypted       = true
+  kms_key_id              = aws_kms_key.rds.arn
+  
+  # Oracle-specific
+  license_model           = "bring-your-own-license"  # BYOL — use existing Oracle license
+  character_set_name      = "AL32UTF8"           # Must match on-prem character set
+  
+  # Network
+  db_subnet_group_name    = aws_db_subnet_group.sterling.name
+  vpc_security_group_ids  = [aws_security_group.sg-rds.id]
+  publicly_accessible     = false
+  
+  # HA
+  multi_az                = true                 # Automatic failover to standby
+  
+  # Backup
+  backup_retention_period = 7                    # 7 days PITR
+  backup_window           = "02:00-04:00"
+  maintenance_window      = "Sun:04:00-Sun:06:00"
+  
+  # Credentials (from Secrets Manager)
+  username                = "STERLING_ADMIN"
+  password                = var.db_master_password
+  
+  # Parameters
+  parameter_group_name    = aws_db_parameter_group.sterling_oracle.name
+  option_group_name       = aws_db_option_group.sterling_oracle.name
+  
+  deletion_protection     = true
+}</code></pre>
+
+        <h3>Critical Oracle Parameters for Sterling OMS</h3>
+        <pre><code># RDS Parameter Group — sterling-oracle-pg
+# These parameters are critical for Sterling OMS performance
+
+resource "aws_db_parameter_group" "sterling_oracle" {
+  name   = "sterling-oracle-pg"
+  family = "oracle-ee-19"
+
+  # Sterling OMS requires these Oracle parameters
+  parameter {
+    name  = "open_cursors"
+    value = "3000"           # Default 300 is too low; Sterling uses many cursors
+  }
+  parameter {
+    name  = "session_cached_cursors"
+    value = "100"
+  }
+  parameter {
+    name  = "processes"
+    value = "500"
+  }
+  parameter {
+    name  = "sessions"
+    value = "800"            # sessions = processes * 1.6
+  }
+  parameter {
+    name  = "undo_retention"
+    value = "900"            # 15 minutes
+  }
+  parameter {
+    name  = "job_queue_processes"
+    value = "10"             # For DBMS_SCHEDULER jobs used by Sterling
+  }
+  parameter {
+    name  = "parallel_max_servers"
+    value = "5"
+  }
+}
+
+# Option Group — enable Oracle features Sterling requires
+resource "aws_db_option_group" "sterling_oracle" {
+  name                 = "sterling-oracle-og"
+  engine_name          = "oracle-ee"
+  major_engine_version = "19"
+
+  option {
+    option_name = "NATIVE_NETWORK_ENCRYPTION"  # Encrypt data in transit to RDS
+    option_settings {
+      name  = "SQLNET.ENCRYPTION_SERVER"
+      value = "REQUIRED"
+    }
+  }
+}</code></pre>
+
+        <h3>Oracle Schema Migration Steps</h3>
+        <ol class="step-list">
+          <li>
+            <div class="step-body">
+              <strong>Export On-Prem Oracle Schema (Data Pump)</strong>
+              <p>Run Oracle Data Pump export on on-prem: <code>expdp sterling_user/password DIRECTORY=DATA_PUMP_DIR DUMPFILE=sterling_schema.dmp LOGFILE=export.log SCHEMAS=STERLING_USER</code>. Transfer dump file to S3.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-body">
+              <strong>Create Sterling DB User on RDS</strong>
+              <p>Connect to RDS and create the Sterling schema user with same privileges as on-prem: <code>CREATE USER sterling_user IDENTIFIED BY password DEFAULT TABLESPACE STERLING_DATA TEMPORARY TABLESPACE TEMP; GRANT CONNECT, RESOURCE, DBA TO sterling_user;</code></p>
+            </div>
+          </li>
+          <li>
+            <div class="step-body">
+              <strong>Create Required Tablespaces</strong>
+              <p>Sterling OMS requires dedicated tablespaces. Create <code>STERLING_DATA</code>, <code>STERLING_INDEX</code>, <code>STERLING_LOB</code> tablespaces on RDS with appropriate sizes.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-body">
+              <strong>Import Schema via Data Pump</strong>
+              <p>Copy dump file from S3 to EC2 bastion, then import: <code>impdp sterling_user/password@rds-endpoint:1521/ORCL DIRECTORY=DATA_PUMP_DIR DUMPFILE=sterling_schema.dmp LOGFILE=import.log REMAP_SCHEMA=sterling_user:sterling_user</code></p>
+            </div>
+          </li>
+          <li>
+            <div class="step-body">
+              <strong>Update Sterling JDBC Configuration</strong>
+              <p>Update <code>customer_overrides.properties</code> and <code>sandbox.cfg</code> on EFS to point to RDS endpoint. Replace: <code>yfs.dbproperty.url=jdbc:oracle:thin:@rds-endpoint.amazonaws.com:1521:ORCL</code></p>
+            </div>
+          </li>
+          <li>
+            <div class="step-body">
+              <strong>Run Sterling DB Installer (if schema changes needed)</strong>
+              <p>If applying patches: run <code>DBXchanger</code> or Sterling DB installer to apply any pending DB schema updates.</p>
+            </div>
+          </li>
+        </ol>
+
+        <h3>JDBC Configuration in customer_overrides.properties</h3>
+        <pre><code># customer_overrides.properties — DB section (updated for AWS RDS)
+# Location: $STERLING_HOME/properties/customer_overrides.properties
+
+# Oracle JDBC URL for RDS (thin driver — no Oracle client needed)
+yfs.dbproperty.url=jdbc:oracle:thin:@sterling-oms-prod.xxxx.ap-south-1.rds.amazonaws.com:1521/ORCL
+
+yfs.dbproperty.driver=oracle.jdbc.OracleDriver
+yfs.dbproperty.username=sterling_user
+
+# Use Secrets Manager ARN or encrypted value — never plaintext in properties
+# Best practice: inject from SSM Parameter Store at startup
+yfs.dbproperty.password=<from-ssm-parameter-store>
+
+# Connection pool settings (WAS manages the pool, but these are for Sterling's own pool)
+yfs.dbproperty.minPoolSize=5
+yfs.dbproperty.maxPoolSize=50
+yfs.dbproperty.connectionTimeout=30000
+yfs.dbproperty.maxStatements=100</code></pre>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ RDS Oracle Limitations vs On-Prem Oracle</div>
+          <ul>
+            <li>No <code>SYS</code> or <code>SYSTEM</code> access — use <code>RDSADMIN</code> for DBA tasks</li>
+            <li>No Oracle RAC on RDS — use Multi-AZ for HA (synchronous replication)</li>
+            <li>Data Pump directory must be on RDS-managed directory (<code>DATA_PUMP_DIR</code> via UTL_FILE)</li>
+            <li>Some Sterling DBA maintenance scripts (reorg, statistics) need adaptation for RDS stored procedures</li>
+            <li>No direct filesystem access — use S3 integration for exports/imports</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- S7: Sterling Installation on EC2 -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Sterling OMS 9.3 Installation on EC2</h2>
+      </div>
+      <div class="content">
+        <p>Sterling OMS 9.3 uses IBM Installation Manager (IM) for installation. The recommended approach for lift-and-shift is to <strong>clone the existing on-prem installation</strong> rather than fresh-install, to preserve all customizations.</p>
+
+        <h3>Approach A — Clone On-Prem Installation (Recommended)</h3>
+        <pre><code># On-Prem: Create a compressed archive of the Sterling install directory
+tar -czf sterling_install_backup.tar.gz \
+  /opt/IBM/Sterling/ \
+  /opt/IBM/WebSphere/ \
+  /var/ibm/InstallationManager/
+
+# Transfer to S3
+aws s3 cp sterling_install_backup.tar.gz s3://your-sterling-artifacts/backups/
+
+# On EC2: Pull from S3 and restore
+aws s3 cp s3://your-sterling-artifacts/backups/sterling_install_backup.tar.gz /tmp/
+tar -xzf /tmp/sterling_install_backup.tar.gz -C /
+chown -R sterling:sterling /opt/IBM/</code></pre>
+
+        <h3>Approach B — Fresh Install with IBM Installation Manager</h3>
+        <pre><code># 1. Stage Sterling 9.3 binary (from IBM Passport Advantage) to S3, copy to EC2
+aws s3 cp s3://sterling-artifacts/sterling-93-linux.tar.gz /tmp/
+tar -xzf /tmp/sterling-93-linux.tar.gz -C /tmp/sterling-repo
+
+# 2. Install Sterling OMS 9.3 via IBM IM (silent mode)
+/opt/IBM/InstallationManager/eclipse/tools/imcl install \
+  com.ibm.sterling.multiorder.enterprise \
+  -repositories /tmp/sterling-repo/repository.config \
+  -installationDirectory /opt/IBM/Sterling \
+  -acceptLicense \
+  -preferences offering.service.repositories.areUsed=false \
+  -properties \
+  user.wasinst=/opt/IBM/WebSphere/AppServer,\
+  user.dbvendor=oracle,\
+  user.dbserver=sterling-oms-prod.xxxx.ap-south-1.rds.amazonaws.com,\
+  user.dbport=1521,\
+  user.dbname=ORCL,\
+  user.dbuser=sterling_user,\
+  user.dbpassword=yourpassword
+
+# 3. Run sandbox setup (initializes the environment)
+cd /opt/IBM/Sterling/bin
+./sandbox_setup.sh</code></pre>
+
+        <h3>Post-Install Configuration</h3>
+        <pre><code"># Update sandbox.cfg with AWS-specific settings
+cat >> /opt/IBM/Sterling/properties/sandbox.cfg << 'EOF'
+
+# AWS-specific overrides
+DATABASE_HOST=sterling-oms-prod.xxxx.ap-south-1.rds.amazonaws.com
+DATABASE_PORT=1521
+DATABASE_NAME=ORCL
+DATABASE_VENDOR=oracle
+JAVA_HOME=/opt/IBM/WebSphere/AppServer/java/8.0
+
+# JVM heap settings for EC2 instance size
+ANT_OPTS=-Xms4096m -Xmx8192m -XX:+UseG1GC
+EOF
+
+# Update customer_overrides.properties
+cat >> /opt/IBM/Sterling/properties/customer_overrides.properties << 'EOF'
+# AWS environment overrides
+yfs.dbproperty.url=jdbc:oracle:thin:@sterling-oms-prod.xxxx.ap-south-1.rds.amazonaws.com:1521/ORCL
+yfs.dbproperty.username=sterling_user
+yfs.dbproperty.password=yourpassword
+
+# MQ settings (Amazon MQ or IBM MQ on EC2)
+yfs.jmsproperty.QueueConnectionFactory.host=mq.sterling.internal
+yfs.jmsproperty.QueueConnectionFactory.port=1414
+yfs.jmsproperty.QueueConnectionFactory.queueManager=STERLING.QM
+yfs.jmsproperty.QueueConnectionFactory.channel=STERLING.SVRCONN
+EOF</code></pre>
+
+        <h3>DB Schema Initialization (for fresh install only)</h3>
+        <pre><code># Initialize Sterling DB schema against RDS Oracle
+cd /opt/IBM/Sterling/bin
+./ANT_BUILD.sh buildwar loadDB -Ddb.install=true
+
+# This runs Sterling's DBXchanger to create all YFS_*, YCD_* tables
+# Estimated time: 30-60 minutes for full schema creation
+
+# Verify schema creation
+sqlplus sterling_user/password@rds-endpoint:1521/ORCL
+SQL> SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME LIKE 'YFS_%';
+# Should return ~400+ tables for a full Sterling 9.3 schema</code></pre>
+      </div>
+    </section>
+
+    <!-- S8: EAR Build and Deployment -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>EAR Build &amp; Deployment to WAS Cluster</h2>
+      </div>
+      <div class="content">
+        <p>The <code>smcfs.ear</code> is the Sterling application archive — it must be built from source (including customizations/extensions) and deployed to the WAS cluster. This is the core deployment artifact.</p>
+
+        <h3>Build smcfs.ear</h3>
+        <pre><code># Build the Sterling EAR file on the Build Server EC2
+# This runs on the BLD EC2 (separate from App EC2s)
+
+cd /opt/IBM/Sterling/bin
+
+# buildear.sh creates smcfs.ear embedding:
+# - Sterling base application
+# - Custom extensions from /opt/IBM/Sterling/Extensions/
+# - Custom XSL/XML from extensions directories
+# - WAS-specific deployment descriptors
+
+./buildear.sh \
+  -Dappserver.home=/opt/IBM/WebSphere/AppServer \
+  -Dappserver.type=websphere \
+  -Ddir.appserver.webapps=/opt/IBM/WebSphere/AppServer/installableApps \
+  -Dnowebservice=true \
+  -Dnoejb=false \
+  -Dbuildfile=buildear.xml \
+  2>&1 | tee /tmp/buildear.log
+
+# Verify EAR created
+ls -lh /opt/IBM/Sterling/smcfs.ear
+# Typical size: 300MB - 800MB depending on customizations
+
+# Archive to S3 (keep versioned EAR artifacts)
+VERSION=$(date +%Y%m%d-%H%M%S)
+aws s3 cp /opt/IBM/Sterling/smcfs.ear \
+  s3://sterling-artifacts/ears/smcfs-${VERSION}.ear</code></pre>
+
+        <h3>Deploy EAR to WAS Cluster via wsadmin</h3>
+        <pre><code"># Deploy smcfs.ear to the WAS cluster using wsadmin
+# Run from Deployment Manager EC2
+
+/opt/IBM/WebSphere/AppServer/profiles/Dmgr01/bin/wsadmin.sh \
+  -lang jython \
+  -user wasadmin \
+  -password waspassword \
+  -c "
+# Install EAR
+AdminApp.install('/opt/IBM/Sterling/smcfs.ear', [
+  '-appname', 'smcfs',
+  '-cluster', 'SterlingCluster',
+  '-usedefaultbindings',
+  '-MapWebModToVH', [['Sterling Application', 'smcfs.war,WEB-INF/web.xml', 'default_host']],
+  '-MapResRefToEJB', [
+    ['smcfs.war', 'Sterling Application', 'jdbc/SFSDB', 'jdbc/SFSDB', 'javax.sql.DataSource', '']
+  ]
+])
+AdminConfig.save()
+AdminApp.startApplication('smcfs')
+print 'Deployment complete'
+"</code></pre>
+
+        <h3>Configure WAS JDBC Datasource (pointing to RDS)</h3>
+        <pre><code># Configure Oracle JDBC datasource in WAS pointing to RDS
+# Run via wsadmin or WAS Admin Console
+
+AdminTask.createJDBCProvider(
+  '-scope Cell=SterlingCell',
+  '-databaseType Oracle',
+  '-providerType "Oracle JDBC Driver"',
+  '-implementationType "Connection pool data source"',
+  '-name "Sterling Oracle JDBC Provider"',
+  '-classpath /opt/IBM/WebSphere/AppServer/lib/ojdbc8.jar'
+)
+
+AdminTask.createDatasource(
+  'Sterling Oracle JDBC Provider (scope=Cell:SterlingCell)',
+  '-name "Sterling DB"',
+  '-jndiName jdbc/SFSDB',
+  '-dataStoreHelperClassName com.ibm.websphere.rsadapter.Oracle11gDataStoreHelper',
+  '-componentManagedAuthenticationAlias SterlingCellManager01/Sterling_DB_Auth',
+  '-configureResourceProperties [[URL java.lang.String jdbc:oracle:thin:@rds-endpoint.amazonaws.com:1521/ORCL] [preTestSQLString java.lang.String SELECT 1 FROM DUAL]]',
+  '-connectionPool [[minConnections 5] [maxConnections 50] [connectionTimeout 180] [unusedTimeout 1800]]'
+)
+
+AdminConfig.save()</code></pre>
+
+        <h3>JNDI Resources Checklist for WAS</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>JNDI Name</th><th>Type</th><th>Maps To</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>jdbc/SFSDB</code></td><td>DataSource</td><td>RDS Oracle endpoint</td><td>Primary Sterling datasource</td></tr>
+              <tr><td><code>jdbc/SFSDB_RO</code></td><td>DataSource</td><td>RDS Read Replica (optional)</td><td>Read-only queries (reporting)</td></tr>
+              <tr><td><code>jms/STERLING.QCF</code></td><td>QueueConnectionFactory</td><td>IBM MQ / Amazon MQ</td><td>JMS connection to MQ</td></tr>
+              <tr><td><code>jms/queue/STERLING.AGENT</code></td><td>Queue</td><td>Agent JMS queue</td><td>Async order processing</td></tr>
+              <tr><td><code>jms/queue/STERLING.INVENTORY</code></td><td>Queue</td><td>Inventory update queue</td><td>Real-time inventory events</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S9: Agent and JMS Config -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>Sterling Agents &amp; JMS Configuration</h2>
+      </div>
+      <div class="content">
+        <h3>Sterling Agent Architecture on AWS</h3>
+        <p>Sterling OMS 9.3 agents are standalone JVM processes that process asynchronous workflows. They communicate via JMS (IBM MQ queues) and write directly to the Oracle database. In the AWS setup, agents run on a dedicated EC2 instance (Agent Tier) separate from the WAS app servers.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">📋 Common Sterling Agents (9.3)</div>
+          <ul>
+            <li><strong>Order Pipeline Agent</strong> — Processes order status transitions through pipeline configurations</li>
+            <li><strong>Integration Server (IS)</strong> — Handles outbound/inbound API calls (HTTP, FTP, JMS adapters)</li>
+            <li><strong>Alert Agent</strong> — Monitors queues and raises alerts for exception conditions</li>
+            <li><strong>Transaction Purger</strong> — Purges historical transaction data from YFS_ tables</li>
+            <li><strong>Elasticsearch Indexer</strong> (optional) — Indexes store inventory for search</li>
+          </ul>
+        </div>
+
+        <h3>Agent Startup Configuration</h3>
+        <pre><code"># Start Sterling agents on Agent EC2
+# Each agent is a JVM process started via agentserver.sh
+
+cd /opt/IBM/Sterling/bin
+
+# Order Pipeline Agent
+./agentserver.sh \
+  -server_name="OrderPipelineAgent" \
+  -db_vendor="oracle" \
+  -db_host="sterling-oms-prod.xxxx.ap-south-1.rds.amazonaws.com" \
+  -db_port="1521" \
+  -db_name="ORCL" \
+  -db_user="sterling_user" \
+  -db_password="yourpassword" \
+  -jvm_heap_min="1024m" \
+  -jvm_heap_max="4096m" &
+
+# Integration Server
+./startIntegrationServer.sh \
+  -serverName="SterlingIS" \
+  -jms_host="mq.sterling.internal" \
+  -jms_port="1414" \
+  -jms_qmgr="STERLING.QM" &
+
+# Create systemd service for agent auto-start on EC2 reboot
+cat > /etc/systemd/system/sterling-agents.service << 'EOF'
+[Unit]
+Description=IBM Sterling OMS Agents
+After=network.target
+
+[Service]
+User=sterling
+ExecStart=/opt/IBM/Sterling/bin/start_all_agents.sh
+ExecStop=/opt/IBM/Sterling/bin/stop_all_agents.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable sterling-agents
+systemctl start sterling-agents</code></pre>
+
+        <h3>JMS Configuration: Amazon MQ vs IBM MQ on EC2</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Option</th><th>Amazon MQ (ActiveMQ)</th><th>IBM MQ on EC2</th></tr></thead>
+            <tbody>
+              <tr><td>Management</td><td class="rec">Fully managed by AWS</td><td>Self-managed; you patch and operate</td></tr>
+              <tr><td>Sterling compatibility</td><td class="warn-cell">Requires JMS abstraction layer; some MQ-specific features may not work</td><td class="rec">Fully compatible; same queue manager config</td></tr>
+              <tr><td>HA</td><td class="rec">Active-standby built in</td><td>Manual HA configuration needed</td></tr>
+              <tr><td>Cost</td><td>~$200-400/month (mq.m5.large)</td><td>EC2 cost + IBM MQ license</td></tr>
+              <tr><td>Recommended for</td><td>New AWS deployments, no MQ-specific features</td><td class="rec">Direct lift-and-shift of existing IBM MQ config</td></tr>
+              <tr><td>Verdict for 9.3 L&amp;S</td><td class="warn-cell">Use only if MQ license cost is a concern</td><td class="rec">Recommended for true lift-and-shift</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Amazon MQ Compatibility Note</div>
+          Sterling OMS 9.3 uses IBM MQ-specific APIs (com.ibm.mq.* classes) for some integration patterns. Amazon MQ (ActiveMQ broker) supports JMS API compatibility but not IBM MQ-specific bindings. For a true lift-and-shift, run <strong>IBM MQ on an EC2 instance</strong> using the same queue manager configuration as on-premises.
+        </div>
+      </div>
+    </section>
+
+    <!-- S10: Shared Storage + EFS -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Shared Storage — Amazon EFS Configuration</h2>
+      </div>
+      <div class="content">
+        <p>Sterling OMS 9.3 requires shared filesystem access between multiple EC2 instances (App servers and Agent servers must all access the same Sterling install directory, extensions, and log files). Amazon EFS provides NFS-compatible shared storage.</p>
+
+        <h3>What Goes on EFS vs Local EBS</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Path</th><th>Storage Type</th><th>Rationale</th></tr></thead>
+            <tbody>
+              <tr><td><code>/opt/IBM/Sterling/</code> (entire install dir)</td><td class="rec">EFS</td><td>Shared across all EC2 nodes; Extensions, properties, scripts</td></tr>
+              <tr><td><code>/opt/IBM/Sterling/logs/</code></td><td class="rec">EFS</td><td>Centralized log access; ship to CloudWatch</td></tr>
+              <tr><td><code>/opt/IBM/Sterling/eardata/</code></td><td class="rec">EFS</td><td>EAR build staging — accessible from Build server</td></tr>
+              <tr><td><code>/opt/IBM/WebSphere/AppServer/</code> (WAS install)</td><td class="warn-cell">Local EBS per node</td><td>WAS profiles are node-specific; do NOT share across nodes</td></tr>
+              <tr><td><code>/opt/IBM/MQ/</code></td><td class="warn-cell">Local EBS (MQ EC2)</td><td>MQ queue files must be local for performance</td></tr>
+              <tr><td>OS root volume</td><td>Local EBS (gp3)</td><td>OS, swap, WAS temp files</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>EFS Setup and Mount</h3>
+        <pre><code"># Create EFS filesystem (via Terraform)
+resource "aws_efs_file_system" "sterling_shared" {
+  encrypted        = true
+  kms_key_id       = aws_kms_key.efs.arn
+  performance_mode = "generalPurpose"
+  throughput_mode  = "bursting"
+
+  tags = { Name = "sterling-oms-shared" }
+}
+
+# Create mount targets in each app subnet
+resource "aws_efs_mount_target" "sterling_mt" {
+  for_each        = toset(var.app_subnet_ids)
+  file_system_id  = aws_efs_file_system.sterling_shared.id
+  subnet_id       = each.value
+  security_groups = [aws_security_group.sg-efs.id]
+}
+
+# On EC2 instances — install EFS utils and mount
+sudo yum install -y amazon-efs-utils
+
+# Mount EFS
+sudo mount -t efs -o tls,iam \
+  fs-xxxxxxxx:/ /opt/IBM/Sterling
+
+# /etc/fstab entry for persistence
+echo "fs-xxxxxxxx:/ /opt/IBM/Sterling efs _netdev,tls,iam 0 0" >> /etc/fstab</code></pre>
+
+        <h3>CloudWatch Log Shipping from EFS</h3>
+        <pre><code"># Install CloudWatch Agent on all EC2s
+sudo yum install -y amazon-cloudwatch-agent
+
+# CloudWatch Agent config — ship Sterling logs
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/opt/IBM/Sterling/logs/smcfs*.log",
+            "log_group_name": "/sterling/oms/application",
+            "log_stream_name": "{instance_id}/smcfs"
+          },
+          {
+            "file_path": "/opt/IBM/WebSphere/AppServer/profiles/AppSrv01/logs/server1/SystemOut.log",
+            "log_group_name": "/sterling/was/systemout",
+            "log_stream_name": "{instance_id}/server1"
+          },
+          {
+            "file_path": "/opt/IBM/Sterling/logs/agent*.log",
+            "log_group_name": "/sterling/oms/agents",
+            "log_stream_name": "{instance_id}/agents"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s</code></pre>
+      </div>
+    </section>
+
+    <!-- S11: Migration Playbook -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <h2>Migration Playbook — Cutover Approach</h2>
+      </div>
+      <div class="content">
+        <p>The migration runs in four phases designed to minimize downtime and enable rollback at each stage.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Migration Phase Gantt</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb'}}}%%
+gantt
+    title Sterling OMS 9.3 AWS Lift & Shift Migration
+    dateFormat  YYYY-MM-DD
+    section Phase 0 — Discovery
+    Dependency mapping & inventory     :done, 2025-01-01, 2w
+    AWS account & VPC setup            :done, 2025-01-08, 1w
+    RDS Oracle provisioning & test     :done, 2025-01-15, 1w
+    section Phase 1 — Build AWS Infra
+    EC2 provisioning (all tiers)       :active, 2025-01-22, 1w
+    WAS ND install on EC2              :2025-01-29, 1w
+    Sterling install on EC2            :2025-02-05, 1w
+    EFS setup & config migration       :2025-02-05, 1w
+    section Phase 2 — DB Migration
+    Oracle schema export on-prem       :2025-02-12, 3d
+    RDS import & validation            :2025-02-15, 4d
+    Performance benchmark on RDS       :2025-02-19, 3d
+    section Phase 3 — Parallel Run
+    Deploy smcfs.ear to WAS EC2        :2025-02-26, 1w
+    Functional testing on AWS          :2025-03-05, 2w
+    Performance / load testing AWS     :2025-03-12, 1w
+    section Phase 4 — Cutover
+    DNS switch (Route 53 cutover)      :milestone, 2025-03-19, 1d
+    Production traffic on AWS          :2025-03-19, 3d
+    On-prem standby (rollback window)  :2025-03-19, 1w
+    Decommission on-prem               :2025-03-26, 1w
+          </div>
+        </div>
+
+        <h3>Phase Details</h3>
+        <div class="phase-block">
+          <div class="phase-title">Phase 0 — Discovery &amp; Baseline (2 weeks)</div>
+          <div class="phase-sub">Risk register + dependency inventory</div>
+          <ul style="font-size:14px;color:#cdd9e5;padding-left:18px;">
+            <li>Document all on-prem hostnames used in WAS cell, Sterling config, MQ config</li>
+            <li>Audit custom extensions in <code>/opt/IBM/Sterling/Extensions/</code></li>
+            <li>Capture Oracle DB size, active schema objects count, data pump export test</li>
+            <li>Review WAS cluster configuration (heap sizes, thread pools, connection pools)</li>
+            <li>Identify all inbound/outbound integrations (FTP, HTTP, JMS, MFT)</li>
+          </ul>
+        </div>
+        <div class="phase-block phase-2">
+          <div class="phase-title">Phase 1 — AWS Infrastructure Build (3 weeks)</div>
+          <div class="phase-sub">All AWS resources provisioned; WAS + Sterling installed</div>
+          <ul style="font-size:14px;color:#cdd9e5;padding-left:18px;">
+            <li>VPC, subnets, SGs, IAM roles, Route 53 private hosted zone</li>
+            <li>RDS Oracle Multi-AZ provisioning with parameter groups</li>
+            <li>EC2 instances (all tiers) with RHEL 8 AMI</li>
+            <li>EFS creation and mount on all EC2 instances</li>
+            <li>WAS ND 8.5.5 installation + cell creation on EC2</li>
+            <li>Sterling 9.3 installation on EFS mount</li>
+          </ul>
+        </div>
+        <div class="phase-block phase-3">
+          <div class="phase-title">Phase 2 — Database Migration (1 week)</div>
+          <div class="phase-sub">Zero-downtime DB migration with validation</div>
+          <ul style="font-size:14px;color:#cdd9e5;padding-left:18px;">
+            <li>Full Oracle Data Pump export from on-prem (during off-peak hours)</li>
+            <li>Transfer dump to S3, import to RDS Oracle</li>
+            <li>Run Sterling DB validation scripts: row counts, constraint checks, index validity</li>
+            <li>Performance benchmark: run key Sterling queries against RDS vs on-prem Oracle</li>
+          </ul>
+        </div>
+        <div class="phase-block phase-4">
+          <div class="phase-title">Phase 3 — Parallel Run &amp; Testing (3 weeks)</div>
+          <div class="phase-sub">Full parallel environment with functional + load testing</div>
+          <ul style="font-size:14px;color:#cdd9e5;padding-left:18px;">
+            <li>Build and deploy smcfs.ear to WAS cluster on EC2</li>
+            <li>Full regression: order create, payment, sourcing, fulfillment, returns flows</li>
+            <li>Load test: JMeter test simulating peak traffic against AWS environment</li>
+            <li>Agent testing: pipeline transitions, integration server connectivity</li>
+            <li>Validate all inbound/outbound integrations</li>
+          </ul>
+        </div>
+
+        <h3>Cutover Procedure (Maintenance Window)</h3>
+        <ol class="step-list">
+          <li><div class="step-body"><strong>Stop incoming traffic</strong><p>Update external DNS or WAF rules to send 503 maintenance page. Quiesce on-prem IHS.</p></div></li>
+          <li><div class="step-body"><strong>Final Oracle Data Pump sync</strong><p>Export only changed data since last full export using Oracle Log Miner or incremental Data Pump. Import delta to RDS.</p></div></li>
+          <li><div class="step-body"><strong>Drain on-prem MQ queues</strong><p>Ensure all in-flight messages on on-prem IBM MQ are processed before switching. Wait for agent queue depths to reach zero.</p></div></li>
+          <li><div class="step-body"><strong>Validate AWS environment</strong><p>Smoke test: create a test order on the AWS environment. Confirm DB write, agent pickup, and pipeline transition.</p></div></li>
+          <li><div class="step-body"><strong>DNS cutover</strong><p>Update Route 53 (or corporate DNS) to point to AWS ALB. TTL should be pre-set to 60 seconds for this window.</p></div></li>
+          <li><div class="step-body"><strong>Monitor for 30 minutes</strong><p>Watch CloudWatch metrics: WAS JVM heap, RDS connections, MQ depth, order processing rates.</p></div></li>
+          <li><div class="step-body"><strong>Rollback trigger</strong><p>If error rate &gt; 1% or order processing stops: revert DNS to on-prem, investigate. On-prem environment kept warm for 7-day rollback window.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- S12: Operational Excellence -->
+    <section class="section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <h2>Operational Excellence on AWS</h2>
+      </div>
+      <div class="content">
+        <h3>Monitoring Stack</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>What to Monitor</th><th>AWS Service</th><th>Key Metrics</th><th>Alert Threshold</th></tr></thead>
+            <tbody>
+              <tr><td>EC2 WAS App Servers</td><td>CloudWatch Agent</td><td>CPU, Memory, Disk</td><td>CPU &gt; 85%, Mem &gt; 90%</td></tr>
+              <tr><td>WAS JVM Heap</td><td>CloudWatch + WAS PMI</td><td>HeapUsed, GC frequency</td><td>Heap &gt; 85%, GC &gt; 5s pause</td></tr>
+              <tr><td>RDS Oracle</td><td>CloudWatch RDS</td><td>CPUUtilization, FreeableMemory, DBConnections</td><td>CPU &gt; 80%, Connections &gt; 400</td></tr>
+              <tr><td>MQ Queue Depth</td><td>Custom CloudWatch metric</td><td>Queue depth per queue</td><td>STERLING.AGENT &gt; 1000 messages</td></tr>
+              <tr><td>ALB</td><td>CloudWatch ALB</td><td>TargetResponseTime, 5xxErrors</td><td>5xx &gt; 1%, P99 latency &gt; 5s</td></tr>
+              <tr><td>Sterling Logs</td><td>CloudWatch Logs Insights</td><td>ERROR/FATAL log count</td><td>FATAL count &gt; 0</td></tr>
+              <tr><td>EFS</td><td>CloudWatch EFS</td><td>BurstCreditBalance</td><td>Credits &lt; 1TB</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Backup Strategy</h3>
+        <pre><code># AWS Backup Plan for Sterling OMS
+resource "aws_backup_plan" "sterling_backup" {
+  name = "sterling-oms-backup"
+
+  rule {
+    rule_name         = "daily-rds-backup"
+    target_vault_name = aws_backup_vault.sterling.name
+    schedule          = "cron(0 2 * * ? *)"  # 2 AM daily
+    start_window      = 60
+    completion_window = 180
+    lifecycle {
+      delete_after = 30  # 30-day retention
+    }
+  }
+
+  rule {
+    rule_name         = "weekly-ec2-ami"
+    target_vault_name = aws_backup_vault.sterling.name
+    schedule          = "cron(0 3 ? * 1 *)"  # Sunday 3 AM
+    lifecycle {
+      delete_after = 14  # 2-week retention
+    }
+  }
+}
+
+# RDS automated backups (PITR) — already enabled via RDS config
+# backup_retention_period = 7 (Point-In-Time Recovery for 7 days)</code></pre>
+
+        <h3>Auto-Recovery for EC2</h3>
+        <pre><code"># CloudWatch alarm for EC2 auto-recovery
+# Auto-recovers the EC2 instance if hardware failure detected
+resource "aws_cloudwatch_metric_alarm" "was_recovery" {
+  for_each            = toset(var.was_app_instance_ids)
+  alarm_name          = "sterling-was-${each.value}-auto-recover"
+  namespace           = "AWS/EC2"
+  metric_name         = "StatusCheckFailed_System"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  period              = 60
+  statistic           = "Minimum"
+  threshold           = 0
+  alarm_actions       = ["arn:aws:automate:${var.region}:ec2:recover"]
+  dimensions          = { InstanceId = each.value }
+}</code></pre>
+
+        <h3>Cost Optimization</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Resource</th><th>Strategy</th><th>Estimated Saving</th></tr></thead>
+            <tbody>
+              <tr><td>WAS App Servers (r5.2xlarge × 2)</td><td class="rec">Reserved Instances (1-yr, All Upfront)</td><td>~40% vs On-Demand</td></tr>
+              <tr><td>WAS Dmgr, IHS, Build Server</td><td class="rec">Reserved Instances or Savings Plans</td><td>~30-40%</td></tr>
+              <tr><td>Build Server EC2</td><td class="rec">Stop when not in use (EAR build only); use Scheduled Actions</td><td>~70% (8hrs/day vs 24hrs)</td></tr>
+              <tr><td>RDS Oracle</td><td class="rec">BYOL (Bring Your Own License); Reserved Instance</td><td>~50% vs On-Demand + License</td></tr>
+              <tr><td>EFS</td><td>Enable Infrequent Access tier for logs older than 30 days</td><td>~15-20% EFS cost</td></tr>
+              <tr><td>S3 (artifacts, backups)</td><td>S3 Intelligent-Tiering for EAR artifacts</td><td>~30-40% on S3 storage</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S13: ADRs -->
+    <section class="section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <h2>Architecture Decision Records (ADRs)</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Rehost (Lift &amp; Shift) over Re-platform to Containers</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>The team must move Sterling OMS 9.3 to AWS. IBM's preferred path is to upgrade to v10.0 certified containers on OpenShift. However, re-platforming to containers requires significant effort: custom extensions must be rebuilt, CI/CD pipelines created, and team must learn Kubernetes/OpenShift. Timeline constraint: 3-month window.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Rehost as-is: run smcfs.ear on WAS ND on EC2, Oracle on RDS. Defer containerization to Phase 2 (post-stabilization on AWS). This preserves all existing customizations, WAS configuration, and agent setup without change.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Faster migration (weeks vs months), zero application code change risk, team uses existing WAS/Sterling skills. <strong>Cons:</strong> Does not leverage cloud-native scaling; WAS ND licensing cost continues; IBM v9.3 end-of-life support risk increases over time. This is a <em>stepping stone</em> not a permanent state.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Containerize to v10.0 immediately:</strong> Too risky in 3-month window — requires upgrading Sterling version, rebuilding EAR, learning Kubernetes. <strong>SaaS OMS:</strong> Rejected due to extensive customizations (200+ custom APIs) that don't translate to SaaS.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — Amazon RDS Oracle over Self-Managed Oracle on EC2</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS 9.3 requires Oracle DB. The team can run Oracle on EC2 (self-managed) or use Amazon RDS for Oracle (managed service). The on-prem Oracle team has deep expertise but AWS cloud DBA skills are limited.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Amazon RDS for Oracle with BYOL (Bring Your Own License) and Multi-AZ. This offloads patching, backup, and HA to AWS while using the existing Oracle license.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Automated backups (PITR), Multi-AZ failover, automatic minor version patching, no need to manage Oracle RAC. <strong>Cons:</strong> No <code>SYS</code>/<code>SYSTEM</code> access — some DBA maintenance scripts need adaptation. No Oracle RAC equivalent. RDS parameter group limitations may require some query tuning.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Oracle on EC2:</strong> Team would need to set up RAC or active-passive, manage Oracle Clusterware, handle backups. Operational overhead too high. <strong>Oracle Autonomous Database:</strong> Not supported by Sterling OMS 9.3; Sterling requires traditional Oracle JDBC connectivity with schema creation privileges.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — IBM MQ on EC2 over Amazon MQ for JMS</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS 9.3 requires JMS messaging. On-prem uses IBM MQ 7.5 with custom queue manager config, MQ bindings file, and some IBM MQ-specific APIs. Amazon MQ (ActiveMQ) is available as a managed service.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Run IBM MQ 8.x on a dedicated EC2 instance (m5.large) using the existing queue manager configuration. The MQ config is migrated as-is, ensuring zero compatibility risk.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Zero JMS compatibility risk; same queue manager name, channel names, and bindings file; existing Sterling MQ integration code unchanged. <strong>Cons:</strong> Self-managed MQ; need to patch and operate IBM MQ on EC2; no managed HA (need to set up MQ active-passive manually or use RDQM).</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Amazon MQ (ActiveMQ):</strong> Sterling 9.3 uses IBM MQ-specific com.ibm.mq.* classes in some integration adapters. Switching to ActiveMQ would require code changes and testing — violates the lift-and-shift constraint. Revisit in Phase 2 (containerization).</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-004 — Amazon EFS over EBS for Sterling Shared Directory</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS requires multiple EC2 instances (App Server 1, App Server 2, Agent Server) to share the same Sterling install directory, extensions, and configuration files. On-prem this was a NAS/SAN mount.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Amazon EFS for the shared <code>/opt/IBM/Sterling/</code> mount. EFS provides NFS-compatible, multi-AZ shared storage accessible simultaneously from multiple EC2 instances.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Multi-AZ durable storage; automatic scaling; NFS mount is familiar to existing team; eliminates single-point-of-failure for shared config. <strong>Cons:</strong> EFS latency is higher than local EBS (1-3ms vs &lt;0.5ms); for log-heavy workloads, EFS throughput may be a bottleneck (use Provisioned Throughput mode if needed).</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>EBS shared via instance:</strong> EBS volumes can only be attached to one instance at a time (except io1/io2 multi-attach, which is complex to configure correctly for file sharing). <strong>S3 via S3FS:</strong> POSIX compatibility issues with S3FS; Sterling's file operations require true NFS semantics.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S14: Interview Cheat Sheet -->
+    <section class="section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <h2>Interview Cheat Sheet — Director/Principal Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top 5 Clarifying Questions to Ask First</h4>
+            <ul>
+              <li>What is the current Oracle version on-prem — 11gR2 or 12c? Does RDS support it in the same version or do we need to upgrade?</li>
+              <li>What are the existing WAS JVM heap settings? This determines EC2 instance sizing.</li>
+              <li>Are we using IBM MQ-specific APIs (com.ibm.mq.*) or pure JMS? This determines Amazon MQ vs IBM MQ on EC2 decision.</li>
+              <li>What are the inbound/outbound integrations — FTP, HTTP, JMS, MFT? These all need to route to AWS post-cutover.</li>
+              <li>What is IBM Sterling license model — per-CPU perpetual or subscription? Does moving to cloud affect the license?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚡ Key Trade-offs to Verbalize Proactively</h4>
+            <ul>
+              <li><strong>Lift &amp; Shift preserves risk:</strong> All existing WAS performance issues, Oracle tuning debt, and agent design debt come to AWS intact.</li>
+              <li><strong>RDS vs EC2 Oracle:</strong> RDS loses Oracle RAC but gains managed HA (Multi-AZ) — net positive for most GCCs.</li>
+              <li><strong>IBM MQ licensing:</strong> Running IBM MQ on EC2 requires an IBM MQ license — don't underestimate this cost in TCO.</li>
+              <li><strong>WAS ND EOL risk:</strong> WAS 8.5.5 extended support ends — lifting to AWS doesn't extend IBM support. The team must plan a v9.3 → v10.0 containerization roadmap.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🐛 Failure Modes Interviewers Probe For</h4>
+            <ul>
+              <li><strong>Hostname mismatch:</strong> WAS cell uses hostnames; EC2 hostnames change on reboot unless properly configured with Route 53. Node federation breaks.</li>
+              <li><strong>Oracle character set mismatch:</strong> If on-prem is WE8ISO8859P1 and RDS is AL32UTF8, Data Pump import fails on special characters.</li>
+              <li><strong>open_cursors exhaustion:</strong> Sterling's heavy Oracle cursor usage hits default limits in RDS parameter groups. Tuning required.</li>
+              <li><strong>EFS burst credits:</strong> EFS bursts to high throughput then throttles when burst credits are exhausted. Heavy log-writing agents can saturate EFS during peak.</li>
+              <li><strong>MQ in-flight messages during cutover:</strong> Not draining MQ queues before DNS cutover results in duplicate or lost order processing.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>✨ "Wow" Moments — Principal-Level Depth Signals</h4>
+            <ul>
+              <li><strong>Dual-write DB during cutover:</strong> For near-zero downtime, use Oracle GoldenGate or AWS DMS to replicate on-prem Oracle → RDS in real-time, then cut DNS with seconds of downtime — not hours.</li>
+              <li><strong>customer_overrides.properties → Secrets Manager:</strong> Don't just copy the config file to EFS; refactor startup to pull sensitive values (DB password, MQ password) from AWS Secrets Manager at JVM startup. This is a GCC security maturity signal.</li>
+              <li><strong>Build server lifecycle:</strong> The smcfs.ear build server should be on a Spot Instance that terminates after each build — saves 70% cost and ensures clean build environment every time.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>❓ Questions to Ask the Interviewer</h4>
+            <ul>
+              <li>What is the team's current experience level with AWS? Is there a platform engineering team, or is the Sterling team expected to own infrastructure?</li>
+              <li>Is the goal purely lift-and-shift, or is this a stepping stone to Sterling 10.0 containers? That changes the investment in infrastructure automation.</li>
+              <li>Is there a Direct Connect from on-prem to AWS, or will we need Site-to-Site VPN for the integration layer?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>📋 Migration Checklist — What People Forget</h4>
+            <ul>
+              <li>JDBC Oracle driver version — on-prem may use ojdbc6; RDS Oracle 19c requires ojdbc8</li>
+              <li>WAS Admin Console SSL certificates — self-signed certs expire; renew before migration</li>
+              <li>Sterling Elasticsearch (if used) — must also be migrated or replaced with OpenSearch</li>
+              <li>Sterling Integration Server FTP/SFTP adapters — external FTP hosts must whitelist AWS Elastic IPs</li>
+              <li>NTP/timezone alignment — EC2 instances must use the same timezone as on-prem to avoid Sterling schedule agent drift</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif',
+      fontSize: '14px'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function navScrollTo(el, id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.closest('.nav-item').classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
