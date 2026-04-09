@@ -1,0 +1,3066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBM Sterling OMS 9.3 — Post-Purchase Order Modifications</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-hover:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --tag-bg:    #1f6feb33;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; min-width: 260px; background: var(--bg-card);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted);
+      padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .nav-item {
+      display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none;
+      font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .nav-sub { font-size: 11px; color: var(--text-muted); padding: 4px 20px 4px 36px; display: block; text-decoration: none; cursor: pointer; }
+    .nav-sub:hover { color: var(--accent2); }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #238636aa; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    td.warn-cell { color: var(--warn); }
+    td.danger-cell { color: var(--danger); }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; margin-left: 12px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .scenario-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 20px; }
+    .scenario-block h3 { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .scenario-icon { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+    .icon-red { background: #da363333; }
+    .icon-blue { background: #1f6feb33; }
+    .icon-yellow { background: #9e670033; }
+    .icon-green { background: #23863633; }
+    .api-tag { font-family: var(--mono); font-size: 11px; background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb44; padding: 2px 8px; border-radius: 4px; margin-right: 4px; }
+    .api-tag.post { background: #23863622; color: var(--accent2); border-color: #2ea04344; }
+    .api-tag.warn { background: #9e670022; color: var(--warn); border-color: #9e670044; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .flow-step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+    .step-num { min-width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #000; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .step-body h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .step-body p { font-size: 13px; color: var(--text-muted); margin: 0; }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid, .two-col, .three-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Sterling OMS 9.3 + Migration</div>
+    <div style="font-size:10px;color:var(--text-muted);padding:4px 20px 8px;letter-spacing:.04em;text-transform:uppercase;">Part I — Sterling Deep Dive</div>
+    <a class="nav-item active" onclick="scrollToSec('s1')"><span class="num">01</span>Executive Summary</a>
+    <a class="nav-item" onclick="scrollToSec('s2')"><span class="num">02</span>Sterling Foundations</a>
+    <a class="nav-sub" onclick="scrollToSec('s2a')">Order Lifecycle & States</a>
+    <a class="nav-sub" onclick="scrollToSec('s2b')">Core APIs Overview</a>
+    <a class="nav-item" onclick="scrollToSec('s3')"><span class="num">03</span>Modification Architecture</a>
+    <a class="nav-item" onclick="scrollToSec('s4')"><span class="num">04</span>Scenario: Order Cancel</a>
+    <a class="nav-item" onclick="scrollToSec('s5')"><span class="num">05</span>Scenario: Address Change</a>
+    <a class="nav-item" onclick="scrollToSec('s6')"><span class="num">06</span>Scenario: Fulfillment Switch</a>
+    <a class="nav-item" onclick="scrollToSec('s7')"><span class="num">07</span>Scenario: Service Level Change</a>
+    <a class="nav-item" onclick="scrollToSec('s8')"><span class="num">08</span>Payment & Price Recalculation</a>
+    <a class="nav-item" onclick="scrollToSec('s9')"><span class="num">09</span>Inventory & ATP Impact</a>
+    <a class="nav-item" onclick="scrollToSec('s10')"><span class="num">10</span>Pipeline & Condition Tree</a>
+    <a class="nav-item" onclick="scrollToSec('s11')"><span class="num">11</span>Agent Criteria & Events</a>
+    <a class="nav-item" onclick="scrollToSec('s12')"><span class="num">12</span>ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="scrollToSec('s13')"><span class="num">13</span>Interview Cheat Sheet</a>
+    <div style="font-size:10px;color:var(--accent);padding:12px 20px 8px;letter-spacing:.04em;text-transform:uppercase;border-top:1px solid var(--border);margin-top:8px;">Part II — Migration to Cloud-Native</div>
+    <a class="nav-item" onclick="scrollToSec('s14')"><span class="num">14</span>Why Move Off Sterling</a>
+    <a class="nav-item" onclick="scrollToSec('s15')"><span class="num">15</span>Bounded Domain Mapping</a>
+    <a class="nav-item" onclick="scrollToSec('s16')"><span class="num">16</span>Transition Architecture</a>
+    <a class="nav-sub" onclick="scrollToSec('s16a')">Strangler Fig Phases</a>
+    <a class="nav-sub" onclick="scrollToSec('s16b')">Data Migration Strategy</a>
+    <a class="nav-item" onclick="scrollToSec('s17')"><span class="num">17</span>End-State Architecture</a>
+    <a class="nav-sub" onclick="scrollToSec('s17a')">Service Topology</a>
+    <a class="nav-sub" onclick="scrollToSec('s17b')">Modification Flows Cloud-Native</a>
+    <a class="nav-sub" onclick="scrollToSec('s17c')">Cancel — Deep Dive</a>
+    <a class="nav-sub" onclick="scrollToSec('s17d')">Address Change — Deep Dive</a>
+    <a class="nav-sub" onclick="scrollToSec('s17e')">Fulfillment Switch — Deep Dive</a>
+    <a class="nav-sub" onclick="scrollToSec('s17f')">SLA Change — Deep Dive</a>
+    <a class="nav-item" onclick="scrollToSec('s18')"><span class="num">18</span>Tech Stack Deep Dive</a>
+    <a class="nav-item" onclick="scrollToSec('s19')"><span class="num">19</span>Migration Gantt & Phases</a>
+    <a class="nav-item" onclick="scrollToSec('s20')"><span class="num">20</span>Risk Register</a>
+    <a class="nav-item" onclick="scrollToSec('s21')"><span class="num">21</span>Migration ADRs</a>
+    <a class="nav-item" onclick="scrollToSec('s22')"><span class="num">22</span>Migration Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>IBM Sterling OMS 9.3 — <span>Modifications &amp; Cloud-Native Migration</span></h1>
+      <p style="color:var(--text-muted);font-size:14px;">Part I: Sterling inner APIs, state machine, inventory &amp; payment recalculation &nbsp;|&nbsp; Part II: Strangler Fig migration + full end-state cloud-native OMS</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Sterling OMS 9.3</span>
+        <span class="badge badge-yellow">Retail / Ecommerce</span>
+        <span class="badge badge-green">Order Management</span>
+        <span class="badge badge-red">Cloud Migration</span>
+        <span class="badge badge-green">Microservices End-State</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">Generated: <span id="gen-date"></span></span>
+      </div>
+    </header>
+
+    <!-- S1: Executive Summary -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>Executive Summary</h2>
+      </div>
+      <div class="content">
+        <p>IBM Sterling Order Management System (OMS) 9.3 is an enterprise-grade, rule-driven order orchestration platform built around a finite-state order pipeline. Post-purchase order modifications — Cancel, Address Update, Fulfillment Method Switch (Pickup ↔ Ship), and Service Level Change (1-day / 2-day / Standard 5-day) — are among the most operationally critical and technically complex flows in any retail deployment. Each modification must simultaneously satisfy <strong>order state eligibility checks</strong>, <strong>inventory re-reservation or release</strong>, <strong>payment recalculation and adjustment</strong>, <strong>carrier/node re-assignment</strong>, and <strong>downstream notification propagation</strong>.</p>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Critical Complexity Flag</div>
+          Sterling's modification model is <strong>not a simple field-update</strong>. Every modification triggers a chain of API calls, condition tree evaluations, agent tasks, and pipeline transitions. Understanding the inner plumbing is essential before building any self-service or CSR modification UI on top of Sterling 9.3.
+        </div>
+
+        <div class="three-col">
+          <div class="card">
+            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Core API Layer</div>
+            <p style="font-size:13px;color:#cdd9e5;margin:0;">All modifications flow through <code>changeOrder</code> API. Eligibility is gated by <code>getOrderDetails</code> + condition trees. Price changes use <code>getPriceInfo</code> + <code>calculatePricing</code>.</p>
+          </div>
+          <div class="card">
+            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">State Machine Gate</div>
+            <p style="font-size:13px;color:#cdd9e5;margin:0;">Sterling's order pipeline defines hard stops. An order past <strong>Sent to Node</strong> or in <strong>Shipment Confirmed</strong> status cannot be modified via standard APIs without a cancel+recreate pattern.</p>
+          </div>
+          <div class="card">
+            <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Inventory Impact</div>
+            <p style="font-size:13px;color:#cdd9e5;margin:0;">Address change + fulfillment switch can trigger <strong>full sourcing re-run</strong> (GIV/ATP re-evaluation), potentially reassigning fulfillment node, changing carrier, and altering promise dates.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S2: Sterling Foundations -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Sterling OMS 9.3 — Core Foundations</h2>
+      </div>
+      <div class="content" id="s2a">
+        <h3>Order Lifecycle & State Machine</h3>
+        <p>Sterling OMS manages orders through a pipeline of <strong>statuses</strong> defined in the <code>YFS_ORDER_STATUS</code> and <code>YFS_ORDER_LINE_STATUS</code> tables. Each status has a numeric code. Modifications are only valid in certain status windows.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — Sterling Order State Machine (Modification Windows Highlighted)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+stateDiagram-v2
+    [*] --> Created : createOrder API
+    Created --> Released : Schedule Agent
+    Released --> Scheduled : Sourcing / GIV
+    Scheduled --> SentToNode : Release Agent
+    SentToNode --> NodeReceived : Node ACK
+    NodeReceived --> InPacking : Pick/Pack
+    InPacking --> Shipped : Ship Confirm
+    Shipped --> Delivered : Carrier Update
+    Delivered --> [*]
+
+    note right of Created
+      ✅ ALL modifications allowed
+      Cancel, Address, Fulfillment, SLA
+    end note
+    note right of Released
+      ✅ Cancel OK
+      ✅ Address change (re-source)
+      ⚠️ Fulfillment switch with caution
+      ⚠️ SLA change triggers re-source
+    end note
+    note right of Scheduled
+      ✅ Cancel (with hold release)
+      ⚠️ Address change — re-source needed
+      ❌ Fulfillment switch complex
+      ⚠️ SLA change — re-promise
+    end note
+    note right of SentToNode
+      ⚠️ Cancel only via node recall
+      ❌ Address change — carrier recall
+      ❌ Fulfillment switch — cancel+recreate
+      ❌ SLA change — too late
+    end note
+    note right of NodeReceived
+      ❌ Standard mods blocked
+      Cancel requires node reversal
+    end note
+    note right of Shipped
+      ❌ All mods blocked post-ship
+    end note
+          </div>
+        </div>
+
+        <h3>Key Database Tables for Modifications</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Table</th><th>Purpose in Modifications</th><th>Key Columns</th></tr></thead>
+            <tbody>
+              <tr><td><code>YFS_ORDER_HEADER</code></td><td>Order-level status, hold types, modification timestamps</td><td>ORDER_HEADER_KEY, STATUS, HOLD_FLAG, MODIFICATION_REASON_CODE</td></tr>
+              <tr><td><code>YFS_ORDER_LINE</code></td><td>Line-level quantity, status, item details</td><td>ORDER_LINE_KEY, ORDERED_QTY, STATUS, CARRIER_SERVICE_CODE</td></tr>
+              <tr><td><code>YFS_PERSON_INFO</code></td><td>Ship-to/Bill-to address storage</td><td>PERSON_INFO_KEY, ADDRESS_LINE1..3, CITY, STATE, ZIP_CODE, DAY_PHONE</td></tr>
+              <tr><td><code>YFS_SHIPMENT</code></td><td>Shipment record — carrier, node, tracking</td><td>SHIPMENT_KEY, STATUS, CARRIER_SERVICE_CODE, SHIP_NODE</td></tr>
+              <tr><td><code>YFS_ORDER_RELEASE</code></td><td>Release records linking order to fulfillment node</td><td>ORDER_RELEASE_KEY, SHIP_NODE, STATUS</td></tr>
+              <tr><td><code>YFS_PRICE_SET</code></td><td>Pricing components for recalculation</td><td>UNIT_PRICE, EXTENDED_PRICE, CHARGE_AMOUNT (shipping charges)</td></tr>
+              <tr><td><code>YFS_CHARGE_TRANSACTION</code></td><td>Payment authorization / capture records</td><td>CHARGE_TYPE, AMOUNT, STATUS (AUTHORIZED/CAPTURED/VOID)</td></tr>
+              <tr><td><code>YFS_INVENTORY_SUPPLY</code></td><td>Node-level inventory supply</td><td>ITEM_ID, SHIP_NODE, QUANTITY, SUPPLY_TYPE</td></tr>
+              <tr><td><code>YFS_INVENTORY_DEMAND</code></td><td>Demand reservations per order</td><td>DEMAND_TYPE, QUANTITY, ORDER_HEADER_KEY</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="s2b"></div>
+        <h3>Core API Inventory for Post-Purchase Modifications</h3>
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Sterling API Invocation Pattern</div>
+          All Sterling APIs follow the same XML in/XML out contract: <code>YIFApi.invoke(APIName, inputXML)</code>. In REST-enabled Sterling configurations (v9.3+), these APIs are also exposed as REST endpoints via the Application Platform. The API names below are the canonical Sterling API identifiers.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>API Name</th><th>Category</th><th>Used For</th><th>Modification Context</th></tr></thead>
+            <tbody>
+              <tr><td><code>changeOrder</code></td><td><span class="badge badge-blue">Core</span></td><td>Primary modification API for ALL post-purchase changes</td><td>Cancel, Address, Fulfillment, SLA</td></tr>
+              <tr><td><code>getOrderDetails</code></td><td><span class="badge badge-blue">Query</span></td><td>Fetch current order state before modification eligibility check</td><td>Pre-check for all scenarios</td></tr>
+              <tr><td><code>getCompleteOrderDetails</code></td><td><span class="badge badge-blue">Query</span></td><td>Deep fetch with lines, releases, shipments, charges</td><td>Pre-check for complex scenarios</td></tr>
+              <tr><td><code>cancelOrder</code></td><td><span class="badge badge-red">Cancel</span></td><td>Cancels at header level — wrapper over changeOrder with cancel semantics</td><td>Full order cancel</td></tr>
+              <tr><td><code>cancelOrderLine</code></td><td><span class="badge badge-red">Cancel</span></td><td>Line-level cancel</td><td>Partial cancel</td></tr>
+              <tr><td><code>getPriceInfo</code></td><td><span class="badge badge-yellow">Pricing</span></td><td>Current pricing breakdown before recalculation</td><td>Price delta for payment adjust</td></tr>
+              <tr><td><code>calculatePricing</code></td><td><span class="badge badge-yellow">Pricing</span></td><td>Recalculate pricing given new shipment method / address</td><td>SLA change, fulfillment switch</td></tr>
+              <tr><td><code>processPaymentConfirmation</code></td><td><span class="badge badge-red">Payment</span></td><td>Trigger payment charge/refund after price delta is known</td><td>All scenarios with price delta</td></tr>
+              <tr><td><code>getGlobalInventory</code></td><td><span class="badge badge-green">Inventory</span></td><td>Check ATP at candidate fulfillment nodes</td><td>Fulfillment switch, address change</td></tr>
+              <tr><td><code>reserveInventory</code></td><td><span class="badge badge-green">Inventory</span></td><td>Create demand reservation at new node</td><td>After node re-assignment</td></tr>
+              <tr><td><code>releaseInventory</code></td><td><span class="badge badge-green">Inventory</span></td><td>Release demand at previous node</td><td>Before node change is committed</td></tr>
+              <tr><td><code>getItemDetails</code></td><td><span class="badge badge-blue">Catalog</span></td><td>Item eligibility for fulfillment methods</td><td>Fulfillment switch validation</td></tr>
+              <tr><td><code>getCarrierServiceList</code></td><td><span class="badge badge-blue">Carrier</span></td><td>Valid carriers for new address + service level</td><td>SLA change, address change</td></tr>
+              <tr><td><code>modifyShipment</code></td><td><span class="badge badge-blue">Shipment</span></td><td>Update shipment attributes (carrier, address) pre-ship confirm</td><td>Address change if shipment already created</td></tr>
+              <tr><td><code>getPromisedDate</code> / <code>getCapacityInfo</code></td><td><span class="badge badge-yellow">Promise</span></td><td>Re-compute delivery promise after changes</td><td>SLA change, address change</td></tr>
+              <tr><td><code>createCharge</code></td><td><span class="badge badge-red">Payment</span></td><td>Charge incremental amount (e.g., upgrade from standard to 1-day)</td><td>SLA upgrade</td></tr>
+              <tr><td><code>refundCharge</code> / <code>voidCharge</code></td><td><span class="badge badge-red">Payment</span></td><td>Refund/void on downgrade or cancel</td><td>Cancel, SLA downgrade</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: Modification Architecture -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Modification Architecture — Common Pattern</h2>
+      </div>
+      <div class="content">
+        <p>All four modification scenarios follow a common orchestration pattern. The differences are in which sub-steps are executed, which APIs are invoked, and whether inventory/payment recalculation is triggered.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Universal Post-Purchase Modification Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    UI([Customer Self-Service / CSR UI]) --> GATE{Modification Type}
+    GATE -->|Cancel| C[Cancel Flow]
+    GATE -->|Address| A[Address Flow]
+    GATE -->|Fulfillment Switch| F[Fulfillment Flow]
+    GATE -->|SLA Change| S[SLA Flow]
+
+    subgraph COMMON[Common Pre-Checks — All Scenarios]
+      P1[getOrderDetails / getCompleteOrderDetails] --> P2[Check Order Status\nEligibility Gate]
+      P2 --> P3{Status Allows\nModification?}
+      P3 -->|No| ERR[Return Error\nMOD_NOT_ALLOWED]
+      P3 -->|Yes| P4[Check Hold Types\nyfsHoldType Check]
+      P4 --> P5{Holds Present?}
+      P5 -->|Fraud / Payment Hold| ERR2[Block Modification\nNotify CSR]
+      P5 -->|No Blocking Hold| OK[Proceed to Scenario Logic]
+    end
+
+    C --> COMMON
+    A --> COMMON
+    F --> COMMON
+    S --> COMMON
+
+    OK --> INV_CHECK{Inventory\nImpact?}
+    INV_CHECK -->|Yes| GIV[getGlobalInventory\nATP Check]
+    GIV --> RE_SRC{Re-source\nNeeded?}
+    RE_SRC -->|Yes| RELEASE[releaseInventory\nat Old Node]
+    RELEASE --> RESERVE[reserveInventory\nat New Node]
+    RE_SRC -->|No| PRICE_CHK
+
+    RESERVE --> PRICE_CHK{Price Delta\nExists?}
+    INV_CHECK -->|No| PRICE_CHK
+
+    PRICE_CHK -->|Yes| PRICING[calculatePricing\ngetPriceInfo]
+    PRICING --> PAY[processPaymentConfirmation\ncreateCharge / refundCharge]
+    PRICE_CHK -->|No| MODIFY
+
+    PAY --> MODIFY[changeOrder API\n commitModification]
+    MODIFY --> NOTIFY[Event Notification\nOrder Modified Event]
+    NOTIFY --> EXT[External Systems\nCarrier / WMS / Email / App]
+          </div>
+        </div>
+
+        <h3>Modification Eligibility Matrix</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Order Status</th><th>Status Code Range</th><th>Cancel</th><th>Address Change</th><th>Fulfillment Switch</th><th>SLA Change</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Created / Partially Created</strong></td><td>1000–1100</td><td class="rec">✅ Full</td><td class="rec">✅ Full</td><td class="rec">✅ Full</td><td class="rec">✅ Full</td></tr>
+              <tr><td><strong>Released (Awaiting Sourcing)</strong></td><td>1200–1300</td><td class="rec">✅ Full</td><td class="rec">✅ Re-source triggered</td><td class="warn-cell">⚠️ Re-source required</td><td class="warn-cell">⚠️ Re-source required</td></tr>
+              <tr><td><strong>Scheduled / Assigned to Node</strong></td><td>3200–3700</td><td class="rec">✅ Cancel with hold release</td><td class="warn-cell">⚠️ Node recall + re-source</td><td class="danger-cell">❌ Complex / Cancel+Recreate</td><td class="warn-cell">⚠️ Re-promise only</td></tr>
+              <tr><td><strong>Sent to Fulfillment Node</strong></td><td>3700.100+</td><td class="warn-cell">⚠️ Node recall required</td><td class="danger-cell">❌ Carrier notification required</td><td class="danger-cell">❌ Not recommended</td><td class="danger-cell">❌ Blocked</td></tr>
+              <tr><td><strong>Pick / Pack / Ship Confirm</strong></td><td>3700.200+</td><td class="danger-cell">❌ Returns flow only</td><td class="danger-cell">❌ Carrier recall or redirect</td><td class="danger-cell">❌ Blocked</td><td class="danger-cell">❌ Blocked</td></tr>
+              <tr><td><strong>Shipped / In Transit</strong></td><td>9000+</td><td class="danger-cell">❌ Returns/RMA only</td><td class="warn-cell">⚠️ Address intercept via carrier API</td><td class="danger-cell">❌ Blocked</td><td class="danger-cell">❌ Blocked</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Sterling Condition Tree — Modification Rules</div>
+          Sterling's modification eligibility is controlled by <strong>Condition Trees</strong> configured in the Application Manager under <em>Order Management → Modifications</em>. The condition tree evaluates: <code>OrderStatus</code>, <code>ModificationType</code>, <code>HoldType</code>, <code>FulfillmentType</code>. Retailers configure these trees to align with their business policies — the status codes above are defaults; custom pipelines can shift these windows.
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: Cancel -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>Scenario: Order Cancellation</h2>
+      </div>
+      <div class="content">
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-red">✕</span> Business Context</h3>
+          <p>Customer requests full or partial order cancel via self-service or CSR. Sterling must: validate eligibility, release inventory reservations, void/refund payment authorizations, update order status, and fire cancellation event to downstream systems (WMS, carrier, email service).</p>
+        </div>
+
+        <h3>API Sequence — Full Order Cancel</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Order Cancellation API Sequence</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CSR as CSR / Self-Service
+    participant OMS as Sterling OMS
+    participant INV as Inventory Module
+    participant PAY as Payment Module
+    participant WMS as WMS / Node
+    participant NOTIFY as Notification Engine
+
+    CSR->>OMS: getOrderDetails(OrderHeaderKey)
+    OMS-->>CSR: OrderXML [status, holds, lines, charges]
+
+    CSR->>OMS: Eligibility Check\n(condition tree eval)
+    OMS-->>CSR: CANCEL_ALLOWED = true/false
+
+    CSR->>OMS: cancelOrder(OrderHeaderKey, ReasonCode)
+    Note over OMS: changeOrder internally with\nAction=CANCEL on all lines
+
+    OMS->>INV: releaseInventory(DemandType=OPEN_ORDER)
+    INV-->>OMS: Inventory Released
+
+    OMS->>PAY: processPaymentConfirmation\n(ChargeType=VOID or REFUND)
+    Note over PAY: If auth-only → VOID\nIf captured → REFUND
+    PAY-->>OMS: Payment Void/Refund Confirmed
+
+    OMS->>WMS: Order Cancel Event\n(YFS_ORDER.ON_CANCEL)
+    WMS-->>OMS: ACK
+
+    OMS->>NOTIFY: Fire ON_SUCCESS event\n(email, push notification)
+    NOTIFY-->>CSR: Confirmation
+          </div>
+        </div>
+
+        <h3>Key API Details</h3>
+
+        <h4>1. cancelOrder / changeOrder Input XML</h4>
+        <pre><code>&lt;Order OrderHeaderKey="OHK12345" 
+       ModificationReasonCode="CUSTOMER_REQUEST"
+       ModificationReasonText="Customer requested cancellation"&gt;
+  &lt;OrderLines&gt;
+    &lt;OrderLine OrderLineKey="OLK001" Action="CANCEL"&gt;
+      &lt;StatusList&gt;
+        &lt;Status Status="9000" StatusQty="2"/&gt;
+      &lt;/StatusList&gt;
+    &lt;/OrderLine&gt;
+  &lt;/OrderLines&gt;
+&lt;/Order&gt;</code></pre>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Partial Cancel Complexity</div>
+          For <strong>partial cancel</strong> (cancel specific lines), use <code>cancelOrderLine</code> with specific <code>OrderLineKey</code> values. Sterling will recalculate the order total and trigger payment adjustment for the delta amount only. The remaining lines must be re-priced if they had quantity-based promotions.
+        </div>
+
+        <h4>2. Payment Void vs. Refund Decision Logic</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Payment State</th><th>Action</th><th>Sterling API</th><th>PSP Instruction</th></tr></thead>
+            <tbody>
+              <tr><td>Authorization only (pre-capture)</td><td class="rec">VOID</td><td><code>processPaymentConfirmation</code> with <code>ChargeType=AUTHORIZATION_REVERSAL</code></td><td>Void auth — funds never charged</td></tr>
+              <tr><td>Captured (payment settled)</td><td class="warn-cell">REFUND</td><td><code>processPaymentConfirmation</code> with <code>ChargeType=CREDIT</code></td><td>Refund to original payment method</td></tr>
+              <tr><td>Partial capture (split shipments)</td><td class="warn-cell">PARTIAL REFUND</td><td><code>refundCharge</code> with delta amount</td><td>Partial credit — requires PSP support</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>3. Inventory Release on Cancel</h4>
+        <pre><code>/* Sterling internally triggers via pipeline agent on cancel event */
+/* YFS_INVENTORY_DEMAND record with DemandType=OPEN_ORDER is removed */
+/* Supply becomes available again at the node */
+
+API: releaseInventory
+Input:
+&lt;Promise&gt;
+  &lt;PromiseLines&gt;
+    &lt;PromiseLine ItemID="ITEM001" UnitOfMeasure="EACH" 
+                 RequiredQty="2" ShipNode="DC_WEST"/&gt;
+  &lt;/PromiseLines&gt;
+&lt;/Promise&gt;</code></pre>
+
+        <h4>4. Cancel Reasons and Hold Management</h4>
+        <p>Sterling uses <strong>Hold Types</strong> to block or qualify cancellations:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hold Type</th><th>Impact on Cancel</th><th>Resolution</th></tr></thead>
+            <tbody>
+              <tr><td><code>YFS_FRAUD_HOLD</code></td><td class="warn-cell">Cancel requires manual fraud review approval</td><td>Fraud agent resolves hold; cancel proceeds</td></tr>
+              <tr><td><code>YFS_PAYMENT_HOLD</code></td><td class="warn-cell">Cancel blocked until payment resolved</td><td>Resolve payment issue; then cancel</td></tr>
+              <tr><td><code>YFS_SHIP_HOLD</code></td><td class="rec">Cancel allowed; hold auto-releases</td><td>Ship hold released on cancel</td></tr>
+              <tr><td><code>YFS_BACKORDERED_HOLD</code></td><td class="rec">Cancel allowed immediately</td><td>Cancel releases backorder demand</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5: Address Change -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>Scenario: Change Shipping Address / Phone Number</h2>
+      </div>
+      <div class="content">
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-blue">📍</span> Business Context</h3>
+          <p>Customer updates ship-to address (street, city, state, ZIP) or contact phone number after order placement. This is deceptively complex — a ZIP code change can cross carrier zones, change shipping cost, invalidate the current fulfillment node assignment, and require full GIV re-evaluation.</p>
+        </div>
+
+        <h3>API Sequence — Address Change</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Address Change Sequence with Re-Sourcing Decision</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant OMS as Sterling OMS
+    participant GIV as GIV / ATP Engine
+    participant PRICE as Pricing Engine
+    participant PAY as Payment Module
+    participant CARRIER as Carrier Service
+
+    CUST->>OMS: changeOrder(newShipToAddress)
+    Note over OMS: Updates YFS_PERSON_INFO record\nLinked via PersonInfoShipToKey
+
+    OMS->>OMS: Check if ZIP/State changed
+    alt ZIP/State change detected
+        OMS->>OMS: Zone change check\n(carrier zone lookup)
+        OMS->>GIV: getGlobalInventory\n(new destination, same items)
+        GIV-->>OMS: Availability at candidate nodes
+
+        OMS->>OMS: Sourcing Rule Evaluation\n(proximity, inventory, cost)
+        
+        alt New node selected
+            OMS->>OMS: releaseInventory at OLD node
+            OMS->>OMS: reserveInventory at NEW node
+            OMS->>PRICE: calculatePricing\n(new carrier zone + service level)
+            PRICE-->>OMS: NewShippingCharge
+
+            OMS->>OMS: Compute delta =\nNewShippingCharge - OldShippingCharge
+            
+            alt Delta > 0 (more expensive zone)
+                OMS->>PAY: createCharge(deltaAmount)
+                PAY-->>OMS: Additional auth confirmed
+            else Delta < 0 (cheaper zone)
+                OMS->>PAY: refundCharge(deltaAmount)
+                PAY-->>OMS: Refund queued
+            end
+        end
+        
+        OMS->>CARRIER: Update shipment address\n(if shipment already created)
+        CARRIER-->>OMS: Carrier ACK / new label queued
+    else Phone-only or same-ZIP change
+        OMS->>OMS: Direct update to YFS_PERSON_INFO\nNo re-sourcing needed
+    end
+
+    OMS-->>CUST: Address Updated Confirmation\n+ new delivery estimate
+          </div>
+        </div>
+
+        <h3>changeOrder Input for Address Update</h3>
+        <pre><code>&lt;Order OrderHeaderKey="OHK12345"&gt;
+  &lt;PersonInfoShipTo
+    AddressLine1="456 New Street"
+    AddressLine2="Apt 3B"
+    City="Seattle"
+    State="WA"
+    ZipCode="98101"
+    Country="US"
+    DayPhone="206-555-0199"
+    FirstName="John"
+    LastName="Doe"
+    PersonInfoKey="PIK_EXISTING"   &lt;!-- Update existing record --&gt;
+  /&gt;
+  &lt;!-- If shipments exist, also update shipment addresses --&gt;
+  &lt;Shipments&gt;
+    &lt;Shipment ShipmentKey="SHK001"&gt;
+      &lt;ToPersonInfo
+        AddressLine1="456 New Street"
+        City="Seattle" State="WA" ZipCode="98101"/&gt;
+    &lt;/Shipment&gt;
+  &lt;/Shipments&gt;
+&lt;/Order&gt;</code></pre>
+
+        <h3>Address Validation — Pre-Commit Steps</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Validation Step</th><th>Sterling Mechanism</th><th>External Service</th></tr></thead>
+            <tbody>
+              <tr><td>Address standardization / normalization</td><td>Pre-save user exit on <code>changeOrder</code></td><td>SmartyStreets, Melissa Data, USPS AVS</td></tr>
+              <tr><td>Delivery eligibility check (rural, PO Box)</td><td>Carrier service list lookup</td><td>Carrier API (UPS, FedEx)</td></tr>
+              <tr><td>Restricted shipping zone check</td><td>Custom condition tree on ZIP change</td><td>Internal blacklist table</td></tr>
+              <tr><td>Tax re-calculation on state change</td><td><code>calculateTax</code> API call</td><td>Avalara / Vertex</td></tr>
+              <tr><td>Re-source trigger if ZIP/State changes</td><td>GIV sourcing re-run via Schedule Agent</td><td>Internal ATP engine</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ modifyShipment vs. changeOrder for Address</div>
+          If the order has already been <strong>released and a Shipment record created</strong>, you must call both <code>changeOrder</code> (to update the order-level address on <code>YFS_PERSON_INFO</code>) AND <code>modifyShipment</code> (to update the shipment-level <code>ToPersonInfo</code>). Updating only one will cause a data discrepancy between the order and the shipment carrier label.
+        </div>
+
+        <h3>GIV Re-evaluation on Address Change</h3>
+        <p>When ZIP/State changes, Sterling's <strong>Global Inventory Visibility (GIV)</strong> module must re-evaluate which fulfillment node can best serve the new destination:</p>
+        <pre><code>/* getGlobalInventory API — used internally by sourcing rules */
+&lt;Promise ReqType="SOURCING"&gt;
+  &lt;PromiseLines&gt;
+    &lt;PromiseLine ItemID="ITEM001" UnitOfMeasure="EACH" RequiredQty="2"
+                 DeliveryMethod="SHP"
+                 CarrierServiceCode="GROUND"&gt;
+      &lt;ShipToAddress ZipCode="98101" State="WA" Country="US"/&gt;
+    &lt;/PromiseLine&gt;
+  &lt;/PromiseLines&gt;
+  &lt;!-- Sourcing rules: proximity, cost, capacity, split-shipment preference --&gt;
+&lt;/Promise&gt;
+
+/* Returns: recommended nodes with available inventory, 
+   carrier options, and estimated delivery dates */</code></pre>
+      </div>
+    </section>
+
+    <!-- S6: Fulfillment Switch -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Scenario: Fulfillment Method Switch (BOPIS ↔ Ship)</h2>
+      </div>
+      <div class="content">
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-yellow">⇄</span> Business Context</h3>
+          <p>Customer switches between <strong>Buy Online Pick Up In Store (BOPIS)</strong> and <strong>Ship-to-Home (STH)</strong>. This is the most complex modification — it changes the fulfillment type (<code>DeliveryMethod</code>: <code>PICK</code> → <code>SHP</code> or vice versa), triggers complete sourcing re-run, node reassignment, carrier assignment (for STH), and often a price change (shipping charges appear/disappear).</p>
+        </div>
+
+        <h3>Fulfillment Switch — API Sequence</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — BOPIS to Ship-to-Home Conversion</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    START([Customer: Switch from Pickup to Ship]) --> PRECHECK
+
+    subgraph PRECHECK[Pre-Check Phase]
+      PC1[getCompleteOrderDetails] --> PC2{Status ≤ Scheduled?}
+      PC2 -->|No| BLOCK[Block — Too Late\nManual CSR Process]
+      PC2 -->|Yes| PC3[Check Item\nFulfillment Eligibility]
+      PC3 --> PC4{All Items\nShippable?}
+      PC4 -->|No| PARTIAL[Partial switch or\nblock non-shippable items]
+      PC4 -->|Yes| INV_CHECK
+    end
+
+    subgraph INV_CHECK[Inventory Phase]
+      I1[releaseInventory at Store Node\nDemandType=PICKUP_RESERVATION] --> I2
+      I2[getGlobalInventory — Ship from\nDC/Store eligible for ship?\nNew destination ZIP] --> I3
+      I3{Ship Inventory\nAvailable?} -->|No| BACKORDER[Backorder Mode\nor Block Switch]
+      I3 -->|Yes| I4[reserveInventory at Ship Node\nDemandType=OPEN_ORDER]
+    end
+
+    subgraph PRICE_PHASE[Pricing Phase]
+      PR1[getPriceInfo — current order] --> PR2
+      PR2[calculatePricing — new DeliveryMethod=SHP\nCarrierServiceCode determined] --> PR3
+      PR3[Compute delta:\nOld=0 shipping, New=X shipping\nOR promo recalculation] --> PR4
+      PR4[processPaymentConfirmation\ncreateCharge for shipping cost]
+    end
+
+    subgraph COMMIT[Commit Phase]
+      C1[changeOrder API\nDeliveryMethod=SHP\nCarrierServiceCode=UPS_GROUND\nShipNode=DC_WEST\nPersonInfoShipTo = customer address] --> C2
+      C2[Order Release Re-created\nYFS_ORDER_RELEASE updated] --> C3
+      C3[Fire ON_SUCCESS event\nNotify WMS / Email / App]
+    end
+
+    PRECHECK --> INV_CHECK
+    I4 --> PRICE_PHASE
+    PRICE_PHASE --> COMMIT
+          </div>
+        </div>
+
+        <h3>changeOrder Input — BOPIS to Ship Conversion</h3>
+        <pre><code>/* Step 1: Cancel PICKUP reservation on current order line */
+&lt;Order OrderHeaderKey="OHK12345"&gt;
+  &lt;OrderLines&gt;
+    &lt;OrderLine OrderLineKey="OLK001"
+               DeliveryMethod="SHP"               &lt;!-- Was PICK --&gt;
+               CarrierServiceCode="UPS_GROUND"     &lt;!-- NEW: carrier assigned --&gt;
+               ShipNode="DC_WEST"                  &lt;!-- NEW: sourced node --&gt;
+               ScacAndService="UPS/GND"&gt;
+      &lt;PersonInfoShipTo                            &lt;!-- NEW: ship address required --&gt;
+        AddressLine1="123 Main St"
+        City="Portland" State="OR" ZipCode="97201"/&gt;
+    &lt;/OrderLine&gt;
+  &lt;/OrderLines&gt;
+&lt;/Order&gt;
+
+/* Ship to BOPIS: reverse — DeliveryMethod=PICK, ShipNode=STORE_PDX_01,
+   remove CarrierServiceCode, set PickupPersonInfo instead */</code></pre>
+
+        <h3>Item Eligibility for Fulfillment Switch</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Item Attribute</th><th>Sterling Field</th><th>Impact on Switch</th></tr></thead>
+            <tbody>
+              <tr><td>Ship-only item (hazmat, oversized)</td><td><code>IsShipAlone</code>, <code>IsHazmat</code></td><td class="danger-cell">Cannot switch to BOPIS — block at item level</td></tr>
+              <tr><td>Store-only pickup (demo/display item)</td><td><code>IsPickupAllowed=Y/N</code></td><td class="danger-cell">Cannot switch to STH — must remain BOPIS</td></tr>
+              <tr><td>Temperature-sensitive item</td><td>Custom attribute on <code>YFS_ITEM</code></td><td class="warn-cell">Only certain nodes eligible for STH</td></tr>
+              <tr><td>Ship-to-store allowed</td><td><code>ShipToStore</code> flag</td><td class="rec">Can do STS (ship to store for pickup)</td></tr>
+              <tr><td>Age-restricted item</td><td>Custom eligibility rule</td><td class="warn-cell">May require ID verification at pickup — prefer STH</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Ship-to-BOPIS Switch — Additional Considerations</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Store Capacity & BOPIS Slot Availability</div>
+          When switching from STH to BOPIS, Sterling must check: (1) <strong>Store inventory ATP</strong> — does the target store have the item in stock? (2) <strong>Store BOPIS capacity</strong> — is the store accepting new pickup orders? This requires <code>getCapacityInfo</code> API call against the store node's capacity calendar. (3) <strong>Pickup SLA</strong> — "Ready in 2 hours" vs "Next day pickup" promise must be re-issued.
+        </div>
+      </div>
+    </section>
+
+    <!-- S7: SLA / Service Level Change -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Scenario: Service Level Change (1-day / 2-day / Standard)</h2>
+      </div>
+      <div class="content">
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-green">⚡</span> Business Context</h3>
+          <p>Customer upgrades from Standard 5-day to 2-day or 1-day (or downgrades). This modifies the <code>CarrierServiceCode</code> on the order line, triggers carrier re-assignment, re-promisement, shipping cost recalculation, and payment adjustment. Unlike fulfillment switch, the fulfillment node usually remains the same — only the carrier service level changes.</p>
+        </div>
+
+        <h3>Service Level Change — API Sequence</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — Service Level Upgrade Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant OMS as Sterling OMS
+    participant CARRIER_SVC as Carrier Service Resolver
+    participant PROMISE as Promise / ATP Engine
+    participant PRICE as Pricing Module
+    participant PAY as Payment Gateway
+    participant WMS as WMS
+
+    CUST->>OMS: Request SLA Change\n(newServiceLevel = "1-DAY")
+    OMS->>OMS: getOrderDetails — check status, current SLA
+    OMS->>CARRIER_SVC: getCarrierServiceList\n(ZIP, weight, new SLA target)
+    CARRIER_SVC-->>OMS: [UPS_NEXT_DAY_AIR, FEDEX_OVERNIGHT, ...]
+
+    OMS->>PROMISE: getPromisedDate\n(new CarrierServiceCode, current node)
+    PROMISE-->>OMS: NewDeliveryDate + Cutoff time check
+    
+    Note over OMS: Cutoff Check: Can 1-day be fulfilled\ngiven current time? (e.g., 2PM cutoff)
+    
+    OMS->>PRICE: calculatePricing\n(old carrier + new carrier, same items)
+    PRICE-->>OMS: OldShippingCost=$0 (free standard)\nNewShippingCost=$24.99 (1-day)
+    OMS->>OMS: Delta = $24.99
+
+    OMS->>PAY: createCharge(amount=24.99\nChargeType=ADDITIONAL_CHARGE)
+    PAY-->>OMS: Auth confirmed for delta amount
+
+    OMS->>OMS: changeOrder API\nCarrierServiceCode=UPS_NEXT_DAY_AIR\nExpectedDeliveryDate=TomorrowDate
+
+    alt Shipment already created
+        OMS->>WMS: modifyShipment\n(new CarrierServiceCode, regenerate label)
+        WMS-->>OMS: New label queued
+    end
+
+    OMS-->>CUST: Confirmation + Updated Delivery Date
+          </div>
+        </div>
+
+        <h3>Carrier Service Code Mapping in Sterling</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Business SLA</th><th>Sterling CarrierServiceCode (examples)</th><th>Carrier SCAC</th><th>Typical Cost Delta</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Standard 5-7 Day</strong></td><td><code>UPS_GROUND</code>, <code>FEDEX_GROUND</code>, <code>USPS_PRIORITY</code></td><td>UPGF, FDXG, USPS</td><td>$0 (often free threshold)</td></tr>
+              <tr><td><strong>2-Day / Express</strong></td><td><code>UPS_2DA</code>, <code>FEDEX_2_DAY</code>, <code>UPS_2DAM</code></td><td>UPGF, FDXE</td><td>+$8–$15 typically</td></tr>
+              <tr><td><strong>1-Day / Overnight</strong></td><td><code>UPS_NEXT_DAY_AIR</code>, <code>FEDEX_OVERNIGHT</code>, <code>UPS_NDA_SAVER</code></td><td>UPGF, FDXE</td><td>+$20–$35 typically</td></tr>
+              <tr><td><strong>Same Day</strong></td><td><code>DOORDASH_DRIVE</code>, <code>ROADIE_SD</code>, custom</td><td>Custom</td><td>+$10–$20 flat fee</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>changeOrder Input for SLA Change</h3>
+        <pre><code>&lt;Order OrderHeaderKey="OHK12345"&gt;
+  &lt;OrderLines&gt;
+    &lt;OrderLine OrderLineKey="OLK001"
+               CarrierServiceCode="UPS_NEXT_DAY_AIR"    &lt;!-- Upgraded --&gt;
+               SCAC="UPGF"
+               ExpectedDeliveryDate="2024-01-16"         &lt;!-- Re-promised date --&gt;
+               RequestedDeliveryDate="2024-01-16"&gt;
+    &lt;/OrderLine&gt;
+  &lt;/OrderLines&gt;
+  &lt;!-- Additional charges element for shipping cost delta --&gt;
+  &lt;OrderLines&gt;
+    &lt;OrderLine OrderLineKey="OLK001"&gt;
+      &lt;LinePriceInfo ShippingCharge="24.99"/&gt;
+    &lt;/OrderLine&gt;
+  &lt;/OrderLines&gt;
+&lt;/Order&gt;</code></pre>
+
+        <h3>Cutoff Time Logic — Critical for 1-Day</h3>
+        <div class="callout callout-danger">
+          <div class="callout-title">🚨 SLA Upgrade Cutoff Enforcement</div>
+          Sterling does not natively enforce carrier cutoff times out of the box. You must implement a <strong>custom condition tree</strong> or <strong>pre-changeOrder user exit</strong> that: (1) calls <code>getCapacityInfo</code> for the current node with the requested carrier service, (2) checks if the current time is before the carrier cutoff (e.g., 2:00 PM for next-day air), (3) returns an error code <code>SLA_UPGRADE_CUTOFF_MISSED</code> if the window has passed, offering the next available option. Without this, customers can order "1-day" delivery at 11 PM and Sterling will accept it.
+        </div>
+
+        <h3>getPromisedDate / Promise Calculation</h3>
+        <pre><code>/* Promise date calculation — uses carrier transit time tables */
+API: getPromisedDate (or getCapacityInfo in v9.3)
+Input:
+&lt;Promise ReqType="PROMISE_DATE"&gt;
+  &lt;PromiseLines&gt;
+    &lt;PromiseLine ItemID="ITEM001" 
+                 CarrierServiceCode="UPS_NEXT_DAY_AIR"
+                 ShipNode="DC_WEST"&gt;
+      &lt;ShipToAddress ZipCode="97201" State="OR"/&gt;
+    &lt;/PromiseLine&gt;
+  &lt;/PromiseLines&gt;
+  &lt;ShipDate&gt;2024-01-15&lt;/ShipDate&gt; &lt;!-- Current date cutoff check --&gt;
+&lt;/Promise&gt;
+
+/* Returns:
+   PromisedDeliveryDate: 2024-01-16
+   LatestShipDate: 2024-01-15T14:00:00  ← Carrier cutoff
+   IsCapacityAvailable: Y/N  */</code></pre>
+      </div>
+    </section>
+
+    <!-- S8: Payment & Price Recalculation -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Payment & Price Recalculation Engine</h2>
+      </div>
+      <div class="content">
+        <p>Price recalculation is a cross-cutting concern triggered by multiple modification scenarios. Sterling's pricing pipeline must re-evaluate: shipping charges, taxes, promotions/coupons, and order-level discounts whenever the order's fulfillment attributes change.</p>
+
+        <h3>Price Recalculation Decision Matrix</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Modification</th><th>Pricing Components Affected</th><th>Recalculation API</th><th>Payment Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Cancel (Full)</strong></td>
+                <td>All charges voided</td>
+                <td><code>cancelOrder</code> → auto-triggers</td>
+                <td class="warn-cell">VOID (pre-capture) or REFUND (post-capture)</td>
+              </tr>
+              <tr>
+                <td><strong>Cancel (Partial Line)</strong></td>
+                <td>Line price + prorated shipping + promo recalc</td>
+                <td><code>calculatePricing</code> on remaining lines</td>
+                <td class="warn-cell">Partial refund for line amount + shipping delta</td>
+              </tr>
+              <tr>
+                <td><strong>Address (same zone)</strong></td>
+                <td>Minimal — tax may change on state change</td>
+                <td><code>calculateTax</code> if state changes</td>
+                <td>Tax delta charge/refund</td>
+              </tr>
+              <tr>
+                <td><strong>Address (zone change)</strong></td>
+                <td>Shipping cost (carrier zone rate change) + tax</td>
+                <td><code>calculatePricing</code> + <code>calculateTax</code></td>
+                <td class="warn-cell">Shipping delta + tax delta</td>
+              </tr>
+              <tr>
+                <td><strong>BOPIS → Ship</strong></td>
+                <td>Shipping charge added (was $0 for pickup) + tax</td>
+                <td><code>calculatePricing</code> with new <code>DeliveryMethod=SHP</code></td>
+                <td class="danger-cell">Additional charge for shipping cost</td>
+              </tr>
+              <tr>
+                <td><strong>Ship → BOPIS</strong></td>
+                <td>Shipping charge removed + tax change</td>
+                <td><code>calculatePricing</code> with new <code>DeliveryMethod=PICK</code></td>
+                <td class="rec">Refund shipping charge amount</td>
+              </tr>
+              <tr>
+                <td><strong>SLA Upgrade (Standard → 1-day)</strong></td>
+                <td>Shipping charge delta (higher tier)</td>
+                <td><code>calculatePricing</code> on new carrier service</td>
+                <td class="danger-cell">Additional auth + charge for delta</td>
+              </tr>
+              <tr>
+                <td><strong>SLA Downgrade (1-day → Standard)</strong></td>
+                <td>Shipping charge delta (lower tier)</td>
+                <td><code>calculatePricing</code> on new carrier service</td>
+                <td class="rec">Partial refund for shipping delta</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Payment Recalculation Flow</h3>
+        <pre><code>/* Step 1: Get current price breakdown */
+API: getPriceInfo
+Input: &lt;Order OrderHeaderKey="OHK12345"/&gt;
+Output: 
+  UnitPrice: 49.99
+  ShippingCharge: 0.00     ← was standard/free
+  TaxAmount: 4.50
+  TotalAmount: 54.49
+
+/* Step 2: Calculate new pricing */
+API: calculatePricing
+Input: 
+  &lt;Order OrderHeaderKey="OHK12345"&gt;
+    &lt;OrderLines&gt;
+      &lt;OrderLine OrderLineKey="OLK001" 
+                 CarrierServiceCode="UPS_NEXT_DAY_AIR"/&gt;
+    &lt;/OrderLines&gt;
+  &lt;/Order&gt;
+Output:
+  UnitPrice: 49.99
+  ShippingCharge: 24.99    ← NEW: 1-day shipping
+  TaxAmount: 4.50
+  TotalAmount: 79.48
+
+/* Step 3: Delta = 79.48 - 54.49 = $24.99 */
+
+/* Step 4: Additional auth for delta */
+API: processPaymentConfirmation
+  ChargeType: ADDITIONAL_CHARGE
+  Amount: 24.99
+  PaymentMethod: CREDIT_CARD (existing card on file)
+  ChargeTransactionKey: (links to original transaction)</code></pre>
+
+        <h3>Promotion / Coupon Recalculation Edge Cases</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Promotion Invalidation Risk</div>
+          When modifications change fulfillment attributes, Sterling's pricing engine re-evaluates all applied promotions. Watch for these edge cases:
+          <ul style="margin-top:8px;padding-left:18px;">
+            <li style="margin-bottom:4px;font-size:13px;"><strong>"Free shipping on orders over $X"</strong> — if partial cancel drops order below threshold, shipping promo invalidates and must be charged back</li>
+            <li style="margin-bottom:4px;font-size:13px;"><strong>"BOPIS exclusive discount"</strong> — switching to STH may void a pickup-specific promo</li>
+            <li style="margin-bottom:4px;font-size:13px;"><strong>Zone-based free shipping</strong> — address change to a non-eligible zone voids the promo</li>
+            <li style="margin-bottom:4px;font-size:13px;"><strong>Quantity-based promotions</strong> — partial cancel may drop below minimum quantity threshold</li>
+          </ul>
+          Sterling's <code>calculatePricing</code> API handles these re-evaluations, but the <strong>UI must present the price delta clearly</strong> before confirming the modification.
+        </div>
+      </div>
+    </section>
+
+    <!-- S9: Inventory & ATP -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>Inventory & ATP Impact Across Modifications</h2>
+      </div>
+      <div class="content">
+        <h3>Sterling GIV (Global Inventory Visibility) Architecture</h3>
+        <p>Sterling's inventory model tracks <strong>supply</strong> (what's available at nodes) and <strong>demand</strong> (what's reserved by orders). Modifications affect the demand side — releasing old reservations and creating new ones.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — Inventory Reservation Lifecycle During Modifications</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart LR
+    subgraph SUPPLY[Inventory Supply — YFS_INVENTORY_SUPPLY]
+      DC_W[DC West\nItem: SKU001\nQty: 500]
+      DC_E[DC East\nItem: SKU001\nQty: 200]
+      STORE_A[Store Portland\nItem: SKU001\nQty: 10]
+    end
+
+    subgraph DEMAND[Inventory Demand — YFS_INVENTORY_DEMAND]
+      D1[OrderA: 2 units\nDemandType: OPEN_ORDER\nNode: DC_WEST]
+      D2[OrderB: 1 unit\nDemandType: PICKUP\nNode: STORE_PORTLAND]
+    end
+
+    subgraph MODIFICATION_EVENTS[Modification Events]
+      M1[Cancel Order A\n→ Release D1 from DC West\n→ DC West Avail +2]
+      M2[Address Change Order A\nZIP changes zone\n→ Release D1 DC West\n→ Reserve at DC East\n→ DC West +2, DC East -2]
+      M3[BOPIS→Ship Switch Order B\n→ Release D2 from Store Portland\n→ Reserve at DC West\n→ Store Portland +1, DC West -1]
+    end
+
+    D1 -->|Cancel| M1
+    D1 -->|Address Change| M2
+    D2 -->|Fulfillment Switch| M3
+          </div>
+        </div>
+
+        <h3>ATP Calculation Components</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ATP Component</th><th>Formula</th><th>Sterling API</th></tr></thead>
+            <tbody>
+              <tr><td><strong>On-Hand Available</strong></td><td>Physical Inventory − Safety Stock − Reserved Qty</td><td><code>getInventorySupply</code></td></tr>
+              <tr><td><strong>Net Available (ATP)</strong></td><td>On-Hand Available + Inbound Supply − Existing Demand</td><td><code>getGlobalInventory</code></td></tr>
+              <tr><td><strong>Promised Available</strong></td><td>ATP + Future Receipts (POs, transfers) within promise window</td><td><code>getAvailabilityForFulfillment</code></td></tr>
+              <tr><td><strong>BOPIS ATP</strong></td><td>Store On-Hand − BOPIS Reservations − Min Display Qty</td><td><code>getGlobalInventory</code> with <code>DeliveryMethod=PICK</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Inventory Demand Types in Sterling</h3>
+        <pre><code>/* DemandType values in YFS_INVENTORY_DEMAND */
+OPEN_ORDER        — Standard ship-to-home reservation
+BACKORDERED       — Backorder demand (future supply)
+PICKUP_RESERVATION — BOPIS hold at store
+WEB_ONLY_SUPPLY   — Supply earmarked for online channel only
+TRANSFER_IN       — Inbound transfer en route
+RETURN_IN         — Expected return inventory
+
+/* On cancel: OPEN_ORDER demand is deleted */
+/* On BOPIS→Ship: PICKUP_RESERVATION deleted, OPEN_ORDER created at DC */
+/* On Address change + re-source: OPEN_ORDER moved from Node A to Node B */</code></pre>
+      </div>
+    </section>
+
+    <!-- S10: Pipeline & Condition Tree -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Order Pipeline, Condition Trees & User Exits</h2>
+      </div>
+      <div class="content">
+        <h3>Sterling Pipeline — Modification Hook Points</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8 — Sterling Pipeline with Modification Hook Points</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    CO[createOrder] --> CT1{Condition Tree\nModification Rules\nConfigured Here}
+    CT1 --> SCH[Schedule Agent\nSourcing Run]
+    SCH --> GIV_API[GIV / ATP Check]
+    GIV_API --> RELEASE[Release Agent\nYFS_RELEASE_ORDER]
+    RELEASE --> NODE[Sent to Node\nWMS Integration]
+    NODE --> PACK[Pack / Ship Confirm]
+    PACK --> SHIPPED[Shipped Status]
+
+    CT1 -.->|Condition Tree gates| MOD_RULES[YFS_MODIFICATION_RULES\nPer status, per type]
+    SCH -.->|User Exit Hook| UE1[BeforeScheduleOrder\nCustom validation]
+    RELEASE -.->|Event| EVT1[ON_RELEASE_EVENT\nNotify WMS]
+    NODE -.->|Event| EVT2[ON_ORDER_AT_NODE\nNode recall logic]
+
+    subgraph MODIFICATION_PIPELINE[Modification Pipeline Hooks]
+      H1[YFSExtendedAPI.beforeChangeOrder\n→ Pre-validate, address normalization]
+      H2[YFSExtendedAPI.afterChangeOrder\n→ Post-commit notifications]
+      H3[Custom Condition Tree\n→ Status-based eligibility rules]
+      H4[Payment User Exit\n→ PSP adapter for charge/void/refund]
+    end
+          </div>
+        </div>
+
+        <h3>Condition Tree Configuration — Modification Eligibility</h3>
+        <p>In Sterling Application Manager: <em>Order Management → Document Specific → Sales Order → Modifications → Modification Rules</em></p>
+        <pre><code>/* Condition Tree Rule Example: Allow Address Change */
+Rule Name: ALLOW_ADDRESS_CHANGE
+Condition: 
+  OrderStatus IN ('1000','1100','1200','3200','3400','3700')
+  AND HoldType NOT IN ('YFS_FRAUD_HOLD', 'YFS_PAYMENT_HOLD')
+  AND FulfillmentType != 'PICK'   /* Address change N/A for pickup orders */
+
+Action: ALLOW_MODIFICATION
+ModificationType: CHANGE_SHIPPING_ADDRESS
+
+/* Condition Tree Rule: Block Fulfillment Switch Post-Release */
+Rule Name: BLOCK_FULFILLMENT_SWITCH_POST_RELEASE
+Condition:
+  OrderStatus >= '3700.100'   /* Sent to node or later */
+  AND ModificationType = 'CHANGE_FULFILLMENT_TYPE'
+
+Action: BLOCK_MODIFICATION
+ErrorCode: MODIFICATION_NOT_ALLOWED_POST_NODE
+ErrorMessage: "Order has been sent to fulfillment node. Please contact customer service."</code></pre>
+
+        <h3>User Exit Extensions — Key Implementation Points</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User Exit</th><th>Class / Interface</th><th>When Called</th><th>Use For</th></tr></thead>
+            <tbody>
+              <tr><td><code>YFSExtendedAPI.beforeChangeOrder</code></td><td>Java class implementing YFSExtendedAPI</td><td>Before changeOrder processes</td><td>Address validation, fraud check, business rule enforcement</td></tr>
+              <tr><td><code>YFSExtendedAPI.afterChangeOrder</code></td><td>Java class implementing YFSExtendedAPI</td><td>After changeOrder commits</td><td>Downstream notifications, audit log, CRM update</td></tr>
+              <tr><td><code>BeforeScheduleOrder</code></td><td>Agent user exit</td><td>Before sourcing runs</td><td>Custom sourcing logic, node blacklisting</td></tr>
+              <tr><td>Payment Service Adapter</td><td><code>YFSPaymentServiceFactory</code></td><td>On processPaymentConfirmation</td><td>PSP-specific charge/void/refund implementation</td></tr>
+              <tr><td>Address Validation</td><td>Custom service via <code>invokeService</code></td><td>On address change</td><td>Address standardization via AVS/SmartyStreets</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S11: Agents & Events -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <h2>Sterling Agent Criteria & Event Framework</h2>
+      </div>
+      <div class="content">
+        <h3>Key Agents Involved in Post-Modification Processing</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Agent Name</th><th>Sterling Pipeline Agent ID</th><th>Triggered After</th><th>Function</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Schedule Order Agent</strong></td><td><code>YFS_SCHEDULE_ORDER</code></td><td>Address change, SLA change, Fulfillment switch</td><td>Re-runs GIV sourcing, assigns node, updates order release</td></tr>
+              <tr><td><strong>Release Order Agent</strong></td><td><code>YFS_RELEASE_ORDER</code></td><td>After re-scheduling</td><td>Creates/updates YFS_ORDER_RELEASE, notifies WMS node</td></tr>
+              <tr><td><strong>Create Shipment Agent</strong></td><td><code>YFS_CREATE_SHIPMENT</code></td><td>After release to node</td><td>Creates YFS_SHIPMENT record with carrier + address</td></tr>
+              <tr><td><strong>Payment Collection Agent</strong></td><td><code>YFS_COLLECT_PAYMENT</code></td><td>After price recalculation delta computed</td><td>Triggers charge/void/refund via PSP adapter</td></tr>
+              <tr><td><strong>Inventory Reconciliation Agent</strong></td><td><code>YFS_INVENTORY_RECON</code></td><td>After cancel/fulfillment switch</td><td>Reconciles demand vs. supply discrepancies</td></tr>
+              <tr><td><strong>Send Notifications Agent</strong></td><td><code>YFS_SEND_NOTIFICATION</code></td><td>After any modification event</td><td>Triggers email/SMS/push via notification template</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Key Events Fired on Modifications</h3>
+        <pre><code>/* Events fired to external systems via Sterling Event Framework */
+
+ON_ORDER_CANCEL           → WMS (stop pick/pack), Carrier (cancel label), Email (cancel confirmation)
+ON_ADDRESS_CHANGE         → Carrier (new label if pre-shipped), WMS (updated manifest), Email
+ON_FULFILLMENT_TYPE_CHANGE → WMS old node (cancel task), WMS new node (create task), Email
+ON_CARRIER_CHANGE         → Carrier integration (new service code), Carrier label service
+ON_PRICE_CHANGE           → Finance system (revenue adjustment), PSP (auth adjustment)
+ON_ORDER_MODIFICATION     → CRM (customer 360 update), Analytics pipeline
+
+/* Event configuration in Sterling: */
+/* Application Manager → Order Management → Document Specific 
+   → Sales Order → Events → [Event Name] → Channel Subscriptions */</code></pre>
+
+        <h3>Event-Driven Integration — Kafka / IBM MQ Pattern</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Sterling 9.3 Event Publishing</div>
+          Sterling 9.3 publishes events to <strong>IBM MQ queues</strong> natively. For modern event streaming to downstream systems, a common pattern is: Sterling → IBM MQ → <strong>Kafka Connect MQ Source Connector</strong> → Kafka topics → downstream consumers (WMS, CRM, analytics, notification service). This decouples Sterling from downstream latency and provides replay capability.
+        </div>
+      </div>
+    </section>
+
+    <!-- S12: ADRs -->
+    <section class="section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <h2>Architecture Decision Records</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Cancel+Recreate Pattern for Post-Node Fulfillment Switch</span>
+            <span class="badge badge-yellow">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Once an order reaches "Sent to Node" status, Sterling's standard <code>changeOrder</code> API cannot switch the fulfillment method (BOPIS↔Ship) because a physical or digital pick task has already been created at the node. Direct modification risks data inconsistency between the order and the node's work queue.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement a <strong>Cancel + Recreate pattern</strong> for fulfillment switches after node assignment: (1) Cancel the original order with reason <code>FULFILLMENT_SWITCH</code>, (2) Preserve order attributes (items, customer, promos), (3) Create a new order with the new fulfillment method, (4) Carry forward payment auth reference and void/re-authorize as needed. Original order number retained for CX continuity via a parent-child order relationship.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Clean state machine transition; no data inconsistency at node level; clear audit trail. <strong>Cons:</strong> Customer sees order number change (mitigated by showing original reference); double payment auth/void adds latency; promotions must be explicitly re-applied and may have expired.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Direct changeOrder force-modify:</strong> Rejected — bypasses pipeline guards, risks WMS task orphan records. <strong>Hold + manual reassign:</strong> Rejected — too slow for self-service CX; requires CSR intervention.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — Synchronous Payment Delta vs. Deferred Billing for SLA Upgrades</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>When a customer upgrades from Standard to 1-Day shipping, there's a price delta that must be collected. The question is whether to charge it synchronously during the modification flow (blocking) or queue it for async collection via the Payment Collection Agent.</p></div>
+            <div class="adr-field"><label>Decision</label><p><strong>Synchronous auth + deferred capture</strong>: Perform an incremental authorization call to the PSP in real-time during the modification flow (via <code>processPaymentConfirmation</code> with <code>ChargeType=ADDITIONAL_AUTH</code>). If auth fails, block the modification. The actual capture is deferred to the existing payment capture pipeline (at shipment). This gives real-time feedback to the customer while not blocking on capture timing.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Customer knows immediately if payment fails; prevents service delivery without payment confirmation. <strong>Cons:</strong> Adds ~300–800ms latency to modification API call; PSP must support incremental auth (most modern PSPs do).</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Fully async billing:</strong> Rejected — customer could receive 1-day delivery without successful payment, creating revenue leakage. <strong>Full synchronous capture:</strong> Rejected — capture before fulfillment is premature and complicates refund handling if order is subsequently cancelled.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — Idempotency Key for Modification API Calls</span>
+            <span class="badge badge-blue">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Post-purchase modification APIs are called from customer-facing UIs over unreliable networks. A user hitting "Cancel" twice, or a mobile app retrying a failed SLA upgrade request, can result in double-cancel attempts or double-charges if the backend is not idempotent.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement an idempotency layer in the <strong>middleware/API gateway layer</strong> (not in Sterling itself, which lacks native idempotency keys). Each modification request is assigned a client-generated UUID as <code>X-Idempotency-Key</code>. The middleware layer stores (key → response) in Redis with a 24-hour TTL. On retry within TTL, the cached response is returned without re-invoking Sterling. Sterling's <code>changeOrder</code> API is called exactly once per logical modification.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Safe retries for all clients; prevents duplicate charges; aligned with PSP idempotency patterns. <strong>Cons:</strong> Requires Redis infrastructure; cache must be invalidated on order state changes that make the cached response stale.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Sterling-side duplicate detection:</strong> Considered but Sterling's duplicate check only works on order creation, not modification APIs. <strong>Database-level dedup:</strong> Too slow and complex to implement at the Sterling DB layer.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-004 — Address Change: When to Trigger Full Re-Sourcing</span>
+            <span class="badge badge-yellow">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Not every address change warrants a full GIV re-sourcing run. A phone number change or apartment number change should be a simple field update. A ZIP code change across carrier zones should trigger full re-sourcing. The trigger rule needs to be precise to avoid unnecessary re-sourcing overhead.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement a <strong>re-sourcing trigger matrix</strong> in the <code>beforeChangeOrder</code> user exit: (1) <strong>Phone-only change</strong> → direct update, no re-source. (2) <strong>Address line / apartment change, same ZIP</strong> → update YFS_PERSON_INFO + update shipment address; no re-source. (3) <strong>ZIP change, same carrier zone</strong> → tax recalculation only. (4) <strong>ZIP change, different carrier zone</strong> → full GIV re-sourcing, carrier re-assignment, shipping cost recalc. (5) <strong>State change</strong> → full re-sourcing + tax re-calc. Zone lookup table maintained in configuration.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Avoids expensive GIV calls for trivial changes; reduces modification latency for 80% of address change cases. <strong>Cons:</strong> Zone table requires maintenance; edge cases (rural route delivery) may need manual override.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Always re-source on any address change:</strong> Rejected — creates 400–2000ms latency for every phone number update. <strong>Never re-source:</strong> Rejected — misses legitimate cost and fulfillment node changes.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S13: Interview Cheat Sheet -->
+    <section class="section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <h2>Interview Cheat Sheet — Director / Principal Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top 5 Clarifying Questions</h4>
+            <ul>
+              <li>What order statuses should we allow modifications? Is there a business SLA (e.g., "30 minutes after order placement") as a hard cutoff?</li>
+              <li>Is the modification self-service (customer) or CSR-only? Different eligibility windows and override capabilities apply.</li>
+              <li>For address changes: do we have a single-origin DC model or multi-node? This drives re-sourcing complexity.</li>
+              <li>What PSP are we using — does it support incremental auth for SLA upgrades, or do we need void+reauth?</li>
+              <li>Are promotions restartable? If a coupon expires between order placement and modification, do we re-honor it?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚡ Key Trade-offs to Verbalize</h4>
+            <ul>
+              <li>Synchronous payment auth vs. deferred capture — covers latency vs. revenue risk trade-off</li>
+              <li>Re-sourcing aggressiveness — always re-source vs. zone-change-only trigger</li>
+              <li>Cancel+Recreate vs. in-place modification — data integrity vs. UX continuity</li>
+              <li>Idempotency at gateway vs. at Sterling — where to absorb duplicate-request risk</li>
+              <li>Cutoff time enforcement — native Sterling condition tree vs. external microservice</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔍 Common Failure Modes Interviewers Probe</h4>
+            <ul>
+              <li>"What happens if payment auth fails mid-modification?" → Rollback changeOrder via compensating transaction; return error to UI; do not partially commit</li>
+              <li>"What if inventory becomes unavailable during fulfillment switch?" → Backorder mode, notify customer, offer alternatives via getGlobalInventory alternative node list</li>
+              <li>"What if the carrier cutoff is missed for 1-day upgrade?" → Custom condition tree or user exit with cutoff time check; return meaningful error with next available date</li>
+              <li>"How do you handle the case where a cancel attempt races with a shipment confirmation?" → Optimistic locking via order version check in changeOrder; ship-confirm wins, cancel returns ALREADY_SHIPPED error</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>💡 "Wow" Depth Signals</h4>
+            <ul>
+              <li><strong>Compensation pattern:</strong> "I'd implement a saga for cross-system modifications — Sterling order update, inventory release, and payment void are three distributed operations; if payment void fails, we need to re-reserve inventory and revert order status"</li>
+              <li><strong>Inventory hedging:</strong> "For address change with re-sourcing, I'd hold a 'soft reservation' at both old and new nodes for 60 seconds during the transition window to prevent ATP double-sell"</li>
+              <li><strong>Observability:</strong> "I'd instrument a modification funnel — track every pre-check failure reason to identify which status gate is blocking the most modifications; then work with ops to extend modification windows where safe"</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>📋 Sterling-Specific Technical Signals</h4>
+            <ul>
+              <li>Know the difference between <code>cancelOrder</code> (header-level) vs. <code>cancelOrderLine</code> (line-level) and when each is appropriate</li>
+              <li>Explain <code>YFS_PERSON_INFO</code> as a shared address entity — why updating order doesn't auto-update shipment record</li>
+              <li>Explain DemandType differentiation: <code>OPEN_ORDER</code> vs. <code>PICKUP_RESERVATION</code> — critical for fulfillment switch ATP math</li>
+              <li>Condition Tree configuration location in Application Manager and how modification rules are structured per document type, status range, and hold type</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>❓ 3 Follow-up Questions to Ask Interviewer</h4>
+            <ul>
+              <li>"What's the current modification failure rate in production, and what's the most common failure reason? That tells me where to invest in observability first."</li>
+              <li>"Is there a business requirement to support modifications after shipment (address intercept via carrier API)? That's a separate integration surface."</li>
+              <li>"Do we have a requirement for modification history / audit trail per order? Sterling's <code>YFS_ORDER_AUDIT</code> table captures this, but downstream CRM systems may need their own view."</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success" style="margin-top:24px;">
+          <div class="callout-title">✅ Quick-Reference: Modification API Cheat Sheet</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+            <div>
+              <strong style="font-size:13px;color:var(--text);">Cancel Flow</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">getOrderDetails → cancelOrder → releaseInventory → processPaymentConfirmation (VOID/REFUND) → ON_CANCEL event</p>
+            </div>
+            <div>
+              <strong style="font-size:13px;color:var(--text);">Address Change Flow</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">getOrderDetails → changeOrder (PersonInfoShipTo) → [if zone change: GIV re-source → calculatePricing → payment delta] → modifyShipment (if exists) → ON_ADDRESS_CHANGE event</p>
+            </div>
+            <div>
+              <strong style="font-size:13px;color:var(--text);">Fulfillment Switch Flow</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">getCompleteOrderDetails → item eligibility check → releaseInventory (old) → getGlobalInventory → reserveInventory (new) → calculatePricing (shipping delta) → createCharge/refundCharge → changeOrder (DeliveryMethod) → ON_FULFILLMENT_CHANGE event</p>
+            </div>
+            <div>
+              <strong style="font-size:13px;color:var(--text);">SLA Change Flow</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">getOrderDetails → cutoff time check → getCarrierServiceList → getPromisedDate → calculatePricing (shipping delta) → processPaymentConfirmation → changeOrder (CarrierServiceCode + ExpectedDeliveryDate) → ON_CARRIER_CHANGE event</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART II DIVIDER -->
+    <div style="border:1px solid var(--accent);border-radius:10px;padding:24px 28px;margin:48px 0 56px;background:linear-gradient(135deg,#1f6feb11,#0d1117);">
+      <div style="font-size:11px;font-family:var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Part II</div>
+      <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;">Moving Off IBM Sterling — Cloud-Native OMS Migration</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin:0;">Strangler Fig transition architecture, bounded domain decomposition, end-state microservices design, tech stack decisions, and a phase-by-phase migration playbook for replacing Sterling OMS 9.3 with a modern cloud-native order management platform.</p>
+    </div>
+
+    <!-- S14: Why Move Off Sterling -->
+    <section class="section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <h2>Why Move Off IBM Sterling?</h2>
+      </div>
+      <div class="content">
+        <p>IBM Sterling OMS is a battle-tested enterprise platform, but its architecture predates cloud-native patterns by over a decade. As retail technology accelerates, Sterling's constraints increasingly limit speed of iteration, scalability, and total cost of ownership.</p>
+
+        <div class="three-col">
+          <div class="card">
+            <div style="font-size:12px;color:var(--danger);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">⚠️ Technical Debt</div>
+            <ul style="padding-left:16px;margin:0;">
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Monolithic Java EE deployment (<code>smcfs.ear</code>) — single deployable unit</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">XML-over-HTTP APIs with verbose, brittle contracts</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Oracle DB coupling — schema changes require full redeploy</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Condition Tree UI — low developer velocity for rule changes</li>
+              <li style="font-size:13px;color:#cdd9e5;">Agent-based processing — polling, not event-driven</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div style="font-size:12px;color:var(--warn);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">💰 Cost Pressures</div>
+            <ul style="padding-left:16px;margin:0;">
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">IBM licensing: $500K–$2M+ annual depending on tier</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Oracle DB licensing adds $200K–$800K/yr</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Specialized Sterling consultants: $200–$350/hr</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Vertical scaling requirements — large JVM heap, beefy nodes</li>
+              <li style="font-size:13px;color:#cdd9e5;">WebSphere Application Server dependency (legacy)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div style="font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">🚀 Speed to Market</div>
+            <ul style="padding-left:16px;margin:0;">
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Modification rule changes require Condition Tree config + redeploy cycle (hours)</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">New fulfillment scenarios need IBM-specific Java user exits</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">No native REST/GraphQL — adapter layer always required</li>
+              <li style="font-size:13px;color:#cdd9e5;margin-bottom:5px;">Limited talent pool — Sterling specialists rare vs. cloud-native engineers</li>
+              <li style="font-size:13px;color:#cdd9e5;">No microservice-level independent deploy</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>6R Analysis — What Happens to Sterling?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>6R</th><th>Sterling Component</th><th>Decision</th><th>Rationale</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-red">Retire</span></td><td>Condition Trees, Agent Framework, WebSphere</td><td class="danger-cell">Decommission</td><td>Replaced by rules-as-code in domain services; no value in preserving</td></tr>
+              <tr><td><span class="badge badge-yellow">Retain (Temp)</span></td><td>Sterling Order DB (Oracle)</td><td class="warn-cell">Keep during migration window</td><td>Historical order data; dual-write during transition; archive after 18 months</td></tr>
+              <tr><td><span class="badge badge-yellow">Replatform</span></td><td>Sterling reporting / order history</td><td class="warn-cell">Move to event-driven analytics</td><td>Replace with Kafka → data warehouse; same data, modern query patterns</td></tr>
+              <tr><td><span class="badge badge-blue">Repurchase</span></td><td>Distributed order routing / fulfillment optimization</td><td class="rec">Consider Fluent Commerce or Fabric OMS for complex rules</td><td>If modification rules are highly complex; avoid rebuild of sourcing engine</td></tr>
+              <tr><td><span class="badge badge-green">Refactor</span></td><td>Order Management core, Inventory, Payments</td><td class="rec">Re-architect as bounded microservices</td><td>Full cloud-native rebuild — event-driven, independently deployable, REST/GraphQL</td></tr>
+              <tr><td><span class="badge badge-blue">Relocate</span></td><td>Any containerized Sterling (v10 on K8s)</td><td>N/A — v9.3 is not containerized</td><td>v9.3 cannot lift-and-shift to K8s — must refactor</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S15: Bounded Domain Mapping -->
+    <section class="section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <h2>Sterling → Bounded Domain Decomposition</h2>
+      </div>
+      <div class="content">
+        <p>The first step is mapping Sterling's monolithic modules to well-defined bounded contexts, each of which becomes an independently deployable microservice in the end state. The Sterling OMS contains at least 8 distinct bounded contexts that should be separated.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 9 — Sterling Monolith Bounded Context Extraction Map</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    subgraph STERLING["IBM Sterling OMS 9.3 — Monolith (smcfs.ear)"]
+      direction TB
+      S1["Order Lifecycle\n(createOrder, changeOrder,\ncancelOrder)"]
+      S2["Inventory / GIV\n(getGlobalInventory,\nreserve, release)"]
+      S3["Pricing Engine\n(calculatePricing,\ngetPriceInfo)"]
+      S4["Payment Orchestration\n(processPaymentConfirmation,\ncreateCharge, refundCharge)"]
+      S5["Fulfillment / Sourcing\n(Schedule Agent,\nRelease Agent, GIV rules)"]
+      S6["Shipment Management\n(modifyShipment,\ncarrier integration)"]
+      S7["Notification / Events\n(Agent Framework,\nMQ events)"]
+      S8["Order History / Audit\n(YFS_ORDER_AUDIT,\nreporting)"]
+    end
+
+    subgraph TARGET["Cloud-Native Microservices — End State"]
+      direction TB
+      T1["Order Service\n(Node.js / Java Spring)\nPostgreSQL"]
+      T2["Inventory Service\n(Go / Java Spring)\nRedis + PostgreSQL"]
+      T3["Pricing Service\n(Node.js)\nRedis cache + Rules engine"]
+      T4["Payment Service\n(Java Spring)\nStripe/Adyen PSP adapter"]
+      T5["Fulfillment Service\n(Java Spring)\nSourcing rules + Node DB"]
+      T6["Shipment Service\n(Node.js)\nCarrier API adapters"]
+      T7["Notification Service\n(Node.js)\nKafka consumer + SNS/SES"]
+      T8["Order History Service\n(Read model)\nElasticsearch + S3 archive"]
+    end
+
+    S1 -.->|Extract| T1
+    S2 -.->|Extract| T2
+    S3 -.->|Extract| T3
+    S4 -.->|Extract| T4
+    S5 -.->|Extract| T5
+    S6 -.->|Extract| T6
+    S7 -.->|Extract| T7
+    S8 -.->|Extract| T8
+
+    style STERLING fill:#1a0f0f,stroke:#da3633,color:#e6edf3
+    style TARGET fill:#0f1a0f,stroke:#238636,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>Extraction Priority — Strangler Fig Order</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Wave</th><th>Domain</th><th>Extraction Complexity</th><th>Business Value</th><th>Rationale</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-green">Wave 1</span></td><td>Notification Service</td><td class="rec">Low</td><td class="rec">High</td><td>Zero data dependencies on Sterling DB; pure event consumer; immediate CX improvement</td></tr>
+              <tr><td><span class="badge badge-green">Wave 1</span></td><td>Order History / Read Service</td><td class="rec">Low</td><td class="rec">High</td><td>Read-only projection of events; no Sterling write path changes needed</td></tr>
+              <tr><td><span class="badge badge-yellow">Wave 2</span></td><td>Pricing Service</td><td class="warn-cell">Medium</td><td class="rec">High</td><td>Can shadow Sterling pricing; run side-by-side to validate before cutover</td></tr>
+              <tr><td><span class="badge badge-yellow">Wave 2</span></td><td>Shipment Service</td><td class="warn-cell">Medium</td><td class="rec">High</td><td>Carrier integrations are well-bounded; can replace Sterling's carrier adapter layer</td></tr>
+              <tr><td><span class="badge badge-yellow">Wave 3</span></td><td>Inventory Service</td><td class="warn-cell">Medium-High</td><td class="rec">Very High</td><td>ATP/GIV replacement; dual-write period required; critical for modification accuracy</td></tr>
+              <tr><td><span class="badge badge-yellow">Wave 3</span></td><td>Payment Service</td><td class="warn-cell">Medium</td><td class="rec">Very High</td><td>PSP adapter abstraction; Sterling currently owns payment lifecycle — complex hand-off</td></tr>
+              <tr><td><span class="badge badge-red">Wave 4</span></td><td>Fulfillment / Sourcing Service</td><td class="danger-cell">High</td><td class="rec">Very High</td><td>Core Sterling value — sourcing rules, node assignment; highest risk, last to extract</td></tr>
+              <tr><td><span class="badge badge-red">Wave 4</span></td><td>Order Service (Core)</td><td class="danger-cell">Very High</td><td class="rec">Very High</td><td>Order state machine, modification APIs — final strangling of Sterling's core</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S16: Transition Architecture -->
+    <section class="section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <h2>Transition Architecture — Strangler Fig</h2>
+      </div>
+      <div class="content" id="s16a">
+        <h3>The Strangler Fig Pattern Applied to Sterling</h3>
+        <p>The Strangler Fig pattern places an <strong>OMS API Gateway / BFF</strong> in front of Sterling. New microservices are built alongside Sterling. Traffic is progressively routed from Sterling to the new services via feature flags. Sterling is decommissioned when its last route is strangled.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 10 — Strangler Fig Transition Architecture (Mid-Migration State)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'fontSize':'13px'}}}%%
+flowchart TD
+    subgraph CLIENTS["Client Layer"]
+      WEB["Web App\n(Next.js)"]
+      MOB["Mobile App\n(React Native)"]
+      CSR["CSR Tool\n(Internal UI)"]
+      B2B["B2B / 3PL\n(REST / EDI)"]
+    end
+
+    subgraph GATEWAY["API Gateway + BFF Layer (Kong / AWS API GW)"]
+      GW["OMS API Gateway\n• Auth/JWT validation\n• Rate limiting\n• Route table\n• Feature flags (LaunchDarkly)"]
+    end
+
+    subgraph ROUTER["Modification Router — Feature Flag Logic"]
+      FR{Feature Flag\nRouter}
+      FR -->|"cancel: FF=NEW (40%)"| NEW_CANCEL["Cancel Service\n✅ New Microservice"]
+      FR -->|"cancel: FF=LEGACY (60%)"| STERLING_CANCEL["Sterling changeOrder\n⬛ Legacy Path"]
+      FR -->|"address: FF=NEW (100%)"| NEW_ADDR["Address Service\n✅ New Microservice"]
+      FR -->|"fulfillment: FF=LEGACY"| STERLING_FF["Sterling changeOrder\n⬛ Legacy Path"]
+      FR -->|"sla: FF=NEW (70%)"| NEW_SLA["SLA / Shipment Service\n✅ New Microservice"]
+    end
+
+    subgraph NEW_SVCS["New Cloud-Native Services (Running on EKS)"]
+      NS1["Order Service\n🟡 In Progress"]
+      NS2["Inventory Service\n✅ Live"]
+      NS3["Pricing Service\n✅ Live"]
+      NS4["Payment Service\n✅ Live"]
+      NS5["Fulfillment Service\n🔴 Not Started"]
+      NS6["Notification Service\n✅ Live"]
+    end
+
+    subgraph STERLING_MONO["IBM Sterling OMS 9.3 (Shrinking)"]
+      STL_CORE["Sterling Core\nOrder Pipeline\n(smcfs.ear)"]
+      STL_DB["Oracle DB\n(Source of Truth\nduring migration)"]
+      STL_MQ["IBM MQ\n(Legacy Events)"]
+    end
+
+    subgraph DATA_SYNC["Data Synchronization Layer"]
+      CDC["Debezium CDC\nOracle → Kafka"]
+      KAFKA["Apache Kafka\n(Event Backbone)"]
+      DW_NEW["New Order DB\nPostgreSQL (Dual-Write)"]
+    end
+
+    CLIENTS --> GATEWAY
+    GATEWAY --> ROUTER
+    NEW_SVCS --> KAFKA
+    STERLING_MONO --> STL_MQ
+    STL_MQ --> KAFKA
+    STL_DB --> CDC
+    CDC --> KAFKA
+    KAFKA --> DW_NEW
+    KAFKA --> NS6
+
+    style NEW_CANCEL fill:#238636,stroke:#2ea043,color:#fff
+    style NEW_ADDR fill:#238636,stroke:#2ea043,color:#fff
+    style NEW_SLA fill:#238636,stroke:#2ea043,color:#fff
+    style NS2 fill:#238636,stroke:#2ea043,color:#fff
+    style NS3 fill:#238636,stroke:#2ea043,color:#fff
+    style NS4 fill:#238636,stroke:#2ea043,color:#fff
+    style NS6 fill:#238636,stroke:#2ea043,color:#fff
+    style NS1 fill:#9e6700,stroke:#d29922,color:#fff
+    style NS5 fill:#da3633,stroke:#f85149,color:#fff
+    style STERLING_CANCEL fill:#1a0505,stroke:#da3633,color:#e6edf3
+    style STERLING_FF fill:#1a0505,stroke:#da3633,color:#e6edf3
+    style STL_CORE fill:#1a0505,stroke:#da3633,color:#e6edf3
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Feature Flag Router — The Critical Piece</div>
+          The API Gateway routes each <strong>modification type independently</strong> to either the new service or Sterling. This means you can migrate Cancel to the new service at 100% while Fulfillment Switch still goes to Sterling — each domain migrates on its own schedule. LaunchDarkly or Unleash are recommended for this; they support percentage rollouts, user targeting, and instant kill-switch rollback.
+        </div>
+
+        <h3>Four-Wave Migration Phases</h3>
+
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-green">1</span> Wave 1 — Strangler Proxy + Read Services (Months 1–3)</h3>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>Deploy OMS API Gateway in front of Sterling</h4><p>All traffic still routes to Sterling. Zero disruption. Gateway adds auth, rate limiting, observability.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>Deploy Kafka + Debezium CDC from Sterling Oracle DB</h4><p>Capture all Sterling order events into Kafka topics: <code>order.created</code>, <code>order.modified</code>, <code>order.cancelled</code>, <code>shipment.updated</code>. This is the foundation for all new services.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>Build Order History / Read Service</h4><p>Consume Kafka events → project into Elasticsearch. New read path for order history, modification audit trail. Sterling still owns writes.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-body"><h4>Build Notification Service</h4><p>Consume Sterling MQ events via Kafka bridge. Replace Sterling's notification agent with a new service (email, SMS, push). Zero Sterling code change.</p></div>
+          </div>
+        </div>
+
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-yellow">2</span> Wave 2 — Pricing + Shipment Services (Months 4–7)</h3>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>Build Pricing Service — Shadow Mode First</h4><p>Run new Pricing Service in shadow: every <code>calculatePricing</code> call goes to both Sterling and new service. Compare outputs. Fix discrepancies. No user impact.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>Carrier / Shipment Service — Replace Sterling carrier adapters</h4><p>New service owns carrier API integrations (UPS, FedEx, USPS). Feature-flag SLA Change flow to new Shipment Service at 10% → 50% → 100%.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>Payment Service — PSP Adapter Abstraction</h4><p>New Payment Service wraps PSP (Stripe/Adyen). Sterling's <code>processPaymentConfirmation</code> calls are intercepted at gateway level and routed to new service. Dual-auth reconciliation in place.</p></div>
+          </div>
+        </div>
+
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-blue">3</span> Wave 3 — Inventory Service (Months 8–12)</h3>
+          <p>Inventory is the highest-risk Wave 2–3 extraction due to the criticality of ATP accuracy. A dual-write + reconciliation pattern is mandatory.</p>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>Build new Inventory Service with own PostgreSQL + Redis ATP cache</h4><p>Seed from Sterling Oracle DB export. Set up dual-write: every inventory mutation writes to both Sterling Oracle and new Inventory DB.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>Shadow ATP reads: compare new service vs. Sterling GIV for 4 weeks</h4><p>Any discrepancy > 0.1% blocks cutover. Fix sync bugs. Run nightly reconciliation scripts.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>Cut over reads to new Inventory Service, keep dual-writes for 2 more weeks</h4><p>Monitor for inventory accuracy. Stop dual-write only when reconciliation is clean for 14 consecutive days.</p></div>
+          </div>
+        </div>
+
+        <div class="scenario-block">
+          <h3><span class="scenario-icon icon-red">4</span> Wave 4 — Order Service + Fulfillment (Months 13–18)</h3>
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>Build Order Service — full state machine in code, not Condition Trees</h4><p>Order domain model with explicit status transitions. Modification eligibility as code (not XML config). Dual-write to both Order Service DB and Sterling Oracle.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>Fulfillment / Sourcing Service — Replace Sterling Schedule Agent</h4><p>Custom sourcing rules engine (or Fluent Commerce for complex retail). Node scoring algorithm replaces Sterling's Sourcing Rules configuration.</p></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>Final Sterling decommission — route 100% to new Order Service</h4><p>Feature flag all modification types to new services. Sterling Oracle goes read-only. Archive historical data. IBM license terminated.</p></div>
+          </div>
+        </div>
+
+        <div id="s16b"></div>
+        <h3>Data Migration Strategy — Order DB Cutover</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phase</th><th>Duration</th><th>Write Target</th><th>Read Target</th><th>Validation</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Phase 0 — Seed</strong></td><td>1 week</td><td>Sterling Oracle only</td><td>Sterling Oracle</td><td>Export all open orders (last 6 months) to new PostgreSQL</td></tr>
+              <tr><td><strong>Phase 1 — Dual Write</strong></td><td>4 weeks</td><td>Sterling Oracle + PostgreSQL</td><td>Sterling Oracle</td><td>Nightly row count + checksum reconciliation</td></tr>
+              <tr><td><strong>Phase 2 — Shadow Read</strong></td><td>2 weeks</td><td>Sterling Oracle + PostgreSQL</td><td>New PostgreSQL (shadow)</td><td>Log discrepancies; no user-visible impact</td></tr>
+              <tr><td><strong>Phase 3 — Read Cutover</strong></td><td>2 weeks</td><td>Both still</td><td>New PostgreSQL (live)</td><td>Error rate monitoring; P99 latency unchanged</td></tr>
+              <tr><td><strong>Phase 4 — Write Cutover</strong></td><td>1 week</td><td>New PostgreSQL only</td><td>New PostgreSQL</td><td>Sterling Oracle read-only backup for 30 days</td></tr>
+              <tr><td><strong>Phase 5 — Archive</strong></td><td>Ongoing</td><td>New PostgreSQL</td><td>New PostgreSQL</td><td>Sterling Oracle archived to S3 (Parquet) for compliance</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S17: End State Architecture -->
+    <section class="section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <h2>End-State Cloud-Native OMS Architecture</h2>
+      </div>
+      <div class="content" id="s17a">
+        <h3>Full System Architecture — Post-Sterling</h3>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 11 — End-State Cloud-Native OMS (Zero Sterling)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'fontSize':'12px'}}}%%
+flowchart TD
+    subgraph EDGE["Edge / Client Layer"]
+      WEB["Web App\n(Next.js / React)"]
+      MOB["Mobile\n(iOS / Android)"]
+      CSR_UI["CSR Portal\n(React Admin)"]
+      B2B_API["B2B / EDI\n(REST / SFTP)"]
+    end
+
+    subgraph GW_LAYER["API Gateway + BFF Layer"]
+      CDN["CDN\n(CloudFront / Akamai)"]
+      APIGW["Kong API Gateway\n• JWT Auth (Keycloak/Auth0)\n• Rate limiting\n• Circuit breaker\n• Route table"]
+      OMS_BFF["OMS BFF\n(GraphQL — Apollo)\n• Aggregates domain services\n• Handles partial failures\n• Response shaping"]
+    end
+
+    subgraph CORE_SVCS["Core OMS Microservices — EKS (Kubernetes)"]
+      ORD["Order Service\nNode.js / Spring Boot\nPostgreSQL\n• State machine\n• Modification eligibility\n• Order history CQRS"]
+      INV["Inventory Service\nGo lang\nPostgreSQL + Redis\n• ATP calculations\n• Reservation management\n• Node ATP cache"]
+      PRICE["Pricing Service\nNode.js\nRedis cache\n• Shipping charge calc\n• Promotion engine\n• Tax via Avalara"]
+      PAY["Payment Service\nJava Spring\nPostgreSQL\n• PSP abstraction layer\n• Auth/Capture/Void/Refund\n• Idempotency store"]
+      FULFILL["Fulfillment Service\nJava Spring\nPostgreSQL\n• Sourcing rules engine\n• Node scoring\n• Carrier assignment"]
+      SHIP["Shipment Service\nNode.js\nPostgreSQL\n• Carrier API adapters\n• Label generation\n• Tracking events"]
+      NOTIFY["Notification Service\nNode.js\nKafka consumer\n• Email via SES\n• SMS via SNS/Twilio\n• Push via FCM"]
+      HISTORY["Order History Service\nNode.js Read Model\nElasticsearch\n• Full order timeline\n• Audit events\n• Search/filter"]
+    end
+
+    subgraph ASYNC["Async Event Backbone"]
+      KAFKA["Apache Kafka\n(Confluent)\nTopics: order.*, inventory.*\npayment.*, shipment.*, fulfillment.*"]
+    end
+
+    subgraph INFRA["Infrastructure Layer — AWS"]
+      EKS["EKS Kubernetes\n(Istio service mesh)"]
+      RDS["Aurora PostgreSQL\n(per-service DB)"]
+      REDIS["ElastiCache Redis\n(ATP + Session cache)"]
+      ES["OpenSearch\n(Order history + search)"]
+      S3["S3\n(Archive + Assets)"]
+      SES_SNS["SES + SNS\n(Notifications)"]
+    end
+
+    subgraph EXTERNAL["External Integrations"]
+      PSP["Stripe / Adyen\n(Payment)"]
+      CARRIERS["UPS / FedEx / USPS\nDHL / Same-day"]
+      WMS_EXT["WMS / 3PL\n(Manhattan / Blue Yonder)"]
+      TAX["Avalara\n(Tax)"]
+      ADDR_VAL["SmartyStreets\n(Address validation)"]
+    end
+
+    EDGE --> CDN --> APIGW --> OMS_BFF
+    OMS_BFF --> ORD & INV & PRICE & PAY & FULFILL & SHIP & HISTORY
+    ORD --> KAFKA
+    INV --> KAFKA
+    PAY --> KAFKA
+    FULFILL --> KAFKA
+    SHIP --> KAFKA
+    KAFKA --> NOTIFY
+    KAFKA --> HISTORY
+    ORD --> RDS
+    INV --> RDS & REDIS
+    PAY --> RDS
+    FULFILL --> RDS
+    SHIP --> RDS
+    HISTORY --> ES
+    PAY --> PSP
+    SHIP --> CARRIERS
+    SHIP --> WMS_EXT
+    PRICE --> TAX
+    ORD --> ADDR_VAL
+    KAFKA --> S3
+          </div>
+        </div>
+
+        <div id="s17b"></div>
+        <h3>Post-Purchase Modification Flows — Cloud-Native</h3>
+
+        <div class="callout callout-success">
+          <div class="callout-title">✅ What Changes vs. Sterling</div>
+          In the cloud-native end state, the monolithic <code>changeOrder</code> API is replaced by discrete service-level commands. Each modification is an <strong>event-sourced command</strong> that is validated, executed, and published as a domain event. There is no single choke-point API — services are called in parallel where possible, reducing latency.
+        </div>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 12 — Cloud-Native Cancel Flow (Saga Pattern)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant BFF as OMS BFF
+    participant ORD as Order Service
+    participant KAFKA as Kafka
+    participant INV as Inventory Service
+    participant PAY as Payment Service
+    participant NOTIFY as Notification Service
+    participant WMS as WMS and Fulfillment Node
+
+    CUST->>BFF: mutation cancelOrder with orderId and reason
+    BFF->>ORD: POST /orders/id/cancel
+    ORD->>ORD: Load order state machine and check cancelable status
+    ORD->>ORD: Validate modification eligibility - rules as code not Condition Tree XML
+    ORD->>KAFKA: Publish order.cancel.initiated event
+    ORD-->>BFF: 202 Accepted - async saga started
+    BFF-->>CUST: cancelInitiated true with estimatedCompletion
+
+    Note over KAFKA: Saga Orchestrator inside Order Service coordinates steps
+
+    KAFKA->>INV: order.cancel.initiated - release reservation
+    INV->>INV: Delete OPEN_ORDER demand record
+    INV->>KAFKA: inventory.released event
+
+    KAFKA->>PAY: order.cancel.initiated - process refund
+    PAY->>PAY: Check charge state - AUTHORIZED leads to void, CAPTURED leads to refund
+    PAY->>PAY: Void auth or initiate refund via PSP
+    PAY->>KAFKA: payment.voided or payment.refund.initiated
+
+    KAFKA->>WMS: order.cancel.initiated - stop fulfillment
+    WMS-->>KAFKA: fulfillment.task.cancelled
+
+    KAFKA->>ORD: All saga steps complete - update order status to CANCELLED
+    ORD->>KAFKA: order.cancelled as final event
+
+    KAFKA->>NOTIFY: order.cancelled - send email and push
+    NOTIFY->>CUST: Cancellation confirmation
+          </div>
+        </div>
+
+        <h3>Modification Patterns Comparison — Sterling vs. Cloud-Native</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Aspect</th><th>Sterling OMS 9.3</th><th>Cloud-Native End State</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Primary modification API</strong></td><td><code>changeOrder</code> (monolithic)</td><td class="rec">Service-specific REST commands: <code>POST /orders/{id}/cancel</code>, <code>PATCH /orders/{id}/address</code>, etc.</td></tr>
+              <tr><td><strong>Eligibility check</strong></td><td>Condition Tree (XML config, app redeploy)</td><td class="rec">Rules-as-code in Order Service (feature flags, instant update)</td></tr>
+              <tr><td><strong>Inventory mutation</strong></td><td>Sterling GIV APIs (synchronous, in-process)</td><td class="rec">Inventory Service via event (async saga) or direct gRPC (sync path)</td></tr>
+              <tr><td><strong>Payment recalculation</strong></td><td><code>processPaymentConfirmation</code> (Sterling-internal PSP adapter)</td><td class="rec">Payment Service with PSP abstraction; incremental auth via Stripe/Adyen native API</td></tr>
+              <tr><td><strong>Pricing recalculation</strong></td><td><code>calculatePricing</code> (synchronous in Sterling)</td><td class="rec">Pricing Service (separate microservice, Redis-cached shipping rates)</td></tr>
+              <tr><td><strong>Re-sourcing trigger</strong></td><td>Schedule Agent (polling-based)</td><td class="rec">Fulfillment Service subscribes to <code>order.address.changed</code> event; push-based</td></tr>
+              <tr><td><strong>Cutoff time enforcement</strong></td><td>Custom user exit required (Java)</td><td class="rec">Shipment Service owns cutoff calendar; direct REST check before commit</td></tr>
+              <tr><td><strong>Distributed failure handling</strong></td><td>No saga — partial commits possible</td><td class="rec">Choreography saga with compensating transactions via Kafka</td></tr>
+              <tr><td><strong>Audit trail</strong></td><td><code>YFS_ORDER_AUDIT</code> table (queryable only via Sterling APIs)</td><td class="rec">Event sourcing in Order Service; every state change is an immutable event; Elasticsearch for queries</td></tr>
+              <tr><td><strong>Modification velocity</strong></td><td>Config change → Condition Tree → app redeploy (hours)</td><td class="rec">Feature flag update (seconds) or code deploy (minutes)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S17c-f: Cloud-Native Modification Deep Dives -->
+    <section class="section" id="s17c">
+      <div class="section-header">
+        <span class="section-num" style="background:#23863622;border-color:#2ea04344;color:var(--accent2);">17c</span>
+        <h2>Cloud-Native Deep Dive — Order Cancellation</h2>
+      </div>
+      <div class="content">
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Sterling → Cloud-Native Contrast</div>
+          In Sterling, cancel was a single synchronous <code>cancelOrder</code> API that internally chained inventory release, payment void, and event firing in one transaction. In the cloud-native model these are <strong>three independent services</strong> coordinated by a <strong>Saga Orchestrator</strong> inside the Order Service. Each step has its own failure + compensation path.
+        </div>
+
+        <h3>Service Ownership Map — Cancel</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Responsibility</th><th>Sterling Owner</th><th>Cloud-Native Owner</th><th>Contract Change</th></tr></thead>
+            <tbody>
+              <tr><td>Eligibility gate (status check, holds)</td><td><code>cancelOrder</code> + Condition Trees</td><td class="rec">Order Service — rules-as-code</td><td>REST: <code>GET /orders/{id}/modification-eligibility?type=CANCEL</code></td></tr>
+              <tr><td>Order status transition to CANCELLED</td><td>Sterling pipeline</td><td class="rec">Order Service — state machine</td><td>Command: <code>CancelOrderCommand</code> → Event: <code>OrderCancelled</code></td></tr>
+              <tr><td>Inventory demand release</td><td>Sterling GIV — <code>releaseInventory</code></td><td class="rec">Inventory Service</td><td>Subscribes to <code>order.cancelled</code> Kafka event</td></tr>
+              <tr><td>Payment void / refund</td><td>Sterling PSP adapter — <code>processPaymentConfirmation</code></td><td class="rec">Payment Service</td><td>Subscribes to <code>order.cancelled</code>; calls PSP directly</td></tr>
+              <tr><td>WMS / node notification</td><td>Sterling MQ event → WMS</td><td class="rec">Fulfillment Service subscribes + notifies WMS via REST/EDI</td><td>Kafka: <code>fulfillment.cancel.requested</code></td></tr>
+              <tr><td>Customer notification</td><td>Sterling Notification Agent</td><td class="rec">Notification Service</td><td>Subscribes to <code>order.cancelled</code>; sends email/SMS/push</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Full Cancel Saga — Sequence Diagram</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 14 — Cloud-Native Order Cancel Saga (Orchestration Pattern)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer or CSR
+    participant BFF as OMS BFF
+    participant OS as Order Service
+    participant IS as Inventory Service
+    participant PS as Payment Service
+    participant FS as Fulfillment Service
+    participant NS as Notification Service
+    participant KAFKA as Kafka
+
+    CUST->>BFF: cancelOrder request with orderId and reason
+    BFF->>OS: POST /orders/id/cancellations
+
+    OS->>OS: Load order aggregate
+    OS->>OS: Validate state machine - check CANCELLABLE_STATUSES
+
+    alt Status NOT cancellable
+        OS-->>BFF: 422 ORDER_NOT_CANCELLABLE
+        BFF-->>CUST: Error - order cannot be cancelled at this stage
+    end
+
+    OS->>OS: Check fraud hold and payment hold
+    OS->>OS: Check idempotency key in Redis
+    OS->>OS: Create CancelSaga - sagaId, steps, status INITIATED
+
+    OS->>KAFKA: order.cancel.initiated with orderId, sagaId, lineIds
+
+    Note over KAFKA: Parallel saga steps begin
+
+    par Inventory Release
+        KAFKA->>IS: order.cancel.initiated
+        IS->>IS: Load demand records - OPEN_ORDER and PICKUP_RESERVATION
+        IS->>IS: Delete demand records and recalculate ATP
+        IS->>KAFKA: inventory.released with sagaId and nodeId
+    and Payment Void or Refund
+        KAFKA->>PS: order.cancel.initiated
+        PS->>PS: Load charge transactions
+        PS->>PS: AUTHORIZED status leads to VOID
+        PS->>PS: CAPTURED status leads to REFUND
+        PS->>PS: Check idempotency key to prevent double refund
+        PS->>PS: Call PSP via Stripe adapter
+        PS->>KAFKA: payment.void.completed or payment.refund.initiated
+    and Fulfillment Node Recall
+        KAFKA->>FS: order.cancel.initiated
+        FS->>FS: Order at node - send recall via WMS API
+        FS->>KAFKA: fulfillment.task.cancelled with sagaId
+    end
+
+    OS->>OS: Saga coordinator - all 3 steps complete?
+
+    alt All saga steps succeeded
+        OS->>OS: Transition order to CANCELLED
+        OS->>OS: Record cancellation audit event with reason and timestamp
+        OS->>KAFKA: order.cancelled with orderId and refundAmount
+        KAFKA->>NS: order.cancelled
+        NS->>CUST: Email and Push - cancelled, refund in 3-5 days
+        OS-->>BFF: 200 status CANCELLED with refundAmount
+        BFF-->>CUST: Cancel confirmed with refund details
+    else Saga step failed - PSP refund failure
+        OS->>OS: Compensating transaction - mark CANCEL_FAILED
+        OS->>OS: Re-reserve inventory at node
+        OS->>KAFKA: order.cancel.failed with sagaId and failedStep
+        KAFKA->>NS: order.cancel.failed
+        NS->>CUST: Email - cancellation failed, team will contact in 24h
+    end
+          </div>
+        </div>
+
+        <h3>Partial Cancel — Line-Level Saga</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 15 — Partial Cancel with Promotion Recalculation</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    START([PATCH /orders/id/lines/lineId/cancel]) --> ELIG
+
+    subgraph ELIG[Order Service - Eligibility]
+      E1[Load order aggregate with all lines and promotions] --> E2
+      E2{Line cancellable?} -->|No| ERR[Return 422 LINE_NOT_CANCELLABLE]
+      E2 -->|Yes| E3[Snapshot current order total before line removal]
+    end
+
+    ELIG --> PRICE_EVAL
+
+    subgraph PRICE_EVAL[Pricing Service - Promo Re-evaluation]
+      P1[Remove cancelled line and recalculate subtotal] --> P2
+      P2{Promo thresholds still met?}
+      P2 -->|Free ship promo - order dropped below 75 threshold| P3[Promo invalidated - add shipping charge back]
+      P2 -->|BOGO - cancelled line was the free item| P4[BOGO invalidated - adjust remaining line price]
+      P2 -->|No impact| P5[No promo change]
+      P3 & P4 & P5 --> P6[Compute delta - newTotal minus oldTotal = refund or charge]
+    end
+
+    PRICE_EVAL --> PAYMENT
+
+    subgraph PAYMENT[Payment Service]
+      PAY1{Delta direction?}
+      PAY1 -->|Refund - delta negative| PAY2[Issue partial refund for line amount plus promo adjustment]
+      PAY1 -->|Additional charge - delta positive| PAY3[Charge shipping delta - void and reauth if needed]
+    end
+
+    PAYMENT --> INVENTORY
+
+    subgraph INVENTORY[Inventory Service]
+      I1[Release demand for cancelled line only - other lines untouched]
+    end
+
+    INVENTORY --> COMMIT
+
+    subgraph COMMIT[Order Service - Commit]
+      C1[Set line status CANCELLED - update order total - append OrderLinesCancelled event]
+      C2[Publish order.partial.cancelled with cancelledLineIds, newTotal, refundAmount]
+    end
+
+    COMMIT --> NOTIFY[Notification Service sends partial cancellation email with refund details]
+          </div>
+        </div>
+
+        <h3>Cancellation API Contract — Cloud-Native</h3>
+        <pre><code>/* Full cancel */
+POST /orders/{orderId}/cancellations
+Authorization: Bearer {jwt}
+Idempotency-Key: {uuid}
+{
+  "reason": "CUSTOMER_REQUEST",
+  "reasonText": "Changed my mind",
+  "requestedBy": { "type": "CUSTOMER", "id": "user_123" }
+}
+
+/* Partial cancel — specific lines */
+PATCH /orders/{orderId}/lines
+{
+  "lines": [
+    { "lineId": "line_abc", "action": "CANCEL", "reason": "OUT_OF_STOCK_PREFERENCE" }
+  ]
+}
+
+/* Response — saga initiated */
+HTTP 202 Accepted
+{
+  "cancellationId": "cancel_xyz",
+  "sagaId": "saga_999",
+  "status": "CANCELLATION_INITIATED",
+  "estimatedRefund": { "amount": 54.49, "currency": "USD" },
+  "estimatedRefundEta": "3-5 business days",
+  "checkStatusUrl": "/orders/{orderId}/cancellations/cancel_xyz"
+}
+
+/* Polling endpoint for status */
+GET /orders/{orderId}/cancellations/{cancellationId}
+→ { status: "CANCELLED" | "CANCEL_FAILED" | "CANCELLATION_INITIATED" }</code></pre>
+
+        <h3>Hold Type Handling — Cloud-Native vs Sterling</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hold Type</th><th>Sterling Mechanism</th><th>Cloud-Native Equivalent</th></tr></thead>
+            <tbody>
+              <tr><td>Fraud Hold</td><td><code>YFS_FRAUD_HOLD</code> on order</td><td class="rec">Order Service: <code>holds[]</code> array in order aggregate; <code>FRAUD</code> hold blocks cancel via eligibility check; resolved by Fraud Service publishing <code>fraud.hold.released</code> event</td></tr>
+              <tr><td>Payment Hold</td><td><code>YFS_PAYMENT_HOLD</code></td><td class="rec">Payment Service publishes <code>payment.hold.placed</code>; Order Service subscribes and sets hold on aggregate; block until <code>payment.hold.released</code></td></tr>
+              <tr><td>Ship Hold</td><td><code>YFS_SHIP_HOLD</code></td><td class="rec">Fulfillment Service managed; auto-released on cancel command — cancel supersedes ship hold</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section" id="s17d">
+      <div class="section-header">
+        <span class="section-num" style="background:#23863622;border-color:#2ea04344;color:var(--accent2);">17d</span>
+        <h2>Cloud-Native Deep Dive — Address Change</h2>
+      </div>
+      <div class="content">
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Key Difference from Sterling</div>
+          Sterling stored the ship-to address in <code>YFS_PERSON_INFO</code> and required separate calls to update the order record and the shipment record. In the cloud-native model, address is a <strong>value object inside the Order aggregate</strong> — one update propagates via events. Zone detection and re-sourcing decisions are explicit conditional branches, not buried inside Sterling's Schedule Agent polling loop.
+        </div>
+
+        <h3>Address Change — Decision Tree</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 16 — Cloud-Native Address Change Decision Tree</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    START([PATCH /orders/id/shipping-address]) --> VALIDATE
+
+    subgraph VALIDATE[Address Service - Validation]
+      V1[Call SmartyStreets AVS and normalize address] --> V2
+      V2{Address valid?} -->|No| V_ERR[422 INVALID_ADDRESS with suggestions]
+      V2 -->|Yes| V3[Standardized address returned with delivery point validation]
+    end
+
+    VALIDATE --> DELTA
+
+    subgraph DELTA[Order Service - Change Classification]
+      D1[Compare new vs old address across 5 dimensions] --> D2
+      D2{Phone only or apt number change?} -->|Yes| SIMPLE[Simple Update Path - no downstream impact]
+      D2 -->|No| D3
+      D3{Same ZIP?} -->|Yes| D4
+      D3 -->|No| D5
+      D4{Same state?} -->|No - state crossed| FULL_RESRC
+      D4 -->|Yes| D6
+      D6{Same carrier zone?} -->|No| FULL_RESRC[Full Re-source Path]
+      D6 -->|Yes| TAX_ONLY[Tax Recalc Only Path]
+      D5{ZIP change with zone impact?} -->|Yes - different zone| FULL_RESRC
+      D5 -->|No| TAX_ONLY
+    end
+
+    SIMPLE --> DIRECT_UPDATE[Order Service - update address value object
+      and publish order.address.updated
+      and Shipment Service updates label if exists]
+
+    TAX_ONLY --> TAX_PATH[Pricing Service - recalculate tax for new state or county
+      and charge or refund tax delta and update address]
+
+    FULL_RESRC --> RESRC_PATH
+
+    subgraph RESRC_PATH[Full Re-source Flow]
+      R1[Inventory Service - get ATP for new destination and current items] --> R2
+      R2{Current node can still serve new address?}
+      R2 -->|Yes within zone| R3[Keep node - recalculate carrier rates for new ZIP]
+      R2 -->|No - too far or no inventory| R4[Re-source - score candidate nodes for new address]
+      R4 --> R5[Select best node by proximity x inventory x cost x SLA]
+      R5 --> R6[Release demand at OLD node and reserve at NEW node]
+      R3 --> R7
+      R6 --> R7[Pricing Service - recalculate shipping cost and tax for new zone]
+      R7 --> R8[Payment Service - charge or refund carrier zone delta]
+      R8 --> R9[Shipment Service - update ToAddress and request new label if shipment exists]
+    end
+
+    RESRC_PATH --> COMMIT2[Order Service - commit new address and node assignment
+      and publish order.address.changed event]
+    COMMIT2 --> NOTIFY2[Notification Service - email with updated address and new delivery estimate]
+          </div>
+        </div>
+
+        <h3>Full Address Change Sequence — Zone Change Path</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 17 — Address Change API Sequence (Full Re-source with Payment Delta)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant BFF as OMS BFF
+    participant OS as Order Service
+    participant AVS as Address Validation
+    participant IS as Inventory Service
+    participant PRICE as Pricing Service
+    participant PAY as Payment Service
+    participant SS as Shipment Service
+    participant KAFKA as Kafka
+
+    CUST->>BFF: mutation updateShippingAddress with orderId and newAddress
+    BFF->>OS: PATCH /orders/id/shipping-address
+
+    OS->>OS: Load order and check status
+    OS->>OS: Allow if status is CREATED, RELEASED, or SCHEDULED
+    OS->>AVS: POST /validate with address fields
+    AVS->>AVS: SmartyStreets lookup - return standardized and ZIP+4
+    AVS-->>OS: valid true, standardized address, dpv_confirmed, carrierRoute
+
+    OS->>OS: Classify change type
+    OS->>OS: Detect old_zone ZONE_2, new_zone ZONE_5 - FULL_RESOURCE required
+
+    OS->>IS: POST /atp/query with items, destination newZIP, deliveryMethod SHP
+    IS->>IS: Score nodes by proximity to new ZIP, ATP, carrier coverage
+    IS-->>OS: recommendedNode DC_EAST, currentNode DC_WEST, nodeChanged true
+
+    OS->>IS: POST /reservations/transfer from DC_WEST to DC_EAST for orderId and items
+    IS->>IS: Atomic release DC_WEST demand and reserve DC_EAST demand
+    IS-->>OS: transferred true
+
+    OS->>PRICE: POST /shipping-rates with fromNode DC_EAST, toZIP, carrier, weight
+    PRICE-->>OS: shippingCost 8.99, oldShippingCost 0.00
+
+    OS->>PRICE: POST /tax/calculate with newState WA, items, subtotal
+    PRICE-->>OS: newTax 5.12, oldTax 4.50, delta 0.62
+
+    OS->>OS: Total delta = 8.99 shipping + 0.62 tax = 9.61
+
+    OS->>PAY: POST /charges with orderId, amount 9.61, reason ADDRESS_ZONE_CHANGE
+    PAY->>PAY: Incremental auth on existing payment method
+    PAY-->>OS: authorized true with authRef psp_ref_abc
+
+    OS->>OS: Commit address change in order aggregate
+    OS->>KAFKA: order.address.changed with orderId, newAddress, newNode, newDeliveryDate, deltaCharged 9.61
+
+    KAFKA->>SS: order.address.changed
+    SS->>SS: Shipment exists - update address and request new carrier label
+    SS->>KAFKA: shipment.address.updated
+
+    KAFKA->>CUST: Notification Service - Email address updated with new delivery estimate and charge
+          </div>
+        </div>
+
+        <h3>Address Change API Contract</h3>
+        <pre><code>/* PATCH /orders/{orderId}/shipping-address */
+Authorization: Bearer {jwt}
+Idempotency-Key: {uuid}
+{
+  "address": {
+    "line1": "456 New Street",
+    "line2": "Apt 3B",
+    "city": "Seattle",
+    "state": "WA",
+    "zip": "98101",
+    "country": "US"
+  },
+  "contact": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "206-555-0199"
+  }
+}
+
+/* 200 Response — zone change with re-source */
+{
+  "status": "ADDRESS_UPDATED",
+  "previousAddress": { ... },
+  "newAddress": { "line1": "456 New Street", ... },
+  "changeClassification": "ZONE_CHANGE_WITH_RESOURCE",
+  "fulfillmentNodeChanged": true,
+  "previousNode": "DC_WEST",
+  "newNode": "DC_EAST",
+  "newDeliveryDate": "2024-01-19",
+  "priceDelta": {
+    "shippingDelta": 8.99,
+    "taxDelta": 0.62,
+    "totalDelta": 9.61,
+    "direction": "CHARGE"
+  },
+  "paymentAdjustment": {
+    "amount": 9.61,
+    "status": "AUTHORIZED",
+    "pspRef": "psp_ref_abc"
+  }
+}
+
+/* 200 Response — phone-only change */
+{
+  "status": "ADDRESS_UPDATED",
+  "changeClassification": "CONTACT_ONLY",
+  "fulfillmentNodeChanged": false,
+  "priceDelta": null
+}</code></pre>
+
+        <h3>Re-source Node Scoring Algorithm</h3>
+        <pre><code>/* Fulfillment Service — Node Scoring for Address Change Re-source */
+/* Replaces Sterling's Sourcing Rules (distance rules + priority tiers) */
+
+interface NodeScore {
+  nodeId: string;
+  score: number;  // 0–100 composite
+}
+
+function scoreNodes(items: LineItem[], destination: Address): NodeScore[] {
+  return candidateNodes.map(node => {
+    const atp        = inventoryService.getATP(node, items);       // 0 or 1
+    const distance   = geoService.calcZones(node.zip, destination.zip);
+    const transitDays = carrierService.getTransitDays(node, destination, serviceCode);
+    const cost       = pricingService.getShippingRate(node, destination, serviceCode);
+    const capacity   = fulfillmentService.getNodeCapacity(node);   // 0–1
+
+    // Weighted scoring — tune per retailer business rules
+    return {
+      nodeId: node.id,
+      score: (atp * 40)              // must have stock — highest weight
+           + ((10 - distance) * 20)  // closer is better
+           + ((7 - transitDays) * 20)// faster delivery
+           + ((20 - cost) * 10)      // cheaper shipping
+           + (capacity * 10)         // node not overloaded
+    };
+  }).filter(n => n.score > 0)        // only nodes with inventory
+    .sort((a, b) => b.score - a.score);
+}</code></pre>
+
+      </div>
+    </section>
+
+    <section class="section" id="s17e">
+      <div class="section-header">
+        <span class="section-num" style="background:#23863622;border-color:#2ea04344;color:var(--accent2);">17e</span>
+        <h2>Cloud-Native Deep Dive — Fulfillment Method Switch (BOPIS ↔ Ship)</h2>
+      </div>
+      <div class="content">
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Most Complex Modification — Highest Saga Depth</div>
+          The fulfillment switch is the most complex post-purchase modification in any OMS. It crosses <strong>all five core services</strong> simultaneously: Order Service (fulfillment type change), Inventory Service (demand type swap), Fulfillment Service (node swap + carrier assignment), Pricing Service (shipping cost delta), and Payment Service (charge or refund). It requires an <strong>orchestration saga</strong> — not choreography — because the branching logic and compensations are too complex for pure event reaction.
+        </div>
+
+        <h3>BOPIS → Ship-to-Home (STH) Full Saga</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 18 — BOPIS to Ship-to-Home Orchestration Saga</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant OS as Order Service
+    participant IS as Inventory Service
+    participant PRICE as Pricing Service
+    participant PAY as Payment Service
+    participant FS as Fulfillment Service
+    participant SS as Shipment Service
+    participant NS as Notification Service
+    participant KAFKA as Kafka
+
+    CUST->>OS: POST /orders/id/fulfillment-switch
+    Note over OS: from PICKUP to SHIP with shippingAddress and carrierServiceCode
+
+    OS->>OS: STEP 1 Eligibility Check
+    OS->>OS: Status must be CREATED, RELEASED, or SCHEDULED
+    OS->>OS: All items must have IsShipAlone false and IsHazmat false
+
+    OS->>IS: STEP 2 Check Ship Inventory
+    IS-->>OS: available true, recommendedNode DC_WEST, promisedDate T+3
+
+    alt Inventory NOT available for ship
+        OS-->>CUST: 409 SHIP_INVENTORY_UNAVAILABLE with backorderDate
+    end
+
+    OS->>IS: STEP 3 Release BOPIS reservation
+    Note over IS: DELETE demand - orderId, nodeId STORE_PDX, demandType PICKUP
+    IS-->>OS: released true, qtyReleased 2
+
+    OS->>IS: STEP 4 Create Ship reservation
+    Note over IS: POST reservation - orderId, nodeId DC_WEST, demandType OPEN_ORDER
+    IS-->>OS: reserved true, reservationId res_abc
+
+    OS->>PRICE: STEP 5 Calculate shipping cost
+    PRICE-->>OS: shippingCost 7.99, taxDelta 0.42
+
+    OS->>PRICE: Calculate promo impact - was BOPIS discount applied?
+    PRICE-->>OS: promoAdjustment minus 5.00
+
+    OS->>OS: Total delta = 7.99 shipping + 0.42 tax - 5.00 promo = 3.41 net charge
+
+    OS->>PAY: STEP 6 Charge delta 3.41 reason FULFILLMENT_SWITCH
+    PAY-->>OS: authorized true
+
+    OS->>OS: STEP 7 Commit order update
+    Note over OS: fulfillmentType SHIP, fulfillingNode DC_WEST, carrierServiceCode UPS_GROUND
+
+    OS->>KAFKA: order.fulfillment.switched - orderId, from PICKUP, to SHIP, newNode, newDeliveryDate
+
+    KAFKA->>FS: order.fulfillment.switched
+    FS->>FS: Cancel store pick task
+    FS->>FS: Create DC_WEST ship task and assign carrier
+    FS->>KAFKA: fulfillment.task.updated
+
+    KAFKA->>SS: order.fulfillment.switched
+    SS->>SS: Create new Shipment record and request carrier label
+
+    KAFKA->>NS: order.fulfillment.switched
+    NS->>CUST: Email - order will ship to address, delivery by date, 3.41 charged
+
+    Note over OS: Saga complete - all steps acknowledged
+          </div>
+        </div>
+
+        <h3>Ship-to-Home → BOPIS (Reverse Switch)</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 19 — STH to BOPIS Conversion Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    START([POST /orders/id/fulfillment-switch from SHIP to PICKUP]) --> STEP1
+
+    subgraph STEP1[Step 1 - Pre-checks]
+      P1[Order Service - Status must be SCHEDULED or earlier] --> P2
+      P2[Item Eligibility - IsPickupAllowed true for all items] --> P3
+      P3[Inventory Service - Store on-hand ATP meets order qty] --> P4
+      P4[Fulfillment Service - Store BOPIS capacity available today] --> P5
+      P5{All checks passed?} -->|No| BLOCK[Return 409 with specific failure reason]
+      P5 -->|Yes| STEP2
+    end
+
+    subgraph STEP2[Step 2 - Inventory Transfer]
+      I1[Inventory Service - Release OPEN_ORDER demand at DC Node] --> I2
+      I2[Inventory Service - Create PICKUP_RESERVATION at STORE_PDX_01]
+    end
+
+    subgraph STEP3[Step 3 - Price Adjustment]
+      PR1[Pricing Service - Remove shipping charge] --> PR2
+      PR2[Pricing Service - Apply BOPIS discount if eligible] --> PR3
+      PR3[Pricing Service - Recalculate tax for store county] --> PR4
+      PR4[Payment Service - Refund shipping delta]
+    end
+
+    subgraph STEP4[Step 4 - Commit and Notify]
+      C1[Order Service - fulfillmentType PICKUP, ShipNode STORE_PDX_01] --> C2
+      C2[Kafka publish order.fulfillment.switched from SHIP to PICKUP] --> C3
+      C3[Fulfillment Service - Create store pick task] --> C4
+      C4[Notification Service - Email and SMS with pickup ready time and barcode]
+    end
+
+    STEP1 --> STEP2 --> STEP3 --> STEP4
+
+    subgraph COMPENSATION[Compensation if Payment fails]
+      COMP1[Re-release PICKUP_RESERVATION at store] --> COMP2
+      COMP2[Re-reserve OPEN_ORDER at original DC node] --> COMP3
+      COMP3[Return 500 FULFILLMENT_SWITCH_FAILED - order unchanged]
+    end
+
+    STEP3 -.->|Payment fails| COMPENSATION
+          </div>
+        </div>
+
+        <h3>Fulfillment Switch API Contract</h3>
+        <pre><code>/* POST /orders/{orderId}/fulfillment-switch */
+{
+  "from": "PICKUP",
+  "to": "SHIP",
+  "shippingAddress": {
+    "line1": "123 Main St", "city": "Portland",
+    "state": "OR", "zip": "97201", "country": "US"
+  },
+  "carrierServiceCode": "UPS_GROUND",
+  "requestedBy": { "type": "CUSTOMER", "id": "user_123" }
+}
+
+/* 202 Accepted — saga started */
+{
+  "switchId": "switch_xyz",
+  "sagaId": "saga_001",
+  "status": "SWITCH_INITIATED",
+  "from": "PICKUP",
+  "to": "SHIP",
+  "steps": [
+    { "step": "INVENTORY_TRANSFER", "status": "PENDING" },
+    { "step": "PRICE_RECALCULATION", "status": "PENDING" },
+    { "step": "PAYMENT_ADJUSTMENT", "status": "PENDING" },
+    { "step": "FULFILLMENT_REASSIGN", "status": "PENDING" }
+  ],
+  "estimatedDeliveryDate": "2024-01-19",
+  "priceDelta": { "amount": 3.41, "direction": "CHARGE" }
+}
+
+/* Saga completion webhook to client */
+{
+  "event": "order.fulfillment.switched",
+  "orderId": "...", "status": "SHIP",
+  "fulfillingNode": "DC_WEST",
+  "newDeliveryDate": "2024-01-19",
+  "priceDelta": { "amount": 3.41, "charged": true }
+}</code></pre>
+
+        <h3>Post-Cutoff Fulfillment Switch — Cancel + Recreate Pattern</h3>
+        <div class="callout callout-danger">
+          <div class="callout-title">🚨 Status ≥ SENT_TO_NODE — Cancel + Recreate Required</div>
+          <p style="margin-top:6px;font-size:14px;">When order status is <code>SENT_TO_NODE</code> or later, the fulfillment node already has an active pick task. Direct modification is not safe. The cloud-native equivalent of Sterling's cancel+recreate:</p>
+        </div>
+        <pre><code>/* Cancel + Recreate pattern — implemented as atomic operation in Order Service */
+
+Step 1: POST /orders/{id}/cancellations
+  { reason: "FULFILLMENT_SWITCH", preserveForRecreate: true }
+  → Creates snapshot of order items, promos, customer, payment method
+  → Voids payment auth (holds slots for re-auth)
+
+Step 2: POST /orders
+  { ...snapshot, fulfillmentType: "SHIP", shippingAddress: {...} }
+  → New orderId created
+  → parentOrderId: original order (linked for CX continuity)
+  → Re-applies promotions (validates they are still active)
+  → Re-authorizes payment
+
+Step 3: Link original and new order
+  GET /orders/{newOrderId}/linked-orders
+  → Returns: [{ orderId: originalId, relationship: "REPLACED_BY" }]</code></pre>
+
+      </div>
+    </section>
+
+    <section class="section" id="s17f">
+      <div class="section-header">
+        <span class="section-num" style="background:#23863622;border-color:#2ea04344;color:var(--accent2);">17f</span>
+        <h2>Cloud-Native Deep Dive — Service Level Change (1-day / 2-day / Standard)</h2>
+      </div>
+      <div class="content">
+
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Key Difference from Sterling</div>
+          Sterling required a custom Java user exit to check carrier cutoff times — there was no native cutoff enforcement. In the cloud-native model, the <strong>Shipment Service owns the carrier cutoff calendar</strong> and returns structured eligibility data (available service levels, latest order-by time, next-available date) as a first-class API response — enabling self-service UX without CSR intervention.
+        </div>
+
+        <h3>SLA Change — Service Topology</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 20 — SLA Change Service Ownership and Data Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart LR
+    subgraph CLIENT[Client]
+      UI[Customer UI - shows SLA picker with prices and dates]
+    end
+
+    subgraph ELIGIBILITY_QUERY[Pre-modification Query - GET available SLAs]
+      Q1[GET /orders/id/available-sla-upgrades]
+      Q2[Order Service - load order status, node, items]
+      Q3[Shipment Service - get carrier services for node and ZIP]
+      Q4[Pricing Service - get rate for each level and compute delta]
+      Q5[Return options with prices, delta, delivery dates, cutoff warnings]
+    end
+
+    subgraph SLA_CHANGE[SLA Change Execution]
+      E1[POST /orders/id/service-level-change]
+      E2[Order Service - eligibility check, status must be SCHEDULED or earlier]
+      E3[Shipment Service - cutoff validation, can new SLA still be fulfilled?]
+      E4[Pricing Service - compute exact shipping delta]
+      E5[Payment Service - authorize delta amount]
+      E6[Order Service - commit new CarrierServiceCode and ExpectedDeliveryDate]
+      E7[Shipment Service - regenerate label if one already exists]
+    end
+
+    CLIENT -->|Step 1 fetch options| ELIGIBILITY_QUERY
+    CLIENT -->|Step 2 submit choice| SLA_CHANGE
+    Q1 --> Q2 --> Q3 --> Q4 --> Q5
+    E1 --> E2 --> E3 --> E4 --> E5 --> E6 --> E7
+          </div>
+        </div>
+
+        <h3>SLA Change — Full API Sequence</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 21 — SLA Upgrade Full Sequence (Standard → 1-Day)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    actor CUST as Customer
+    participant BFF as OMS BFF
+    participant OS as Order Service
+    participant SS as Shipment Service
+    participant PRICE as Pricing Service
+    participant PAY as Payment Service
+    participant CARRIER as Carrier API
+    participant KAFKA as Kafka
+
+    Note over CUST,BFF: Step 1 - Customer fetches available upgrade options
+    CUST->>BFF: query availableSLAUpgrades for orderId
+    BFF->>OS: GET /orders/id/available-sla-upgrades
+    OS->>SS: GET /carrier-services with nodeId, toZip, items, currentDate
+    SS->>SS: Check carrier cutoff calendar for each service
+    SS->>SS: UPS_GROUND has no cutoff
+    SS->>SS: UPS_2DA cutoff at 3PM - 4 hours remaining
+    SS->>SS: UPS_NDA cutoff at 2PM - already missed today
+    SS-->>OS: UPS_2DA available with deliveryDate Jan17 and cutoffIn 4hrs
+    SS-->>OS: UPS_NDA unavailable reason CUTOFF_MISSED nextAvailableDate Jan16
+    OS->>PRICE: GET /shipping-rates/batch for node, zip, UPS_2DA
+    PRICE-->>OS: UPS_2DA rate 12.99, delta plus 12.99 vs current 0
+    OS-->>BFF: upgrade option 2-DAY UPS, cost 12.99, delivery Jan17, cutoff warning 4h
+    BFF-->>CUST: Show picker with prices and cutoff countdown
+
+    Note over CUST,BFF: Step 2 - Customer selects 2-day upgrade
+    CUST->>BFF: mutation changeSLA with orderId and slaCode UPS_2DA
+    BFF->>OS: POST /orders/id/service-level-change with carrierServiceCode UPS_2DA
+
+    OS->>SS: POST /cutoff-check with nodeId, UPS_2DA, timestamp NOW
+    SS-->>OS: canFulfill true, cutoffAt 3PM, minutesRemaining 238
+
+    OS->>PRICE: POST /shipping-rates for node, zip, UPS_2DA, weight
+    PRICE-->>OS: rate 12.99
+
+    OS->>OS: Delta = 12.99 minus 0.00 = 12.99
+
+    OS->>PAY: POST /charges amount 12.99 reason SLA_UPGRADE with idempotencyKey
+    PAY->>PAY: Incremental auth via Stripe paymentIntents
+    PAY-->>OS: authorized true with authRef
+
+    OS->>OS: Commit SLA change
+    Note over OS: carrierServiceCode UPS_2DA, expectedDeliveryDate Jan17, shippingCharge 12.99
+
+    OS->>KAFKA: order.sla.changed - orderId, from UPS_GROUND, to UPS_2DA, deltaCharged 12.99
+
+    KAFKA->>SS: order.sla.changed
+    SS->>CARRIER: Update shipment service level, void and regenerate label if exists
+    CARRIER-->>SS: New tracking number for upgraded service
+    SS->>KAFKA: shipment.service.updated with newTrackingNumber
+
+    KAFKA->>CUST: Notification - Upgraded to 2-Day Delivery, delivery Jan17, 12.99 charged
+          </div>
+        </div>
+
+        <h3>Carrier Cutoff Calendar — Shipment Service Design</h3>
+        <pre><code>/* Shipment Service — Cutoff Calendar API */
+/* This replaces Sterling's missing native cutoff enforcement */
+
+GET /carrier-services?nodeId=DC_WEST&toZip=97201&date=2024-01-15T10:00:00Z
+
+Response:
+{
+  "services": [
+    {
+      "carrierServiceCode": "UPS_GROUND",
+      "displayName": "Standard 5-7 Day",
+      "deliveryDate": "2024-01-22",
+      "available": true,
+      "cutoff": null,          // no cutoff for ground
+      "baseCost": 0.00
+    },
+    {
+      "carrierServiceCode": "UPS_2DA",
+      "displayName": "2-Day Delivery",
+      "deliveryDate": "2024-01-17",
+      "available": true,
+      "cutoff": {
+        "time": "15:00:00",
+        "timezone": "America/Los_Angeles",
+        "minutesRemaining": 238,
+        "message": "Order within 3h 58m for 2-day delivery"
+      },
+      "baseCost": 12.99
+    },
+    {
+      "carrierServiceCode": "UPS_NDA",
+      "displayName": "Next-Day Air",
+      "deliveryDate": "2024-01-16",
+      "available": false,
+      "unavailableReason": "CUTOFF_MISSED",
+      "nextAvailable": {
+        "date": "2024-01-16",        // if ordered tomorrow
+        "orderByTime": "2024-01-16T14:00:00-08:00"
+      },
+      "baseCost": 27.99
+    }
+  ]
+}
+
+/* Cutoff calendar stored per node × carrier in DB */
+/* Updated nightly via carrier API or manual config */
+/* Redis cached with 1-hour TTL (re-evaluated near cutoff) */</code></pre>
+
+        <h3>SLA Downgrade — Refund Path</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 22 — SLA Downgrade (1-Day → Standard) with Refund</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    START([Customer requests downgrade from 1-Day to Standard]) --> E1
+
+    subgraph E1[Eligibility Check]
+      EL1[Order Service - Status must be SENT_TO_NODE or earlier] --> EL2
+      EL2[Shipment Service - was a label generated for 1-day service?] --> EL3
+      EL3{Label status?}
+      EL3 -->|No label exists| PROCEED
+      EL3 -->|Label exists and carrier dispatched| BLOCK[Block downgrade - return CARRIER_ALREADY_DISPATCHED]
+      EL3 -->|Label exists but not dispatched| VOID_LABEL[Void existing label via carrier API]
+    end
+
+    PROCEED --> PRICE_CALC
+    VOID_LABEL --> PRICE_CALC
+
+    subgraph PRICE_CALC[Pricing Recalculation]
+      PR1[Old shipping charge 27.99 for UPS_NDA] --> PR2
+      PR2[New shipping charge 0.00 for UPS_GROUND - free standard threshold met] --> PR3
+      PR3[Delta = minus 27.99 to refund]
+    end
+
+    PRICE_CALC --> PAY_REFUND
+
+    subgraph PAY_REFUND[Payment Refund]
+      PA1{Payment state?}
+      PA1 -->|Auth only not yet captured| PA2[Partial void - reduce auth by 27.99]
+      PA1 -->|Already captured| PA3[Initiate partial refund of 27.99 via PSP]
+    end
+
+    PAY_REFUND --> COMMIT
+
+    subgraph COMMIT[Commit and Notify Downstream]
+      C1[Order Service - set carrierServiceCode UPS_GROUND and shippingCharge 0.00] --> C2
+      C2[Shipment Service - request new standard label] --> C3
+      C3[Kafka publish order.sla.changed and Notification Service sends refund email]
+    end
+          </div>
+        </div>
+
+        <h3>SLA Change API Contract</h3>
+        <pre><code>/* POST /orders/{orderId}/service-level-change */
+{
+  "carrierServiceCode": "UPS_2DA",
+  "idempotencyKey": "client-uuid-here",
+  "requestedBy": { "type": "CUSTOMER", "id": "user_123" }
+}
+
+/* 200 OK — SLA changed successfully */
+{
+  "status": "SLA_CHANGED",
+  "previousCarrierService": "UPS_GROUND",
+  "newCarrierService": "UPS_2DA",
+  "previousDeliveryDate": "2024-01-22",
+  "newDeliveryDate": "2024-01-17",
+  "cutoffDeadline": "2024-01-15T15:00:00-08:00",
+  "priceDelta": {
+    "previousShippingCharge": 0.00,
+    "newShippingCharge": 12.99,
+    "delta": 12.99,
+    "direction": "CHARGE"
+  },
+  "paymentAdjustment": {
+    "amount": 12.99,
+    "status": "AUTHORIZED",
+    "willCaptureAt": "shipment_confirmation"
+  },
+  "tracking": {
+    "carrier": "UPS",
+    "serviceLevel": "2DA",
+    "estimatedDelivery": "2024-01-17"
+  }
+}
+
+/* 409 Conflict — cutoff missed */
+{
+  "code": "CUTOFF_MISSED",
+  "message": "The cutoff for next-day delivery has passed for today.",
+  "requestedService": "UPS_NDA",
+  "cutoffWasAt": "2024-01-15T14:00:00-08:00",
+  "nextAvailableOption": {
+    "code": "UPS_NDA",
+    "orderByTime": "2024-01-16T14:00:00-08:00",
+    "deliveryDate": "2024-01-17"
+  },
+  "availableNow": [
+    { "code": "UPS_2DA", "deliveryDate": "2024-01-17", "delta": 12.99 }
+  ]
+}</code></pre>
+
+        <h3>Cross-Scenario: Payment Delta Reference — All Four Modifications</h3>
+        <div class="callout callout-success">
+          <div class="callout-title">✅ Unified Payment Delta Pattern Across All Scenarios</div>
+          Every modification that causes a price change follows the same three-step pattern in the cloud-native architecture: (1) <strong>Pricing Service computes delta</strong>, (2) <strong>Payment Service authorizes/voids delta atomically</strong> using idempotency key — only then (3) <strong>Order Service commits the change</strong>. If step 2 fails, the order change is not committed. No partial states are possible.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Modification</th><th>Price Component Changed</th><th>Delta Direction</th><th>Payment Action</th><th>Timing</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Cancel (full)</strong></td><td>All charges</td><td class="rec">Refund 100%</td><td>VOID (pre-capture) / REFUND (post-capture)</td><td>Synchronous within saga</td></tr>
+              <tr><td><strong>Cancel (partial line)</strong></td><td>Line amount ± promo adjustment</td><td class="rec">Partial refund</td><td>Partial VOID or partial REFUND</td><td>Synchronous within saga</td></tr>
+              <tr><td><strong>Address — same zone</strong></td><td>Tax delta only (state change)</td><td class="warn-cell">Charge or refund</td><td>Incremental auth or partial void</td><td>Synchronous (small delta)</td></tr>
+              <tr><td><strong>Address — zone change</strong></td><td>Shipping rate + tax</td><td class="warn-cell">Usually charge</td><td>Incremental auth on existing payment method</td><td>Synchronous within saga</td></tr>
+              <tr><td><strong>BOPIS → Ship</strong></td><td>Shipping added + BOPIS promo removed</td><td class="danger-cell">Charge</td><td>New incremental auth</td><td>Sync before commit</td></tr>
+              <tr><td><strong>Ship → BOPIS</strong></td><td>Shipping removed + BOPIS promo added</td><td class="rec">Refund</td><td>Partial void or refund</td><td>Sync before commit</td></tr>
+              <tr><td><strong>SLA upgrade</strong></td><td>Shipping delta (higher tier)</td><td class="danger-cell">Charge</td><td>Incremental auth</td><td>Sync — blocks if payment fails</td></tr>
+              <tr><td><strong>SLA downgrade</strong></td><td>Shipping delta (lower tier)</td><td class="rec">Refund</td><td>Partial void or partial refund</td><td>Sync before new label issued</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S18: Tech Stack -->
+    <section class="section" id="s18">
+      <div class="section-header">
+        <span class="section-num">18</span>
+        <h2>Tech Stack — Build vs. Buy Deep Dive</h2>
+      </div>
+      <div class="content">
+        <h3>OMS Core — Build vs. Buy vs. SaaS</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Most Important Decision in the Migration</div>
+          The most critical decision is whether to <strong>build your own OMS</strong> (custom microservices), <strong>buy a modern SaaS OMS</strong> (Fluent Commerce, Fabric, Kibo), or take a <strong>hybrid approach</strong> (buy sourcing/fulfillment, build order lifecycle). Get this wrong and you'll spend 3–5 years rebuilding what Sterling already did — just in Node.js.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Build Custom Microservices</th><th>Fluent Commerce (SaaS OMS)</th><th>Fabric OMS (Headless)</th><th>Custom + Fluent Hybrid</th></tr></thead>
+            <tbody>
+              <tr><td>Time to launch</td><td class="danger-cell">18–36 months</td><td class="rec">3–6 months</td><td class="rec">4–8 months</td><td class="warn-cell">12–18 months</td></tr>
+              <tr><td>Sourcing / fulfillment rules</td><td class="warn-cell">Build from scratch</td><td class="rec">Configurable, proven at scale</td><td class="warn-cell">Basic rules, limited customization</td><td class="rec">Fluent handles sourcing; custom handles lifecycle</td></tr>
+              <tr><td>Modification flexibility</td><td class="rec">Unlimited</td><td class="warn-cell">API-driven but bounded by platform</td><td class="warn-cell">Limited</td><td class="rec">High</td></tr>
+              <tr><td>Engineering ownership</td><td class="danger-cell">Very high (8–15 engineers)</td><td class="rec">Low (2–3 integration engineers)</td><td class="warn-cell">Medium</td><td class="warn-cell">Medium (4–6 engineers)</td></tr>
+              <tr><td>TCO 3-yr estimate</td><td class="warn-cell">$3–6M (eng + infra)</td><td class="warn-cell">$800K–$2M (licensing + infra)</td><td class="warn-cell">$600K–$1.5M</td><td class="warn-cell">$2–4M</td></tr>
+              <tr><td>Vendor lock-in</td><td class="rec">None</td><td class="danger-cell">High</td><td class="danger-cell">High</td><td class="warn-cell">Partial</td></tr>
+              <tr><td>Best for</td><td>Large retailers with unique fulfillment logic + platform team</td><td>Mid-market retailers, complex omnichannel</td><td>D2C brands, simpler order flows</td><td>Enterprises with custom lifecycle + complex sourcing</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Per-Service Technology Recommendations</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Service</th><th>Language</th><th>Primary DB</th><th>Cache</th><th>Key Rationale</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Order Service</strong></td><td><code>Java Spring Boot</code></td><td>Aurora PostgreSQL (ACID, complex queries, CQRS split)</td><td>Redis (order state cache)</td><td>ACID guarantees essential for state machine; Spring's mature event sourcing ecosystem</td></tr>
+              <tr><td><strong>Inventory Service</strong></td><td><code>Go</code></td><td>PostgreSQL + TimescaleDB for time-series ATP</td><td>Redis Sorted Sets (ATP per node)</td><td>Go's concurrency model handles high-throughput reservation contention; Redis sorted sets perfect for ATP ranking</td></tr>
+              <tr><td><strong>Pricing Service</strong></td><td><code>Node.js</code></td><td>PostgreSQL (price rules)</td><td>Redis (shipping rate cache, 5-min TTL)</td><td>Pricing is read-heavy; Node.js + Redis cache handles 50K RPS with <5ms latency</td></tr>
+              <tr><td><strong>Payment Service</strong></td><td><code>Java Spring Boot</code></td><td>PostgreSQL (payment records + idempotency store)</td><td>Redis (idempotency key lookup)</td><td>Java Spring's transactional guarantees; battle-tested for financial operations</td></tr>
+              <tr><td><strong>Fulfillment Service</strong></td><td><code>Java Spring Boot</code></td><td>PostgreSQL (sourcing rules + node DB)</td><td>Redis (node ATP snapshot)</td><td>Complex scoring algorithms benefit from JVM; or delegate to Fluent Commerce via API</td></tr>
+              <tr><td><strong>Shipment Service</strong></td><td><code>Node.js</code></td><td>PostgreSQL (shipment records)</td><td>-</td><td>I/O-bound (carrier API calls); Node.js async model ideal</td></tr>
+              <tr><td><strong>Notification Service</strong></td><td><code>Node.js</code></td><td>-</td><td>-</td><td>Pure Kafka consumer; stateless; Node.js lightweight</td></tr>
+              <tr><td><strong>Order History</strong></td><td><code>Node.js</code></td><td>OpenSearch (full-text search, timeline)</td><td>-</td><td>Read model only; Elasticsearch query expressiveness for order search</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Event Backbone — Kafka Topic Design</h3>
+        <pre><code>/* Kafka Topic Schema — OMS Domain Events */
+
+Topic: order.commands
+  Partitioning: by order_id (co-locate all commands for same order)
+  Messages: CancelOrderCommand, ChangeAddressCommand, ChangeSLACommand, ChangeFulfillmentCommand
+  Retention: 7 days
+
+Topic: order.events  
+  Partitioning: by order_id
+  Messages: OrderCreated, OrderCancelled, OrderAddressChanged, 
+            OrderFulfillmentSwitched, OrderSLAChanged, OrderModificationFailed
+  Retention: 30 days (replay for analytics)
+
+Topic: inventory.events
+  Partitioning: by item_id + node_id (compound)
+  Messages: InventoryReserved, InventoryReleased, InventoryATPUpdated
+  Retention: 7 days
+
+Topic: payment.events
+  Partitioning: by order_id
+  Messages: PaymentAuthorized, PaymentCaptured, PaymentVoided, PaymentRefunded, PaymentFailed
+  Retention: 90 days (compliance)
+
+Topic: fulfillment.events
+  Partitioning: by order_id
+  Messages: OrderSourced, NodeAssigned, OrderSentToNode, OrderAtNode
+  Retention: 30 days
+
+Topic: shipment.events
+  Partitioning: by shipment_id
+  Messages: ShipmentCreated, ShipmentLabelGenerated, ShipmentShipped, ShipmentDelivered
+  Retention: 30 days</code></pre>
+
+        <h3>Saga Pattern for Modifications — Orchestration vs. Choreography</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Choreography (Event-Driven)</th><th>Orchestration (Saga Orchestrator)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>How it works</strong></td><td>Each service reacts to events; no central coordinator</td><td>Order Service is saga orchestrator; tells each service what to do</td></tr>
+              <tr><td><strong>Best for</strong></td><td>Simple linear flows (cancel, SLA change)</td><td>Complex branching flows (fulfillment switch with re-source + payment + re-promise)</td></tr>
+              <tr><td><strong>Failure handling</strong></td><td>Each service publishes failure event; compensating consumers react</td><td>Orchestrator tracks state; explicitly triggers compensations</td></tr>
+              <tr><td><strong>Recommendation</strong></td><td class="rec">Cancel, Address-phone-only, SLA downgrade</td><td class="rec">Fulfillment switch, Address + zone change + re-source, Partial cancel with promo recalc</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S19: Migration Gantt -->
+    <section class="section" id="s19">
+      <div class="section-header">
+        <span class="section-num">19</span>
+        <h2>Migration Timeline — Gantt View</h2>
+      </div>
+      <div class="content">
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 13 — Sterling to Cloud-Native OMS Migration Gantt (18-Month Plan)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+gantt
+    title Sterling OMS Migration — 18 Month Plan
+    dateFormat  YYYY-MM
+    axisFormat  %b %Y
+
+    section Phase 0 — Discovery
+    Dependency mapping & domain analysis     :done,    p0a, 2024-01, 2024-02
+    Risk register + team formation           :done,    p0b, 2024-01, 2024-02
+    Kafka + Debezium CDC setup               :done,    p0c, 2024-02, 2024-03
+
+    section Wave 1 — Read Services
+    API Gateway deployment (Kong)            :done,    w1a, 2024-02, 2024-03
+    Notification Service (replace MQ agent)  :done,    w1b, 2024-03, 2024-04
+    Order History Service (Elasticsearch)    :done,    w1c, 2024-03, 2024-05
+    Sterling Oracle CDC → Kafka live         :done,    w1d, 2024-03, 2024-04
+
+    section Wave 2 — Pricing + Payments
+    Pricing Service (shadow mode)            :active,  w2a, 2024-04, 2024-06
+    Pricing Service (live — feature flagged) :         w2b, 2024-06, 2024-07
+    Shipment / Carrier Service               :active,  w2c, 2024-05, 2024-07
+    Payment Service (PSP abstraction)        :         w2d, 2024-05, 2024-08
+
+    section Wave 3 — Inventory
+    Inventory Service build                  :         w3a, 2024-06, 2024-09
+    Dual-write period (Oracle + PostgreSQL)  :crit,    w3b, 2024-09, 2024-11
+    Read cutover to new Inventory Service    :crit,    w3c, 2024-11, 2024-12
+
+    section Wave 4 — Order Core + Fulfillment
+    Order Service build (state machine)      :         w4a, 2024-08, 2024-12
+    Fulfillment / Sourcing Service           :         w4b, 2024-10, 2025-02
+    Order dual-write period                  :crit,    w4c, 2025-01, 2025-03
+    Sterling decommission prep               :crit,    w4d, 2025-03, 2025-04
+    Sterling decommission (license terminated):milestone, w4e, 2025-06, 1d
+
+    section Ongoing
+    Performance + chaos testing              :         ong1, 2024-04, 2025-06
+    Data reconciliation                      :         ong2, 2024-09, 2025-04
+    Observability + alerting build-out       :         ong3, 2024-03, 2025-06
+          </div>
+        </div>
+
+        <h3>Stage Gate Decision Points</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Gate</th><th>Month</th><th>Pass Criteria</th><th>Rollback if Failed</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-blue">G0</span></td><td>M2</td><td>Dependency map complete, Kafka CDC live, all domain owners assigned</td><td>N/A — no production traffic affected</td></tr>
+              <tr><td><span class="badge badge-green">G1</span></td><td>M3</td><td>API Gateway in production, zero latency regression, notification service live</td><td>Remove gateway, direct traffic to Sterling (< 5 min)</td></tr>
+              <tr><td><span class="badge badge-yellow">G2</span></td><td>M7</td><td>Pricing shadow mode: < 0.01% discrepancy over 4 weeks; Payment PSP adapter: 100% transaction match</td><td>Feature flag to 0%, all traffic to Sterling pricing</td></tr>
+              <tr><td><span class="badge badge-yellow">G3</span></td><td>M11</td><td>Inventory dual-write: zero ATP discrepancy for 14 consecutive days; read cutover error rate unchanged</td><td>Stop dual-write, revert reads to Sterling Oracle (< 15 min)</td></tr>
+              <tr><td><span class="badge badge-red">G4</span></td><td>M16</td><td>Order Service handles 100% of write traffic for 2 weeks; Sterling Oracle is read-only and matches</td><td>Flip feature flags back; Sterling Oracle accepts writes</td></tr>
+              <tr><td><span class="badge badge-red">G5</span></td><td>M18</td><td>30 days clean on full cloud-native stack; IBM license formally terminated</td><td>Emergency only: contract extension, point-in-time restore</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S20: Risk Register -->
+    <section class="section" id="s20">
+      <div class="section-header">
+        <span class="section-num">20</span>
+        <h2>Migration Risk Register</h2>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Risk</th><th>Probability</th><th>Impact</th><th>Mitigation</th><th>Owner</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>ATP double-sell during inventory cutover</strong><br><small style="color:var(--text-muted)">Dual-write window creates dual demand counting</small></td>
+                <td><span class="badge badge-red">High</span></td>
+                <td><span class="badge badge-red">Critical</span></td>
+                <td>Hard lock via distributed mutex (Redis SETNX) during reservation; nightly reconciliation; 24h kill switch</td>
+                <td>Inventory Team</td>
+              </tr>
+              <tr>
+                <td><strong>Payment saga partial failure</strong><br><small style="color:var(--text-muted)">Inventory released but refund fails → money + inventory inconsistency</small></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td><span class="badge badge-red">Critical</span></td>
+                <td>Outbox pattern for payment events; compensating transaction retries for 24h; dead letter queue + alerting</td>
+                <td>Payment Team</td>
+              </tr>
+              <tr>
+                <td><strong>Fulfillment sourcing rule parity</strong><br><small style="color:var(--text-muted)">New sourcing engine selects different nodes than Sterling did</small></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td><span class="badge badge-yellow">High</span></td>
+                <td>Shadow mode sourcing for 8 weeks before cutover; log all divergent node selections; business sign-off on rule parity</td>
+                <td>Fulfillment Team</td>
+              </tr>
+              <tr>
+                <td><strong>Promotion recalculation divergence</strong><br><small style="color:var(--text-muted)">New pricing engine computes different promo stacking vs. Sterling</small></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td><span class="badge badge-yellow">High</span></td>
+                <td>Full regression test suite of 500+ promo scenarios; shadow pricing mode for 4 weeks</td>
+                <td>Pricing Team</td>
+              </tr>
+              <tr>
+                <td><strong>Talent gap — Sterling consultants leave mid-migration</strong><br><small style="color:var(--text-muted)">Domain knowledge loss during transition</small></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td><span class="badge badge-yellow">High</span></td>
+                <td>Document all Sterling customizations in Confluence before Wave 1; retain 1 Sterling specialist for 12 months overlap</td>
+                <td>Engineering Manager</td>
+              </tr>
+              <tr>
+                <td><strong>IBM license extension cost overrun</strong><br><small style="color:var(--text-muted)">Migration slips past license renewal date</small></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td>Negotiate 2-year IBM extension at start of migration; plan migration to complete within Year 1.5 with buffer</td>
+                <td>VP Engineering</td>
+              </tr>
+              <tr>
+                <td><strong>Kafka CDC lag during peak traffic</strong><br><small style="color:var(--text-muted)">Sterling Oracle CDC falls behind during flash sales</small></td>
+                <td><span class="badge badge-red">High (seasonal)</span></td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td>CDC consumer lag alerting; autoscale Debezium connectors; avoid major migrations during peak season (Black Friday)</td>
+                <td>Data Team</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S21: Migration ADRs -->
+    <section class="section" id="s21">
+      <div class="section-header">
+        <span class="section-num">21</span>
+        <h2>Migration Architecture Decision Records</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-M01 — Strangler Fig over Big Bang Rewrite</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS processes live order modifications 24/7. A big-bang cutover to a new system would require a maintenance window of days and risks catastrophic failure with no proven rollback path for an order management system handling real revenue.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Strangler Fig with an API Gateway routing proxy. Sterling remains the system of record for Waves 1–3. New services are introduced incrementally via feature flags. Each domain can roll back independently in under 2 minutes by flipping a feature flag. Sterling is decommissioned only after all domains are live and stable for 30 days.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Zero-downtime migration; incremental risk; independent domain rollback; real traffic validation on each service before full cutover. <strong>Cons:</strong> 12–18 month migration timeline vs. 6 months for big-bang; dual system maintenance cost during transition; engineers must understand both Sterling and new services simultaneously.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Big Bang Rewrite:</strong> 6-month build + cutover weekend — rejected due to catastrophic rollback risk and promotion/pricing regression risk on live orders. <strong>Lift-and-shift v9.3 to containers:</strong> Sterling 9.3 is not container-native (EAR-based WebSphere); containerization only available in v10+; rejected as it preserves all architectural debt.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-M02 — CQRS + Event Sourcing for Order Service</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling's order modification history is stored in <code>YFS_ORDER_AUDIT</code> as snapshots. There's no replay capability. The new Order Service needs a complete, queryable modification history, support for event replay during migration, and audit compliance for financial regulations.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement CQRS on the Order Service: <strong>Write side</strong> = command handlers that produce events stored in a Kafka-backed event log (with PostgreSQL event store for durability). <strong>Read side</strong> = projections materialized into PostgreSQL (operational queries) and Elasticsearch (historical search). Every modification is an immutable event: <code>OrderCancelled</code>, <code>OrderAddressChanged</code>, etc.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Complete audit trail; event replay for migration verification; temporal queries ("what was the order state at time T?"); decoupled read/write scaling. <strong>Cons:</strong> Eventual consistency on read models (acceptable for order history); engineering complexity (2x vs. simple CRUD); team needs CQRS/ES training runway.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Simple CRUD with audit log table:</strong> Rejected — loses modification intent semantics; can't replay events to rebuild read models; doesn't support the migration verification requirement.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-M03 — Debezium CDC over Custom Dual-Write Application Logic</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>During migration, changes in Sterling's Oracle DB must be propagated to new services' PostgreSQL databases and Kafka. Two options: (1) modify Sterling application code to dual-write to both DBs, or (2) use Debezium CDC to tap Oracle's redo log.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Debezium CDC (Oracle connector) reading from Oracle redo log → Kafka topics. This requires zero changes to Sterling application code, captures every DB change including those from Sterling's internal agents, and provides a reliable event stream even if the application layer crashes mid-transaction. Debezium's Oracle connector requires Oracle LogMiner configuration.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> No Sterling code changes; captures ALL mutations (including agent-driven changes not triggered by APIs); low latency (sub-second); proven at scale. <strong>Cons:</strong> Oracle LogMiner licensing implications — verify with Oracle; Debezium Oracle connector has schema change complexity; requires DBA involvement for LogMiner setup.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Application-level dual-write in Sterling Java user exits:</strong> Rejected — requires Sterling code changes; only captures API-driven mutations, misses agent-driven mutations; hard to maintain during migration.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-M04 — Inventory Service: Go over Java Spring Boot</span>
+            <span class="badge badge-blue">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>The Inventory Service must handle concurrent ATP reservation requests at high throughput during flash sales (up to 50K RPS). Reservation contention — multiple threads competing to reserve the last unit at a node — is the critical performance bottleneck. Language choice matters for this service more than any other.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Go (Golang) for the Inventory Service. Go's goroutine model handles 50K+ concurrent connections with minimal memory overhead vs. JVM thread pools. Go's native mutex primitives map cleanly to reservation lock patterns. Binary size and startup time are also better for horizontal autoscaling during peak traffic bursts.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> 5–10x better concurrency handling vs. JVM thread-per-request; lower memory footprint (50MB vs. 500MB JVM heap); fast startup (autoscale in <2s). <strong>Cons:</strong> Most retail engineering teams are Java/Node.js dominant — Go is a hiring and training investment; Go's ORM ecosystem is less mature than Spring Data JPA.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Java Spring Boot:</strong> Adequate but JVM thread pools become a bottleneck at 20K+ concurrent reservations without reactive programming. <strong>Node.js:</strong> Single-threaded — cannot use multi-core CPU for CPU-bound ATP calculations.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S22: Migration Cheat Sheet -->
+    <section class="section" id="s22">
+      <div class="section-header">
+        <span class="section-num">22</span>
+        <h2>Migration Interview Cheat Sheet — Director Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top Questions Before Starting Migration</h4>
+            <ul>
+              <li>What is the migration trigger — IBM license renewal date, performance cliff, or developer velocity problem? The answer shapes urgency and risk tolerance.</li>
+              <li>Does the business have complex omnichannel fulfillment rules (BOPIS, SFS, curbside)? If yes, strongly consider Fluent Commerce over a full custom build.</li>
+              <li>What's the team size? A team of 5 should not attempt a full custom OMS — buy a SaaS OMS and customize APIs.</li>
+              <li>What peak traffic does the business need to handle? If it's <5K RPS and no flash sales, Sterling's limits aren't the real problem.</li>
+              <li>Is there a 2-year runway or a 6-month runway? This determines whether Strangler Fig or a parallel-run big-bang is more realistic.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚡ Key Trade-offs to Verbalize</h4>
+            <ul>
+              <li><strong>Strangler Fig timeline vs. big bang risk:</strong> 18 months of dual-system cost vs. catastrophic weekend cutover risk</li>
+              <li><strong>Build vs. Buy sourcing engine:</strong> Sterling's sourcing engine took IBM 20 years to build — rebuild that vs. license Fluent Commerce</li>
+              <li><strong>Eventual consistency in sagas:</strong> Cloud-native modifications are async sagas; Sterling was synchronous. CX implications of "pending" states</li>
+              <li><strong>CQRS complexity vs. audit benefit:</strong> Event sourcing on Order Service adds engineering overhead but gives migration verification and compliance audit for free</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔍 Hardest Technical Problems</h4>
+            <ul>
+              <li><strong>Promotion parity:</strong> Sterling's promotion engine encodes years of business rules in Condition Trees and Java user exits. Getting 100% pricing parity in a new engine is the #1 migration defect source.</li>
+              <li><strong>Inventory ATP accuracy during dual-write:</strong> The 4-week window where both Oracle and PostgreSQL are accepting reservations requires a bulletproof reconciliation script running every hour, not nightly.</li>
+              <li><strong>Event ordering guarantees:</strong> Kafka ordering within a partition but cross-service sagas can arrive out of order — use event sequencing + idempotent consumers.</li>
+              <li><strong>Historical order data:</strong> 5+ years of orders in Sterling Oracle — you cannot migrate all to PostgreSQL; archive to S3 Parquet and provide a separate historical query service.</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>💡 Director-Level "Wow" Signals</h4>
+            <ul>
+              <li><strong>Seasonal awareness:</strong> "I'd schedule the inventory cutover for February — after holiday peak and before spring sale season. The Gantt should have hard migration freezes around Black Friday, Cyber Monday, and Q4 peak."</li>
+              <li><strong>Dual IBM strategy:</strong> "Before signing the migration SOW, I'd negotiate a 2-year IBM license bridge at reduced rate. This removes the clock pressure and lets us migrate on quality milestones, not artificial deadlines."</li>
+              <li><strong>Not everything needs to move:</strong> "IBM Sterling handles carrier integrations with 50+ carrier adapters out of the box. I'd evaluate whether to keep a thin Sterling Carrier Broker as a stable integration layer while migrating everything else — avoiding rebuilding 50 carrier integrations."</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success" style="margin-top:24px;">
+          <div class="callout-title">✅ Migration Decision Framework — One-Page Summary</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:12px;">
+            <div>
+              <strong style="font-size:13px;color:var(--accent);">If team &lt; 8 engineers</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">→ Buy SaaS OMS (Fluent Commerce or Fabric). Customize via their APIs. Don't rebuild Sterling from scratch.</p>
+            </div>
+            <div>
+              <strong style="font-size:13px;color:var(--accent);">If complex sourcing rules</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">→ Hybrid: Fluent Commerce for sourcing/fulfillment + custom Order Service for lifecycle + Modification APIs. Best ROI.</p>
+            </div>
+            <div>
+              <strong style="font-size:13px;color:var(--accent);">If full platform team (15+)</strong>
+              <p style="font-size:12px;margin:4px 0 0;color:#cdd9e5;">→ Full custom microservices with Strangler Fig. 18-month runway. CQRS + Event Sourcing on Order Service. Kafka backbone.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif',
+      fontSize: '13px'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function scrollToSec(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (event && event.target) {
+      const navItem = event.target.closest('.nav-item');
+      if (navItem) navItem.classList.add('active');
+    }
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

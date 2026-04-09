@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBM Sterling OMS — Inventory Availability & Migration to Modern Stack</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --bg-card: #161b22; --bg-hover: #1c2128;
+      --border: #30363d; --text: #e6edf3; --text-muted: #8b949e;
+      --accent: #58a6ff; --accent2: #3fb950; --warn: #d29922;
+      --danger: #f85149; --tag-bg: #1f6feb33;
+      --mono: 'JetBrains Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; min-width: 260px; background: var(--bg-card);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-brand { padding: 0 20px 16px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .sidebar-brand .product { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 4px; }
+    .sidebar-brand .title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .nav-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 12px 20px 4px; }
+    .nav-item { display: block; padding: 6px 20px; color: var(--text-muted); text-decoration: none; font-size: 12.5px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer; }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 10px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #23863655; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 19px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success{ background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 11px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    td.warn-cell { color: var(--warn); }
+    td.danger-cell { color: var(--danger); }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; gap: 12px; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 13.5px; flex: 1; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; color: #cdd9e5; }
+    pre, code { font-family: var(--mono); font-size: 12.5px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 15.5px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 13px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .content em { color: var(--warn); font-style: normal; font-weight: 500; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .demand-tag { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 4px; margin: 2px; }
+    .dt-promised { background: #23863633; color: var(--accent2); border: 1px solid #2ea04355; }
+    .dt-uncommitted { background: #9e670033; color: var(--warn); border: 1px solid #9e670055; }
+    .dt-released { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb55; }
+    .supply-tag { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 4px; margin: 2px; }
+    .st-onhand { background: #23863633; color: var(--accent2); border: 1px solid #2ea04355; }
+    .st-future { background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb44; }
+    .st-vendor { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .flow-step { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .flow-step:last-child { border-bottom: none; }
+    .flow-num { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; background: var(--accent); color: #000; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); }
+    .flow-content { flex: 1; }
+    .flow-content strong { display: block; font-size: 14px; color: var(--text); margin-bottom: 2px; }
+    .flow-content span { font-size: 13px; color: #cdd9e5; }
+    .formula-box { background: #010409; border: 1px solid var(--accent); border-radius: 8px; padding: 20px 24px; text-align: center; margin: 20px 0; }
+    .formula { font-family: var(--mono); font-size: 18px; color: var(--accent2); letter-spacing: 0.05em; }
+    .formula-sub { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 24px 16px; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .sidebar { display: none; }
+      .main { padding: 20px; max-width: 100%; }
+      .adr-body { display: block !important; }
+    }
+    /* Migration sections */
+    .tab-group { margin: 20px 0; }
+    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 0; flex-wrap: wrap; }
+    .tab-btn { font-family: var(--mono); font-size: 12px; padding: 8px 16px; background: none; border: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover { color: var(--text); }
+    .tab-panel { display: none; background: var(--bg-card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 20px 24px; }
+    .tab-panel.active { display: block; }
+    .phase-badge { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; margin-bottom: 10px; font-weight: 700; letter-spacing: 0.06em; }
+    .phase-0 { background: #30363d55; color: var(--text-muted); border: 1px solid var(--border); }
+    .phase-1 { background: #9e670022; color: var(--warn); border: 1px solid #9e670055; }
+    .phase-2 { background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb44; }
+    .phase-3 { background: #23863622; color: var(--accent2); border: 1px solid #2ea04344; }
+    .phase-4 { background: #23863655; color: var(--accent2); border: 1px solid var(--accent2); }
+    .service-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+    .service-card .svc-name { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+    .service-card .svc-maps { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+    .service-card p { font-size: 13px; color: #cdd9e5; margin: 0; }
+    .five-col { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 16px 0; }
+    .four-col { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    @media(max-width:900px){ .five-col,.four-col{ grid-template-columns: 1fr 1fr; } }
+    .risk-row-high td:first-child { border-left: 3px solid var(--danger); }
+    .risk-row-med td:first-child { border-left: 3px solid var(--warn); }
+    .risk-row-low td:first-child { border-left: 3px solid var(--accent2); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="product">IBM Sterling OMS 9.3 + Migration</div>
+      <div class="title">Inventory Availability & Modern Stack</div>
+    </div>
+    <div class="nav-section">Architecture</div>
+    <a class="nav-item active" onclick="scrollToSection('s1')">01 · GIV Architecture Overview</a>
+    <a class="nav-item" onclick="scrollToSection('s2')">02 · The ATP Formula</a>
+    <div class="nav-section">Supply Side</div>
+    <a class="nav-item" onclick="scrollToSection('s3')">03 · Supply Types & Channels</a>
+    <a class="nav-item" onclick="scrollToSection('s4')">04 · Store / Warehouse / Vendor</a>
+    <a class="nav-item" onclick="scrollToSection('s5')">05 · Distribution Groups & Nodes</a>
+    <div class="nav-section">Demand Side</div>
+    <a class="nav-item" onclick="scrollToSection('s6')">06 · Demand Types Explained</a>
+    <a class="nav-item" onclick="scrollToSection('s7')">07 · Order Lifecycle → Demand States</a>
+    <a class="nav-item" onclick="scrollToSection('s8')">08 · Reservation Flow</a>
+    <div class="nav-section">Availability Engine</div>
+    <a class="nav-item" onclick="scrollToSection('s9')">09 · Inventory Considerations Matrix</a>
+    <a class="nav-item" onclick="scrollToSection('s10')">10 · RTAM — Real-Time Monitor</a>
+    <a class="nav-item" onclick="scrollToSection('s11')">11 · Key APIs</a>
+    <div class="nav-section">Advanced</div>
+    <a class="nav-item" onclick="scrollToSection('s12')">12 · Hot SKU & Performance</a>
+    <a class="nav-item" onclick="scrollToSection('s13')">13 · Safety Factor & Node Control</a>
+    <a class="nav-item" onclick="scrollToSection('s14')">14 · Key DB Tables</a>
+    <a class="nav-item" onclick="scrollToSection('s15')">15 · Interview Cheat Sheet</a>
+    <div class="nav-section" style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;color:var(--accent2);">Migration to Modern Stack</div>
+    <a class="nav-item" onclick="scrollToSection('s16')">16 · Why Migrate from Sterling</a>
+    <a class="nav-item" onclick="scrollToSection('s17')">17 · Modern Inventory Architecture</a>
+    <a class="nav-item" onclick="scrollToSection('s18')">18 · Service Decomposition Map</a>
+    <a class="nav-item" onclick="scrollToSection('s19')">19 · Transition Architecture</a>
+    <a class="nav-item" onclick="scrollToSection('s20')">20 · 4-Phase Migration Plan</a>
+    <a class="nav-item" onclick="scrollToSection('s21')">21 · Data Migration Strategy</a>
+    <a class="nav-item" onclick="scrollToSection('s22')">22 · Tech Stack — Build vs Buy</a>
+    <a class="nav-item" onclick="scrollToSection('s23')">23 · ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="scrollToSection('s24')">24 · End-State Target Architecture</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>IBM Sterling OMS <span>Inventory Availability</span> — Deep Dive</h1>
+      <p style="color:var(--text-muted);font-size:14px;">How GIV calculates ATP across nodes, channels, supply types, and demand states — plus complete migration architecture to a modern cloud-native stack</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Sterling OMS 9.3</span>
+        <span class="badge badge-green">GIV Module</span>
+        <span class="badge badge-yellow">Retail / Omnichannel</span>
+        <span class="badge badge-blue">Practitioner Reference</span>
+        <span class="badge badge-green">Migration Architecture</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">Generated: <span id="gen-date"></span></span>
+      </div>
+    </header>
+
+    <!-- ===== SECTION 1 ===== -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>GIV Architecture Overview</h2>
+      </div>
+      <div class="content">
+        <p>The <strong>Global Inventory Visibility (GIV)</strong> module is the inventory brain of Sterling OMS. It maintains a real-time picture of all supply and demand across every ship node — stores, warehouses, and vendor/drop-ship locations — and provides availability answers to the order promising, scheduling, and release engines.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Core Responsibility</div>
+          GIV answers one fundamental question: <strong>"For this item, at this node (or across nodes), how much inventory can I promise to a new demand, given all existing supplies and committed demands?"</strong>
+        </div>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — GIV High-Level Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    classDef channel fill:#1c2128,stroke:#30363d,color:#e6edf3
+    classDef engine fill:#1f2d3d,stroke:#1f6feb,color:#58a6ff
+    classDef store fill:#162416,stroke:#2ea043,color:#3fb950
+    classDef data fill:#0d1117,stroke:#30363d,color:#8b949e
+    classDef api fill:#2d1f1f,stroke:#f85149,color:#ffa198
+
+    subgraph CHANNELS["Inventory Supply Channels"]
+        WH["🏭 Warehouses<br/>(Ship Nodes)"]:::store
+        ST["🏪 Stores<br/>(Ship Nodes)"]:::store
+        VN["🚚 Vendors<br/>(Drop Ship Nodes)"]:::store
+        EXT["🔗 External Systems<br/>(ERP/WMS Feed)"]:::channel
+    end
+
+    subgraph GIV["Global Inventory Visibility Engine"]
+        direction TB
+        INV_SUP["YFS_INVENTORY_SUPPLY<br/>Supply Picture"]:::data
+        INV_DEM["YFS_INVENTORY_DEMAND<br/>Demand Picture"]:::data
+        INV_ITEM["YFS_INVENTORY_ITEM<br/>Item Config"]:::data
+        ATP_RULES["ATP Rules<br/>(Inventory Considerations)"]:::engine
+        SAFETY["Safety Factor<br/>Node Controls"]:::engine
+        DG["Distribution Groups<br/>Node Aggregations"]:::engine
+    end
+
+    subgraph CONSUMERS["Availability Consumers"]
+        SCHED["Schedule Agent<br/>(Promising)"]:::api
+        RELEASE["Release Agent"]:::api
+        RTAM["RTAM Agent<br/>(Publish to Channels)"]:::api
+        EXT_CH["External Channels<br/>(Web, Store POS)"]:::api
+    end
+
+    CHANNELS --> INV_SUP
+    INV_SUP --> ATP_RULES
+    INV_DEM --> ATP_RULES
+    ATP_RULES --> SAFETY
+    SAFETY --> DG
+    DG --> CONSUMERS
+    EXT --> INV_SUP
+          </div>
+        </div>
+
+        <h3>Three Levels of Inventory Availability</h3>
+        <div class="three-col">
+          <div class="card">
+            <strong style="color:var(--accent2);">Node Level</strong>
+            <p style="font-size:13px;margin-top:8px;">ATP at a specific ship node (a single store or warehouse). Most granular. Used during scheduling and release.</p>
+            <code>getATP(shipNode=NODE1)</code>
+          </div>
+          <div class="card">
+            <strong style="color:var(--warn);">Distribution Group Level</strong>
+            <p style="font-size:13px;margin-top:8px;">Aggregate ATP across a defined group of nodes (e.g., all Northeast warehouses). Used for regional promising.</p>
+            <code>getATP(distributionGroup=DG1)</code>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent);">Enterprise Level</strong>
+            <p style="font-size:13px;margin-top:8px;">Total ATP across all nodes for an item under an enterprise. Broadest view, used for catalog-level availability displays.</p>
+            <code>getATP(enterpriseCode=ENT1)</code>
+          </div>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Key Gotcha</div>
+          <strong>Node-level sum ≠ Enterprise-level ATP.</strong> Unassigned demands (OPEN_ORDER with no shipNode stamped) are subtracted at enterprise level but NOT at node level — so summing node ATPs always overstates enterprise availability. Always use <code>getATP</code> for enterprise availability, not <code>getSupplyDetails</code> sum.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 2 ===== -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>The ATP Formula</h2>
+      </div>
+      <div class="content">
+        <p><strong>Available-To-Promise (ATP)</strong> is the quantity of an item available to commit to a new incoming demand, after accounting for all existing supplies and demands within a configured time horizon.</p>
+
+        <div class="formula-box">
+          <div class="formula">ATP = Total Qualifying Supply − Total Qualifying Demand</div>
+          <div class="formula-sub">Evaluated across a configured date range, per the Inventory Considerations matrix in GIV</div>
+        </div>
+
+        <h3>What "Qualifying" Means</h3>
+        <p>Not every supply type and not every demand type enters the ATP formula. The GIV <strong>Inventory Considerations</strong> screen maps which supply types and which demand types are considered together, depending on the <em>incoming demand type being evaluated</em>.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Classic Example</div>
+          When the input <code>DemandType = OPEN_ORDER</code> (a new web order), the system considers: <strong>Onhand + Firm Plan + PO + PO Placed + PO Released + PO Scheduled</strong> supplies, and ALL existing demands. When evaluating <code>DemandType = ALLOCATED</code> (for release), only <strong>Onhand + WIP</strong> supplies are considered.
+        </div>
+
+        <h3>ATP Calculation Steps</h3>
+        <div class="card">
+          <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-content">
+              <strong>Determine Evaluation Horizon</strong>
+              <span>The date range is derived from lead time configuration + requested ship date. Supplies and demands outside this window are excluded.</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-content">
+              <strong>Collect Qualifying Supplies</strong>
+              <span>Look up <code>YFS_INVENTORY_SUPPLY</code> records for the item-node(s) filtered by supply types configured in Inventory Considerations for the incoming DemandType.</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-content">
+              <strong>Collect All Demands</strong>
+              <span>All existing demands from <code>YFS_INVENTORY_DEMAND</code> are summed — OPEN_ORDER, BACKORDER, RESERVED, SCHEDULED, ALLOCATED — including unassigned demands at enterprise level.</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">4</div>
+            <div class="flow-content">
+              <strong>Apply Safety Factor</strong>
+              <span>A percentage of the supply is withheld based on the safety factor configuration per item/node. This reduces the effective supply available for promising.</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">5</div>
+            <div class="flow-content">
+              <strong>Apply Expiration Logic</strong>
+              <span>Expired supply quantities (past item-level expiration time) are deducted from supply before the formula runs. Expired items are not counted.</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-num">6</div>
+            <div class="flow-content">
+              <strong>Compute ATP = Supply − Demand</strong>
+              <span>Final ATP = qualifying supply (after safety factor and expiration) minus total qualifying demands. Result can be negative (backorder condition).</span>
+            </div>
+          </div>
+        </div>
+
+        <h3>ATP vs getSupplyDetails</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>getATP</th><th>getSupplyDetails</th></tr></thead>
+            <tbody>
+              <tr><td>Scope</td><td>Enterprise, DG, or Node</td><td>Node-level only</td></tr>
+              <tr><td>Unassigned Demands</td><td class="rec">Included (ConsiderUnassignedDemands=Y)</td><td class="danger-cell">Excluded</td></tr>
+              <tr><td>Use Case</td><td>Order promising, ATP check, availability check</td><td>Node-level drill-down, sourcing evaluation</td></tr>
+              <tr><td>Accuracy</td><td class="rec">Most accurate for enterprise view</td><td class="warn-cell">May overstate vs enterprise reality</td></tr>
+              <tr><td>When to Use</td><td>All availability checks from selling channels</td><td>Internal node-level supply reporting</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 3 ===== -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Supply Types & What They Represent</h2>
+      </div>
+      <div class="content">
+        <p>Sterling OMS models inventory supply as typed records in <code>YFS_INVENTORY_SUPPLY</code>. Every unit of supply has a <strong>supply type</strong>, an <strong>availability date</strong>, and a <strong>ship node</strong>. The supply type tells GIV what kind of supply it is and when it becomes available for promising.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Supply Type</th><th>What It Represents</th><th>When Available</th><th>Availability Type</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="supply-tag st-onhand">ONHAND</span></td>
+                <td>Physical inventory currently in the node — counted, received, and ready to ship</td>
+                <td>Immediately</td>
+                <td class="rec">TRACK</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-future">OPEN_PO</span> / <span class="supply-tag st-future">PO_PLACED</span></td>
+                <td>Purchase Orders issued to suppliers but not yet received</td>
+                <td>Expected receipt date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-future">PO_RELEASED</span></td>
+                <td>PO lines released for fulfillment — supplier confirmed</td>
+                <td>Supplier commit date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-future">PO_SCHEDULED</span></td>
+                <td>PO lines with a firm delivery schedule in the system</td>
+                <td>Scheduled delivery date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-future">FIRM_PLAN</span></td>
+                <td>Planned replenishment (MRP/planning system feed) — committed</td>
+                <td>Planning horizon date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-vendor">TRANSFER_IN</span></td>
+                <td>Stock in-transit from another node (inter-store or DC-to-store transfer)</td>
+                <td>Transfer arrival date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-vendor">WIP</span></td>
+                <td>Work-in-Progress inventory (manufacturing/kitting scenarios)</td>
+                <td>Completion date</td>
+                <td class="warn-cell">Future</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-onhand">PROCUREMENT_PLACED</span></td>
+                <td>Synthetic supply created when a chained/procurement order is placed (offsets demand temporarily)</td>
+                <td>Procurement date</td>
+                <td class="rec">Virtual / Internal</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-vendor">INFINITE</span></td>
+                <td>Node configured as infinite availability — never backordered. Typically vendor drop-ship nodes or virtual nodes.</td>
+                <td>Always</td>
+                <td class="rec">INFINITE</td>
+              </tr>
+              <tr>
+                <td><span class="supply-tag st-onhand">INFO</span></td>
+                <td>Informational only — does not count toward ATP. Used for visibility without promising.</td>
+                <td>N/A (excluded)</td>
+                <td>INFO</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Availability Type vs Supply Type</div>
+          Don't confuse these. The <strong>Availability Type</strong> at the node level (TRACK / INFINITE) controls whether Sterling tracks inventory for that node at all. The <strong>Supply Type</strong> on a supply record tells GIV the nature of that specific supply unit. A TRACK node can have multiple supply types (ONHAND, PO, FIRM_PLAN, etc.).
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 4 ===== -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>Store, Warehouse & Vendor Supply Channels</h2>
+      </div>
+      <div class="content">
+        <p>Each fulfillment channel integrates with GIV differently, with distinct supply management patterns, update frequencies, and ATP considerations.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Supply Channel Integration Patterns</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart LR
+    classDef wh fill:#162416,stroke:#2ea043,color:#3fb950
+    classDef st fill:#1f2d3d,stroke:#1f6feb,color:#58a6ff
+    classDef vn fill:#2d1f1f,stroke:#d29922,color:#d29922
+    classDef giv fill:#0d1117,stroke:#30363d,color:#e6edf3
+
+    subgraph WAREHOUSE["🏭 Warehouse / DC"]
+        WH_WMS["WMS System<br/>(Manhattan/JDA)"]:::wh
+        WH_PO["Purchase Orders<br/>from ERP"]:::wh
+        WH_ADJ["Inventory Adjustments<br/>(manageInventory API)"]:::wh
+    end
+
+    subgraph STORE["🏪 Store"]
+        ST_POS["POS System<br/>(Intraday Feed)"]:::st
+        ST_CYCLE["Cycle Count<br/>Adjustments"]:::st
+        ST_RETURN["In-Store Returns<br/>(Return to Shelf)"]:::st
+    end
+
+    subgraph VENDOR["🚚 Vendor / Drop Ship"]
+        VN_EDI["EDI 846<br/>Inventory Advice"]:::vn
+        VN_INF["Infinite Node<br/>Config"]:::vn
+        VN_DROP["Drop Ship<br/>Chained Orders"]:::vn
+    end
+
+    subgraph GIV_STORE["GIV Supply Store<br/>(YFS_INVENTORY_SUPPLY)"]
+        GIV_ON["ONHAND Records"]:::giv
+        GIV_PO["PO / Future Records"]:::giv
+        GIV_ATP["ATP Calculation"]:::giv
+    end
+
+    WH_WMS -->|"Batch / real-time sync<br/>adjustInventory API"| GIV_ON
+    WH_PO -->|"createOrder (PO type)<br/>inserts PO supply"| GIV_PO
+    WH_ADJ --> GIV_ON
+    ST_POS -->|"Intraday delta feed<br/>adjustInventory"| GIV_ON
+    ST_CYCLE --> GIV_ON
+    ST_RETURN -->|"Return to shelf<br/>adds ONHAND"| GIV_ON
+    VN_EDI -->|"Scheduled batch<br/>manageInventory"| GIV_PO
+    VN_INF -->|"Node-level INFINITE<br/>config"| GIV_ATP
+    VN_DROP -->|"Procurement supply<br/>synthetic record"| GIV_PO
+    GIV_ON --> GIV_ATP
+    GIV_PO --> GIV_ATP
+          </div>
+        </div>
+
+        <h3>Warehouse Supply Management</h3>
+        <div class="card">
+          <p>Warehouses (Distribution Centers) are the primary ONHAND supply source. Key characteristics:</p>
+          <ul>
+            <li><strong>WMS Integration:</strong> WMS systems feed inventory adjustments via <code>adjustInventory</code> API or batch file. In 9.3, this is often an IBM MQ-based async feed.</li>
+            <li><strong>PO Supply:</strong> When a Purchase Order is received in ERP (SAP/Oracle), Sterling creates <code>PO_PLACED → PO_RELEASED → PO_SCHEDULED</code> supply records, advancing through states as the PO progresses.</li>
+            <li><strong>On Receipt:</strong> When the PO is received at the DC, the PO supply record is converted to ONHAND supply (net increase), and the PO supply record is decremented/deleted.</li>
+            <li><strong>Availability Type:</strong> Always <code>TRACK</code>. Every unit matters and is tracked.</li>
+          </ul>
+        </div>
+
+        <h3>Store Supply Management</h3>
+        <div class="card">
+          <p>Stores as fulfillment nodes (Ship-from-Store, BOPIS) present unique challenges:</p>
+          <ul>
+            <li><strong>Intraday Feed:</strong> Stores typically push delta inventory feeds (e.g., every 30 min or hourly) via <code>adjustInventory</code> API. Sterling does not connect to store POS in real-time in 9.3 without custom integration.</li>
+            <li><strong>Null Pick Problem:</strong> Store inventory can be inaccurate (shrinkage, theft, misplaced). When a store associate cannot find inventory ("null pick"), the <em>Dirty Node</em> mechanism is triggered via <code>manageInventoryNodeControl</code> — that node is excluded from sourcing for that item until the inventory picture is corrected.</li>
+            <li><strong>Store Returns:</strong> When an item is returned to a store and returned-to-shelf, <code>adjustInventory</code> with positive quantity adds ONHAND supply back. <em>Note: returns that go to a back-room hold may use a separate supply type or segment.</em></li>
+            <li><strong>Short Pick / Backorder:</strong> If a store cannot fulfill a released order (short pick via Sterling Store module via <code>changeShipment</code>), the demand should transition to BACKORDER. A known 9.3 issue is that the shipNode on the order line is NOT cleared, causing the BACKORDER demand to remain node-locked, leading to incorrect RTAM ATP publication.</li>
+          </ul>
+        </div>
+
+        <h3>Vendor / Drop-Ship Supply Management</h3>
+        <div class="card">
+          <p>Vendor nodes have two modes in Sterling OMS:</p>
+          <ul>
+            <li><strong>INFINITE Node:</strong> The vendor node is configured as <code>AvailabilityType = INFINITE</code>. Sterling never backorers at this node — all incoming orders are scheduled against it. ATP is always "yes". Used when vendor manages their own availability and Sterling just routes.</li>
+            <li><strong>TRACKED Vendor Node:</strong> Vendor sends inventory advice (EDI 846 or API feed), which is loaded as supply records. Sterling tracks PO and available quantities. More accurate but requires vendor cooperation.</li>
+            <li><strong>Chained PO Flow:</strong> When a sales order is sourced to a vendor node, a chained Purchase Order is created (<code>createChainedOrder</code>). Sterling inserts a <code>PROCUREMENT_PLACED</code> synthetic supply at the ship node and a corresponding demand. When the chained PO is scheduled and received, these synthetic records are cleaned up.</li>
+            <li><strong>Drop Ship Confirmation:</strong> Vendor confirms shipment via EDI 856 (ASN) or API, triggering the demand to be consumed and ONHAND decremented.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 5 ===== -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>Distribution Groups & Node Aggregations</h2>
+      </div>
+      <div class="content">
+        <p><strong>Distribution Groups (DGs)</strong> are the core aggregation mechanism in GIV. A DG is a logical grouping of ship nodes used for both sourcing rules and inventory availability aggregation.</p>
+
+        <div class="two-col">
+          <div class="card">
+            <h3 style="margin-top:0">Default Distribution Group</h3>
+            <p>Every enterprise has a Default DG. When no specific DG is configured for an item or sourcing rule, the default DG is used for RTAM monitoring and availability publication.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Node-Level Distribution Group</h3>
+            <p>A specific DG assigned to a subset of nodes. Used to create regional availability pools (e.g., all stores in Maharashtra, all East Coast DCs).</p>
+          </div>
+        </div>
+
+        <h3>How DGs Affect ATP</h3>
+        <p>When <code>getATP</code> is called with a Distribution Group, the engine:</p>
+        <ul>
+          <li>Sums ONHAND + future supplies across all nodes in the DG</li>
+          <li>Sums all assigned demands across all nodes in the DG</li>
+          <li>Handles unassigned demands at the DG level separately (the backorder distribution problem)</li>
+          <li>Applies safety factors per item-node configuration before summing</li>
+        </ul>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Backorder Demand Distribution Problem (v9.3)</div>
+          When a backorder demand has no shipNode (unassigned), RTAM must distribute it across nodes in a DG to calculate node-level ATP. In 9.3, this distribution is random — RTAM may assign the backorder demand to Store 5 for RTAM ATP calculation, even though the Schedule Agent later routes the actual order to Store 1. This causes transient ATP inaccuracies in RTAM publish. The <em>priority-based unassigned demand distribution</em> feature was added in 9.5 to address this.
+        </div>
+
+        <h3>Sourcing Rules → Distribution Group Connection</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — DG Role in Sourcing and Availability</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    ORDER["Incoming Order<br/>(OPEN_ORDER demand)"]
+    SR["Sourcing Rules Engine<br/>(getOrderFulfillmentDetails)"]
+    DG1["Distribution Group 1<br/>Northeast DCs"]
+    DG2["Distribution Group 2<br/>Northeast Stores"]
+    DG3["Distribution Group 3<br/>Vendor Nodes"]
+    ATP1["getATP @ DG1<br/>Check DC availability"]
+    ATP2["getATP @ DG2<br/>Check Store availability"]
+    ATP3["getATP @ DG3<br/>Check Vendor (Infinite)"]
+    SCHED["Schedule Agent<br/>Stamps ShipNode on Order Line"]
+    INV_DEM["YFS_INVENTORY_DEMAND<br/>OPEN_ORDER → SCHEDULED"]
+
+    ORDER --> SR
+    SR --> DG1 & DG2 & DG3
+    DG1 --> ATP1
+    DG2 --> ATP2
+    DG3 --> ATP3
+    ATP1 & ATP2 & ATP3 --> SCHED
+    SCHED --> INV_DEM
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 6 ===== -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Demand Types — Complete Reference</h2>
+      </div>
+      <div class="content">
+        <p>Demand in Sterling OMS is not a single concept. Every order line creates demand records of specific types in <code>YFS_INVENTORY_DEMAND</code>, and these types progress as the order flows through the fulfillment lifecycle. Understanding demand types is critical because <strong>ATP calculation behavior changes based on which demand types are included</strong>.</p>
+
+        <h3>Demand Type Classification</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4 style="color:var(--accent2)">Promised / Committed Demands</h4>
+            <p style="font-size:13px;">Demands already assigned to a specific ship node. These are <strong>hard reservations</strong> against node inventory.</p>
+            <div style="margin-top:8px">
+              <span class="demand-tag dt-promised">SCHEDULED</span>
+              <span class="demand-tag dt-promised">RESERVED (RSRV_ORDER)</span>
+              <span class="demand-tag dt-promised">ALLOCATED</span>
+            </div>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--warn)">Uncommitted / Unassigned Demands</h4>
+            <p style="font-size:13px;">Demands not yet assigned to any node. These are <strong>floating demands</strong> against enterprise inventory.</p>
+            <div style="margin-top:8px">
+              <span class="demand-tag dt-uncommitted">OPEN_ORDER</span>
+              <span class="demand-tag dt-uncommitted">BACKORDER</span>
+              <span class="demand-tag dt-uncommitted">FORECAST</span>
+            </div>
+          </div>
+        </div>
+
+        <h3>All Demand Types Explained</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Demand Type</th><th>When Created</th><th>Node Assignment</th><th>Promised?</th><th>Impact on ATP</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="demand-tag dt-uncommitted">OPEN_ORDER</span></td>
+                <td>Order created via <code>createOrder</code> with no shipNode or with a DG-only assignment</td>
+                <td>None (enterprise-level float)</td>
+                <td>No</td>
+                <td>Deducted at enterprise/DG ATP level. NOT deducted at node level.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">RSRV_ORDER</span> (Reserved)</td>
+                <td>Order created with explicit reservation (<code>reserveAvailableInventory</code> or createOrder with shipNode + mandatory reservation)</td>
+                <td>Specific ship node</td>
+                <td class="rec">Yes</td>
+                <td>Deducted at the specific node. OPEN_ORDER demand is removed simultaneously.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">SCHEDULED</span></td>
+                <td>Schedule Agent runs and stamps a ship node on the order line</td>
+                <td>Specific ship node</td>
+                <td class="rec">Yes</td>
+                <td>Deducted at node level. Replaces OPEN_ORDER demand for that line.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-released">ALLOCATED</span></td>
+                <td>Release Agent runs and inventory is hard-allocated for shipment</td>
+                <td>Specific ship node</td>
+                <td class="rec">Yes — Hard</td>
+                <td>Deducted at node level. Supply check uses ONHAND + WIP only (configured in Inv Considerations for ALLOCATED type).</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-uncommitted">BACKORDER</span></td>
+                <td>Scheduling fails due to insufficient supply at all nodes</td>
+                <td>None (or previous node — the 9.3 bug)</td>
+                <td>No</td>
+                <td>Deducted at enterprise ATP. Node-level behavior depends on whether shipNode was cleared after the short pick.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-uncommitted">FORECAST</span></td>
+                <td>Demand planning system feeds forecast data into Sterling</td>
+                <td>Node or DG</td>
+                <td>No</td>
+                <td>Uncommitted. Can be included/excluded in ATP via IgnoreUnpromised flag in <code>findInventory</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">TRANSFER_ORDER</span></td>
+                <td>Inter-node transfer order created (e.g., DC → Store replenishment)</td>
+                <td>Source node (deduction node)</td>
+                <td class="rec">Yes</td>
+                <td>Creates demand at source node AND supply (TRANSFER_IN) at destination node.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>IgnorePromised & IgnoreUnpromised Flags</h3>
+        <p>The <code>findInventory</code> API exposes two flags that allow callers to selectively exclude demand categories from ATP calculation:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Flag Combination</th><th>Effect</th><th>Use Case</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>IgnorePromised=N, IgnoreUnpromised=N</code></td>
+                <td>All demands included (default)</td>
+                <td>Standard order promising</td>
+              </tr>
+              <tr>
+                <td><code>IgnorePromised=N, IgnoreUnpromised=Y</code></td>
+                <td>Only promised (SCHEDULED, RESERVED, ALLOCATED) demands counted; OPEN_ORDER + BACKORDER ignored</td>
+                <td>Release-time check (how much is physically available?)</td>
+              </tr>
+              <tr>
+                <td><code>IgnorePromised=Y, IgnoreUnpromised=N</code></td>
+                <td>SCHEDULED demand removed; only soft demands counted</td>
+                <td>What-if analysis, re-promising scenarios</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 7 ===== -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Order Lifecycle → Demand State Transitions</h2>
+      </div>
+      <div class="content">
+        <p>As an order progresses through the OMS pipeline, demand records in <code>YFS_INVENTORY_DEMAND</code> are continuously created, updated, and deleted. This is the bridge between order management and inventory visibility.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Demand State Transitions Through Order Lifecycle</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+stateDiagram-v2
+    [*] --> OPEN_ORDER : createOrder<br/>(no shipNode)
+    OPEN_ORDER --> RSRV_ORDER : reserveAvailableInventory<br/>or createOrder with mandatory reservation
+    OPEN_ORDER --> SCHEDULED : Schedule Agent runs<br/>(stamps shipNode)
+    RSRV_ORDER --> SCHEDULED : Schedule Agent confirms reservation
+    SCHEDULED --> ALLOCATED : Release Agent runs<br/>(hard allocation)
+    ALLOCATED --> SHIPPED : Shipment confirmed<br/>(demand record deleted)
+    SCHEDULED --> BACKORDER : Schedule Agent fails<br/>(no supply at any node)
+    BACKORDER --> SCHEDULED : Re-schedule when supply arrives
+    OPEN_ORDER --> BACKORDER : Direct backorder (promise failure at create time)
+    ALLOCATED --> BACKORDER : Short pick / null pick at store
+    SHIPPED --> [*]
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Demand Record Lifecycle in the DB</div>
+          <ul>
+            <li>When order is <strong>created</strong>: OPEN_ORDER record inserted in <code>YFS_INVENTORY_DEMAND</code></li>
+            <li>When order is <strong>scheduled</strong>: OPEN_ORDER record updated → SCHEDULED type; demand detail records updated in <code>YFS_INVENTORY_DEMAND_DTLS</code></li>
+            <li>When order is <strong>reserved</strong>: OPEN_ORDER reduced/removed; RSRV_ORDER created at the specific node</li>
+            <li>When order is <strong>shipped</strong>: All demand detail records for that order are <strong>deleted</strong> from <code>YFS_INVENTORY_DEMAND_DTLS</code></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 8 ===== -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Reservation Flow — Deep Dive</h2>
+      </div>
+      <div class="content">
+        <p>Reservation is the mechanism by which inventory is <strong>soft-locked</strong> for a specific customer order at a specific node, before scheduling/release formally commits it.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — Reservation Flow (createOrder with mandatory reservation)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant WEB as Web Channel / POS
+    participant OMS as OMS API Layer
+    participant GIV as GIV Engine
+    participant DB as YFS_INVENTORY_*
+
+    WEB->>OMS: createOrder(shipNode=WH1, reservation=mandatory)
+    OMS->>GIV: findInventory(item, node=WH1, DemandType=RSRV_ORDER)
+    GIV->>DB: Query YFS_INVENTORY_SUPPLY (ONHAND, PO...)
+    GIV->>DB: Query YFS_INVENTORY_DEMAND (existing demands)
+    DB-->>GIV: Supply=10, Existing Demand=3 → ATP=7
+    GIV-->>OMS: Available qty=7
+    OMS->>DB: INSERT YFS_INVENTORY_DEMAND (RSRV_ORDER, qty=1, node=WH1)
+    OMS->>DB: DELETE/UPDATE OPEN_ORDER demand (if existed)
+    OMS-->>WEB: Order created, Status=1200 (Reserved)
+
+    Note over WEB,DB: Order now has RSRV_ORDER demand at WH1<br/>Node ATP reduced by 1 unit
+          </div>
+        </div>
+
+        <h3>Reservation Scenarios</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Scenario</th><th>API Behavior</th><th>Demand Created</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>createOrder with shipNode, reservation mandatory</td>
+                <td>Checks RSRV_ORDER availability at node. Creates RSRV_ORDER demand. OPEN_ORDER demand is removed.</td>
+                <td class="rec">RSRV_ORDER at node</td>
+              </tr>
+              <tr>
+                <td>createOrder without shipNode</td>
+                <td>No inventory check at create time (if not configured). Creates OPEN_ORDER demand with blank shipNode.</td>
+                <td>OPEN_ORDER (unassigned)</td>
+              </tr>
+              <tr>
+                <td>createOrder with shipNode but no mandatory reservation</td>
+                <td>OPEN_ORDER demand created. ShipNode is a preference, not a hard lock.</td>
+                <td>OPEN_ORDER with node hint</td>
+              </tr>
+              <tr>
+                <td>Reservation with ProcureFromNode (multi-node)</td>
+                <td>Demand created at both ShipNode AND ProcureFromNode. Synthetic supply added at ShipNode (PROCUREMENT_PLACED) to offset double-demand.</td>
+                <td class="warn-cell">Demand at both nodes + synthetic supply</td>
+              </tr>
+              <tr>
+                <td>reserveAvailableInventory (explicit API call)</td>
+                <td>Checks availability in general pool then reservation segment. Creates RSRV_ORDER at specified node.</td>
+                <td class="rec">RSRV_ORDER at node</td>
+              </tr>
+              <tr>
+                <td>cancelReservation</td>
+                <td>RSRV_ORDER demand removed; inventory released back to general ATP pool.</td>
+                <td>Demand deleted</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 9 ===== -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>Inventory Considerations Matrix</h2>
+      </div>
+      <div class="content">
+        <p>The <strong>Inventory Considerations</strong> screen in GIV Application Manager is the master configuration that maps demand types to qualifying supply types. This is the heart of the ATP formula — it tells Sterling <em>which supply buckets to look at</em> when evaluating a demand of a given type.</p>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Critical Configuration — Test Before Changing</div>
+          IBM strongly recommends that any change to Inventory Considerations be accompanied by heavy regression testing. A misconfiguration here affects the entire availability picture across all orders and channels.
+        </div>
+
+        <h3>Standard Inventory Considerations Mappings (9.3 OOB)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Incoming Demand Type</th>
+                <th>Qualifying Supply Types</th>
+                <th>Typical Use Case</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="demand-tag dt-uncommitted">OPEN_ORDER</span><br/>(default DemandType for new orders)</td>
+                <td>
+                  <span class="supply-tag st-onhand">ONHAND</span>
+                  <span class="supply-tag st-future">FIRM_PLAN</span>
+                  <span class="supply-tag st-future">OPEN_PO</span>
+                  <span class="supply-tag st-future">PO_PLACED</span>
+                  <span class="supply-tag st-future">PO_RELEASED</span>
+                  <span class="supply-tag st-future">PO_SCHEDULED</span>
+                </td>
+                <td>New order promising via getATP / findInventory</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">ALLOCATED</span><br/>(release-time check)</td>
+                <td>
+                  <span class="supply-tag st-onhand">ONHAND</span>
+                  <span class="supply-tag st-future">WIP</span>
+                </td>
+                <td>Release agent checks if inventory is physically ready to ship. Only ONHAND and WIP count at this stage.</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">SCHEDULED</span></td>
+                <td>
+                  <span class="supply-tag st-onhand">ONHAND</span>
+                  <span class="supply-tag st-future">FIRM_PLAN</span>
+                  <span class="supply-tag st-future">PO_PLACED</span>
+                </td>
+                <td>Schedule agent evaluating committed supply sources</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-uncommitted">BACKORDER</span></td>
+                <td>All supply types (same as OPEN_ORDER)</td>
+                <td>Re-scheduling backordered lines as new supply arrives</td>
+              </tr>
+              <tr>
+                <td><span class="demand-tag dt-promised">RSRV_ORDER</span> (Reserved)</td>
+                <td>
+                  <span class="supply-tag st-onhand">ONHAND</span>
+                  <span class="supply-tag st-future">FIRM_PLAN</span>
+                </td>
+                <td>Reservation check at order creation or explicit reservation API call</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Unplanned Inventory Flag</h3>
+        <p>Per item configuration in GIV, you can set <strong>Allow Unplanned Inventory = Yes</strong>. This means even if no explicit supply record exists, the system treats the node as having supply (useful for infinite-capability nodes or where physical inventory exceeds system records due to feed delays).</p>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 10 ===== -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>RTAM — Real-Time Availability Monitor</h2>
+      </div>
+      <div class="content">
+        <p>The <strong>Real-Time Availability Monitor (RTAM)</strong> is the agent-based publish mechanism that pushes updated ATP snapshots to external selling channels whenever the inventory picture changes. It is one of the most performance-sensitive components in Sterling OMS.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — RTAM Trigger and Publish Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    TRIGGER["Inventory Change Triggers<br/>(adjustInventory, createOrder, Schedule, Release, Return)"]
+    ALERT["YFS_INVENTORY_ALERTS<br/>Alert raised per item-node"]
+    RTAM["RTAM Agent<br/>(Integration Server)"]
+    ATP_CALC["Recalculate ATP<br/>(Supply - Demand at DG level)"]
+    PUBLISH["Publish ATP Event<br/>(onSuccess event)"]
+    EXT["External Channels<br/>(WebSphere Commerce,<br/>Salesforce Commerce,<br/>Internal Cache)"]
+
+    TRIGGER --> ALERT
+    ALERT --> RTAM
+    RTAM --> ATP_CALC
+    ATP_CALC --> PUBLISH
+    PUBLISH --> EXT
+
+    subgraph TYPES["Alert Types"]
+        ON_HAND["Onhand Inventory Monitor<br/>(threshold-based)"]
+        EVENT_BASED["Event-Based Availability Monitor<br/>(every change)"]
+        ACTION_BASED["Action-Based Availability Monitor<br/>(configurable triggers)"]
+    end
+
+    TYPES --> ALERT
+          </div>
+        </div>
+
+        <h3>Three Monitor Types in GIV</h3>
+        <div class="three-col">
+          <div class="card">
+            <strong style="color:var(--accent2);">Onhand Inventory Monitor</strong>
+            <p style="font-size:13px;margin-top:8px;">Triggers when onhand quantity crosses a configured threshold (e.g., falls below 10 units). Used for replenishment triggers and low-stock alerts.</p>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent);">Event-Based Availability Monitor (RTAM)</strong>
+            <p style="font-size:13px;margin-top:8px;">Triggers on every inventory change event. Recalculates ATP at item-DG level and publishes to subscribed external systems. This is the standard channel availability sync mechanism.</p>
+          </div>
+          <div class="card">
+            <strong style="color:var(--warn);">Action-Based Availability Monitor</strong>
+            <p style="font-size:13px;margin-top:8px;">Triggers configurable actions (custom Java class, API call) when inventory crosses thresholds. Used for automated replenishment order creation (transfer orders).</p>
+          </div>
+        </div>
+
+        <h3>RTAM ATP vs. Order-Time ATP</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">Critical Distinction</div>
+          <strong>RTAM publishes a snapshot ATP — not a live lock.</strong> Between the time RTAM publishes ATP=5 and a customer places an order, other orders may arrive. RTAM-based ATP is used for <em>display availability</em> (website, app) while <em>order-time ATP</em> (via getATP/findInventory called synchronously during checkout) is the authoritative source. If the channel relies solely on the RTAM cache for order acceptance without a live check, overselling is possible during high-velocity periods.
+        </div>
+
+        <h3>RTAM Performance Considerations (9.3)</h3>
+        <ul>
+          <li>RTAM agent is an Integration Server process — configure thread counts based on expected inventory change throughput</li>
+          <li>For <strong>Hot SKUs</strong> (high-velocity items), Sterling 9.3 introduced the Hot SKU property set to minimize DB locking during concurrent inventory reads/writes</li>
+          <li>Use <code>getAvailabilityCache</code> (short-lived cache) for product browsing pages to reduce RTAM load</li>
+          <li>Smart Sourcing + GIV-RTAM with node-level monitoring: use RTAM node-level ATP to filter out empty nodes from sourcing, avoiding unnecessary Schedule Agent compute</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 11 ===== -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <h2>Key APIs — Reference Guide</h2>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>API</th><th>Purpose</th><th>Key Input Params</th><th>Important Behavior</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>getATP</code></td>
+                <td>Get available-to-promise quantity for an item</td>
+                <td>ItemID, EnterpriseCode, ShipNode or DG, DemandType, ConsiderUnassignedDemands</td>
+                <td class="rec">Most accurate. Includes unassigned demands. Use for all order promising.</td>
+              </tr>
+              <tr>
+                <td><code>findInventory</code></td>
+                <td>Find inventory availability with supply/demand breakdown</td>
+                <td>ItemID, EnterpriseCode, ShipNode/DG, IgnorePromised, IgnoreUnpromised</td>
+                <td>More detailed breakdown. Supports ignoring demand categories.</td>
+              </tr>
+              <tr>
+                <td><code>getSupplyDetails</code></td>
+                <td>Node-level supply and availability picture</td>
+                <td>ItemID, ShipNode</td>
+                <td class="warn-cell">Node-only. Excludes unassigned demands. May overstate ATP vs. getATP.</td>
+              </tr>
+              <tr>
+                <td><code>getAvailabilityCache</code></td>
+                <td>Read cached ATP snapshot (from RTAM)</td>
+                <td>ItemID, EnterpriseCode, ShipNode/DG</td>
+                <td>Fast (in-memory). Stale between RTAM runs. Use for browsing, not order commitment.</td>
+              </tr>
+              <tr>
+                <td><code>adjustInventory</code></td>
+                <td>Adjust ONHAND supply at a node (positive or negative)</td>
+                <td>ItemID, ShipNode, Quantity, AuditReason</td>
+                <td>Core supply management API. Triggers RTAM alert on completion.</td>
+              </tr>
+              <tr>
+                <td><code>manageInventory</code></td>
+                <td>Manage supply records (create/update future supply)</td>
+                <td>ItemID, ShipNode, SupplyType, Quantity, ETA</td>
+                <td>Used for PO/Transfer supply management.</td>
+              </tr>
+              <tr>
+                <td><code>reserveAvailableInventory</code></td>
+                <td>Explicit inventory reservation</td>
+                <td>ItemID, ShipNode, DemandType=RSRV_ORDER, Quantity</td>
+                <td>Creates RSRV_ORDER demand. Returns reservation ID.</td>
+              </tr>
+              <tr>
+                <td><code>cancelReservation</code></td>
+                <td>Release a reservation</td>
+                <td>ReservationID or ItemID+ShipNode+Quantity</td>
+                <td>Removes RSRV_ORDER demand. ATP restored at node.</td>
+              </tr>
+              <tr>
+                <td><code>monitorItemAvailability</code></td>
+                <td>Trigger RTAM recalculation for specific item</td>
+                <td>ItemID, EnterpriseCode, ShipNode/DG</td>
+                <td>On-demand RTAM refresh. Useful after bulk inventory loads.</td>
+              </tr>
+              <tr>
+                <td><code>manageInventoryNodeControl</code></td>
+                <td>Mark a node as dirty (exclude from sourcing)</td>
+                <td>ItemID, ShipNode, INV_PIC_CORRECT_TILL_DATE</td>
+                <td>Dirty node mechanism for null-pick / short-pick scenarios.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>API Request Pattern — ATP Check at Order Creation</h3>
+        <pre><code>&lt;!-- getATP request for a new OPEN_ORDER demand --&gt;
+&lt;ATP
+  ItemID="ITEM001"
+  EnterpriseCode="ACME"
+  UnitOfMeasure="EACH"
+  DemandType="OPEN_ORDER"
+  RequiredQty="1"
+  ConsiderUnassignedDemands="Y"&gt;
+  
+  &lt;ShipNodeList&gt;
+    &lt;ShipNode ShipNode="WH_EAST"/&gt;
+  &lt;/ShipNodeList&gt;
+  
+&lt;/ATP&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 12 ===== -->
+    <section class="section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <h2>Hot SKU & Performance Tuning</h2>
+      </div>
+      <div class="content">
+        <p>A <strong>Hot SKU</strong> is an item with extremely high concurrent order volume — flash sale items, free gift items, deeply discounted products. Without special handling, concurrent DB reads/writes to <code>YFS_INVENTORY_ITEM</code>, <code>YFS_INVENTORY_DEMAND</code>, and <code>INV_INVENTORY_ITEM_LOCK</code> tables cause severe contention and system degradation.</p>
+
+        <h3>Hot SKU Properties (9.3)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Property</th><th>Purpose</th><th>Default</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>yfs.inventory.sortandlock</code></td>
+                <td>Sort and lock inventory records in a deterministic order to prevent deadlocks during concurrent updates</td>
+                <td>false</td>
+              </tr>
+              <tr>
+                <td><code>yfs.balanceShortageAcrossNodes</code></td>
+                <td>Balance backorder demand across all eligible nodes (vs. random assignment)</td>
+                <td>false</td>
+              </tr>
+              <tr>
+                <td><code>yfs.nodecapacity.lock</code></td>
+                <td>Use node capacity lock to serialize inventory updates at high-contention nodes</td>
+                <td>false</td>
+              </tr>
+              <tr>
+                <td><code>persistCapacityAdjustments</code></td>
+                <td>Persist capacity adjustments to additional tables for Hot SKU consolidation</td>
+                <td>false</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-danger">
+          <div class="callout-title">9.3 Hot SKU + Tag Controlled Items</div>
+          Hot SKU cannot be enabled for tag-controlled items if <em>Summarize and Maintain Total Demand and Supply Values</em> flag is on. Turning it off leaves stale data in <code>YFS_INVENTORY_TAG</code> (TotalOnhandSupply, TotalOtherSupply, TotalDemand columns). Must run Inventory Purge Agent to clean up.
+        </div>
+
+        <h3>Availability Cache for High-Traffic Browsing</h3>
+        <p>For product browsing pages (not checkout), use a <strong>short-lived availability cache</strong>. Instead of calling <code>getATP</code> for every page view, the cache stores a recent ATP snapshot per item-node. <code>getAvailabilityCache</code> reads from this in-memory store. Cache invalidation is driven by RTAM.</p>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 13 ===== -->
+    <section class="section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <h2>Safety Factor, Dirty Nodes & Node Controls</h2>
+      </div>
+      <div class="content">
+        <h3>Safety Factor</h3>
+        <p>The <strong>Safety Factor</strong> is a percentage of on-hand inventory excluded from promising — it acts as a buffer against forecast errors, in-transit losses, and store shrinkage.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Configuration</div>
+          Safety factor is configured at item level in Catalog Management → Product → Node Item Attribute. You can set different safety factors per item-node combination (e.g., 5% safety factor at WH_EAST, 20% at Store_Mumbai_001 to account for higher store shrinkage).
+        </div>
+
+        <pre><code>&lt;!-- Safety factor impact on ATP --&gt;
+ONHAND supply at node = 100 units
+Safety Factor = 10%
+Effective supply available for ATP = 100 - (100 * 10%) = 90 units
+
+If existing demands = 85 units
+ATP = 90 - 85 = 5 units (not 100 - 85 = 15)</code></pre>
+
+        <h3>Dirty Node Mechanism</h3>
+        <p>When a store reports a <strong>null pick</strong> (physically cannot find inventory that OMS shows as available), the node-item combination is marked "dirty" — excluded from future sourcing until the inventory picture is corrected.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Step</th><th>Action</th><th>DB Change</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Store associate reports null pick via Sterling Store module</td><td>changeShipment API called</td></tr>
+              <tr><td>2</td><td><code>manageInventoryNodeControl</code> called with future timestamp</td><td><code>YFS_INVENTORY_NODE_CONTROL.INV_PIC_CORRECT_TILL_DATE</code> set</td></tr>
+              <tr><td>3</td><td>Sourcing engine checks this field — excludes node until timestamp passes</td><td>Node flagged dirty for item</td></tr>
+              <tr><td>4</td><td>When inventory adjustment happens at that node for that item, the timestamp is reset</td><td><code>INV_PIC_CORRECT_TILL_DATE</code> cleared</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Node-Level Inventory Controls</h3>
+        <p>Beyond dirty nodes, GIV allows fine-grained node-level inventory controls including: minimum and maximum capacity thresholds per node, time-window restrictions (e.g., no new orders at a store after 5 PM for same-day fulfillment), and resource pool configurations that limit concurrent order processing capacity.</p>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 14 ===== -->
+    <section class="section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <h2>Key Database Tables</h2>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Table</th><th>Purpose</th><th>Key Columns</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>YFS_INVENTORY_SUPPLY</code></td>
+                <td>All supply records for all items at all nodes</td>
+                <td>INVENTORY_ITEM_KEY, SHIP_NODE_KEY, SUPPLY_TYPE, QUANTITY, ETA_DATE</td>
+                <td class="rec">Core supply table. Purged when QUANTITY=0 and SUPPLY_TYPE≠INFO.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_DEMAND</code></td>
+                <td>All demand records for all items at all nodes</td>
+                <td>INVENTORY_ITEM_KEY, SHIP_NODE_KEY, DEMAND_TYPE, QUANTITY, DEMAND_SHIP_DATE</td>
+                <td>Deleted when order ships. Note DEMAND_SHIP_DATE with non-zero time can cause mismatches.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_DEMAND_DTLS</code></td>
+                <td>Detail records linking demand to specific order lines</td>
+                <td>INVENTORY_DEMAND_KEY, ORDER_LINE_KEY, QUANTITY</td>
+                <td>Cleaned up with each status movement. Deleted on shipment.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_ITEM</code></td>
+                <td>Item-level inventory configuration per enterprise</td>
+                <td>ITEM_KEY, ENTERPRISE_KEY, UNPLANNED_INVENTORY, SAFETY_FACTOR</td>
+                <td class="warn-cell">High-contention table for Hot SKUs. Lock mechanism applies.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_ALERTS</code></td>
+                <td>RTAM triggers — raised when inventory changes</td>
+                <td>INVENTORY_ALERT_KEY, SHIP_NODE, ITEM_ID, ALERT_TYPE, STATUS</td>
+                <td>Consumed by RTAM agent. Query: <code>SELECT * FROM yfs_inventory_alerts WHERE shipnode='X'</code></td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_NODE_CONTROL</code></td>
+                <td>Dirty node flags per item-node</td>
+                <td>ITEM_KEY, SHIP_NODE_KEY, INV_PIC_CORRECT_TILL_DATE</td>
+                <td>Reset when valid inventory adjustment is made.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_TAG</code></td>
+                <td>Tag-controlled item inventory (lot, batch, serial)</td>
+                <td>TAG_KEY, TOTAL_ONHAND_SUPPLY, TOTAL_OTHER_SUPPLY, TOTAL_DEMAND</td>
+                <td class="danger-cell">Stale data issue when Hot SKU enabled + summarize flag off.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_INVENTORY_SUPPLY_TEMP</code></td>
+                <td>Temporary supply records during processing</td>
+                <td>Same as YFS_INVENTORY_SUPPLY</td>
+                <td>Used during batch inventory feeds for atomic updates.</td>
+              </tr>
+              <tr>
+                <td><code>INV_INVENTORY_ITEM_LOCK</code></td>
+                <td>Locking table for Hot SKU serialization</td>
+                <td>ITEM_KEY, SHIP_NODE_KEY, LOCK_TIMESTAMP</td>
+                <td>Only active when Hot SKU properties enabled.</td>
+              </tr>
+              <tr>
+                <td><code>YFS_ORDER_LINE_SCHEDULE</code></td>
+                <td>Schedule records linking order lines to ship nodes</td>
+                <td>ORDER_LINE_KEY, SHIP_NODE_KEY, DEMAND_SHIP_DATE, QUANTITY</td>
+                <td>Cross-reference with YFS_INVENTORY_DEMAND for demand mismatch debugging.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Useful Diagnostic Queries</h3>
+        <pre><code>-- Check availability picture for an item at a node
+SELECT s.SUPPLY_TYPE, s.QUANTITY, s.ETA_DATE
+FROM YFS_INVENTORY_SUPPLY s
+JOIN YFS_INVENTORY_ITEM i ON s.INVENTORY_ITEM_KEY = i.INVENTORY_ITEM_KEY
+WHERE i.ITEM_ID = 'ITEM001' AND s.SHIP_NODE_KEY = 'WH_EAST';
+
+-- Check all demands for an item
+SELECT d.DEMAND_TYPE, d.QUANTITY, d.DEMAND_SHIP_DATE, d.SHIP_NODE_KEY
+FROM YFS_INVENTORY_DEMAND d
+JOIN YFS_INVENTORY_ITEM i ON d.INVENTORY_ITEM_KEY = i.INVENTORY_ITEM_KEY
+WHERE i.ITEM_ID = 'ITEM001';
+
+-- Check active RTAM alerts
+SELECT * FROM YFS_INVENTORY_ALERTS WHERE SHIPNODE = 'WH_EAST' AND STATUS = 'OPEN';
+
+-- Check dirty nodes
+SELECT * FROM YFS_INVENTORY_NODE_CONTROL
+WHERE INV_PIC_CORRECT_TILL_DATE > SYSDATE;
+
+-- Demand detail cross-reference
+SELECT dd.ORDER_LINE_KEY, dd.QUANTITY, d.DEMAND_TYPE
+FROM YFS_INVENTORY_DEMAND_DTLS dd
+JOIN YFS_INVENTORY_DEMAND d ON dd.INVENTORY_DEMAND_KEY = d.INVENTORY_DEMAND_KEY
+WHERE d.INVENTORY_ITEM_KEY = (SELECT INVENTORY_ITEM_KEY FROM YFS_INVENTORY_ITEM WHERE ITEM_ID='ITEM001');</code></pre>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 15 ===== -->
+    <section class="section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <h2>Interview Cheat Sheet — Director / Principal Level</h2>
+      </div>
+      <div class="content">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <h4 style="color:var(--accent);margin-bottom:12px;">Top Clarifying Questions</h4>
+            <ol style="padding-left:18px;font-size:13px;color:#cdd9e5">
+              <li style="margin-bottom:8px">Are we discussing order-time ATP (live check during checkout) or channel-display ATP (RTAM cache)? The accuracy guarantees differ significantly.</li>
+              <li style="margin-bottom:8px">Is the vendor network INFINITE-node or TRACKED? This determines whether drop-ship demand appears in ATP calculations.</li>
+              <li style="margin-bottom:8px">What's the store inventory feed frequency — real-time WMS integration or batch delta? This determines how stale store ATP can be.</li>
+              <li style="margin-bottom:8px">Are there multi-enterprise (sub-division) configurations? ATP rules can differ per enterprise.</li>
+              <li style="margin-bottom:8px">Is the business using reservations at checkout or just OPEN_ORDER demand? Reservation mode affects concurrency and oversell risk.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--accent2);margin-bottom:12px;">Key Trade-offs to Verbalize</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5">
+              <li style="margin-bottom:8px"><strong>RTAM cache vs. live getATP:</strong> RTAM is fast but stale; live getATP is accurate but expensive at scale</li>
+              <li style="margin-bottom:8px"><strong>Reservation vs. OPEN_ORDER:</strong> Mandatory reservation prevents oversell but increases latency at checkout; OPEN_ORDER is faster but risk of double-sell on flash sales</li>
+              <li style="margin-bottom:8px"><strong>INFINITE vendor nodes:</strong> No oversell protection but maximum availability for drop-ship; TRACKED nodes are accurate but require EDI feed maintenance</li>
+              <li style="margin-bottom:8px"><strong>Fine-grained DGs vs. coarse:</strong> More DGs = more granular sourcing control but higher RTAM computation load</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--warn);margin-bottom:12px;">Common Failure Modes</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5">
+              <li style="margin-bottom:8px"><strong>Backorder node-lock bug (9.3):</strong> Short-pick doesn't clear shipNode on order line → BACKORDER demand stays node-locked → RTAM publishes incorrect ATP → oversell</li>
+              <li style="margin-bottom:8px"><strong>Unassigned demand inconsistency:</strong> getSupplyDetails sum ≠ getATP result → upstream system miscalculates ATP</li>
+              <li style="margin-bottom:8px"><strong>Hot SKU DB contention:</strong> Flash sale without Hot SKU properties enabled → lock contention on YFS_INVENTORY_ITEM → timeout cascade</li>
+              <li style="margin-bottom:8px"><strong>Schedule Agent frequency (OMS on Cloud 9.3):</strong> Minimum 30-min schedule frequency → backorders sit unprocessed for up to 30 minutes when new supply arrives</li>
+              <li style="margin-bottom:8px"><strong>Safety factor misconfiguration:</strong> Wrong safety factor at item-node level → systematic over-promise or under-promise</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--danger);margin-bottom:12px;">"Wow" Moments — Depth Signals</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5">
+              <li style="margin-bottom:8px"><strong>Unassigned demand math:</strong> "I know that summing node-level getSupplyDetails will overstate enterprise ATP because unassigned demands (no shipNode) are excluded at node level — always use getATP with ConsiderUnassignedDemands=Y for enterprise truth."</li>
+              <li style="margin-bottom:8px"><strong>RTAM + backorder distribution:</strong> "In 9.3, RTAM randomly assigns unassigned backorder demand to nodes for calculation purposes — this causes ghost ATP reductions at the wrong nodes. 9.5 introduced priority-based distribution. A workaround is ensuring backorder demands have shipNode cleared via changeShipment customization."</li>
+              <li style="margin-bottom:8px"><strong>Inventory Considerations as config:</strong> "The supply types that count against a demand type are not hardcoded — they're configured in the Inventory Considerations matrix per DemandType. Misconfiguring ALLOCATED to see PO supply means you'd 'release' orders that can't physically ship yet."</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Quick Reference: The Complete Inventory Availability Mental Model</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — Complete Mental Model</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+mindmap
+  root((GIV ATP))
+    Supply Side
+      ONHAND
+        Warehouse DC
+        Store
+        Vendor TRACKED
+      Future Supply
+        PO PLACED RELEASED SCHEDULED
+        FIRM PLAN
+        TRANSFER IN
+        WIP
+      INFINITE Nodes
+        Vendor Drop Ship
+        Endless Aisle
+    Demand Side
+      Uncommitted Float
+        OPEN ORDER no node
+        BACKORDER no node
+        FORECAST
+      Committed at Node
+        SCHEDULED
+        RESERVED
+        ALLOCATED
+    ATP Formula
+      Supply x InvConsiderations
+      minus All Demands
+      minus Safety Factor
+      equals ATP
+    Availability Levels
+      Node Level
+      DG Level
+      Enterprise Level
+    Channels
+      RTAM Cache publish
+      Live getATP checkout
+      getAvailabilityCache browse
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SECTION 16 ===== -->
+    <section class="section" id="s16">
+  <div class="section-header">
+    <span class="section-num">16</span>
+    <h2>Why Migrate Away from IBM Sterling GIV?</h2>
+  </div>
+  <div class="content">
+    <p>IBM Sterling OMS is a proven, battle-tested platform — but organizations are increasingly choosing to migrate its inventory subsystem to a custom-built, cloud-native stack. The drivers are a combination of licensing economics, architectural constraints, and the speed of modern tooling.</p>
+
+    <div class="callout callout-warn">
+      <div class="callout-title">This is NOT a criticism of Sterling</div>
+      Sterling OMS built GIV in an era before cloud-native patterns existed. Its design decisions (EAR deployments, agent-based async, relational inventory tables) were correct for their time. Migration makes sense when your scale, cost structure, or engineering agility demands it — not as a reaction to Sterling's age alone.
+    </div>
+
+    <h3>Migration Drivers — Honest Assessment</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Driver</th><th>Sterling Constraint</th><th>Modern Alternative Advantage</th><th>Migration Priority</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Licensing Cost</strong></td>
+            <td>IBM Sterling OMS carries significant per-core or per-order licensing fees at enterprise scale</td>
+            <td>OSS stack: Kafka + PostgreSQL + custom services. 3-yr TCO can be 60–80% lower at mid-scale</td>
+            <td><span class="badge badge-red">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Deployment Model</strong></td>
+            <td>v9.3 on WebSphere (smcfs.ear). Container support improved in 10.x but significant migration effort even within Sterling</td>
+            <td>Microservices on Kubernetes. Independent deploys per service. Zero-downtime rollouts.</td>
+            <td><span class="badge badge-yellow">Medium-High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Customization Complexity</strong></td>
+            <td>Customizations via User Exits (Java), XSL overrides, and agent configuration. Hard to test, slow to deploy, coupled to upgrades</td>
+            <td>Custom services with well-defined APIs. Standard CI/CD. Independent testability.</td>
+            <td><span class="badge badge-red">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Scale Ceiling</strong></td>
+            <td>Hot SKU contention on YFS_INVENTORY_* tables at &gt;50K TPS. Agent-based async limits throughput. Schedule Agent minimum 30-min frequency on OMS Cloud.</td>
+            <td>Event-driven with Kafka. Horizontal scaling per service. Sub-second inventory updates at 500K+ events/sec.</td>
+            <td><span class="badge badge-red">High for Flash Sale retailers</span></td>
+          </tr>
+          <tr>
+            <td><strong>Real-Time ATP</strong></td>
+            <td>RTAM publishes snapshots — not live. Order-time ATP requires synchronous DB hit. Unassigned demand inconsistency between APIs.</td>
+            <td>Event-sourced inventory ledger. Every change is an event. Projections are always current. Sub-10ms ATP response from Redis.</td>
+            <td><span class="badge badge-yellow">Medium — depends on SLA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Observability</strong></td>
+            <td>Limited built-in tracing. Debugging inventory issues requires DB queries + log correlation. No native metrics export.</td>
+            <td>OpenTelemetry traces per inventory transaction. Grafana dashboards. Alert on ATP deviation in real time.</td>
+            <td><span class="badge badge-blue">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>Vendor Lock-in</strong></td>
+            <td>IBM ecosystem. Upgrades gated by IBM release schedule (9.3 → 10.x is a significant effort). Future IBM pricing uncertain.</td>
+            <td>OSS-first. No vendor dependency on critical path.</td>
+            <td><span class="badge badge-yellow">Strategic</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>What to Keep vs. Build vs. Buy</h3>
+    <div class="three-col">
+      <div class="card" style="border-color:var(--danger)">
+        <strong style="color:var(--danger);">Replace (Build Custom)</strong>
+        <ul style="font-size:13px;padding-left:16px;margin-top:8px;color:#cdd9e5">
+          <li>GIV ATP Engine</li>
+          <li>RTAM Publish Agent</li>
+          <li>Schedule Agent logic</li>
+          <li>Release Agent logic</li>
+          <li>Supply/Demand record management</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--warn)">
+        <strong style="color:var(--warn);">Consider SaaS Replacement (Buy)</strong>
+        <ul style="font-size:13px;padding-left:16px;margin-top:8px;color:#cdd9e5">
+          <li>Fluent Commerce (Order Management)</li>
+          <li>OneStock (OMS SaaS)</li>
+          <li>Deck Commerce</li>
+          <li>Fabric OMS</li>
+          <li>Commercetools (composable)</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--accent2)">
+        <strong style="color:var(--accent2);">Keep / Wrap</strong>
+        <ul style="font-size:13px;padding-left:16px;margin-top:8px;color:#cdd9e5">
+          <li>WMS integration patterns (proven EDI/API)</li>
+          <li>Business rules logic (re-implement in code)</li>
+          <li>Sourcing rule concepts (rebuild as config)</li>
+          <li>Order lifecycle state machine (redesign)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 17 ===== -->
+    <section class="section" id="s17">
+  <div class="section-header">
+    <span class="section-num">17</span>
+    <h2>Modern Inventory Availability — Target Architecture Principles</h2>
+  </div>
+  <div class="content">
+    <p>The replacement architecture applies five core patterns that collectively address all the constraints identified in Sterling GIV. These are not new ideas — they are proven patterns from companies like Amazon, Shopify, and Zalando who have built inventory systems at 10-100x Sterling's scale.</p>
+
+    <div class="five-col">
+      <div class="card">
+        <div class="svc-name" style="font-family:var(--sans);font-size:13px;color:var(--accent)">① Event Sourcing</div>
+        <p style="font-size:12.5px;color:#cdd9e5;margin-top:6px">Every inventory change is an immutable event. The current state is a projection. Replay enables any point-in-time snapshot.</p>
+      </div>
+      <div class="card">
+        <div class="svc-name" style="font-family:var(--sans);font-size:13px;color:var(--accent2)">② CQRS</div>
+        <p style="font-size:12.5px;color:#cdd9e5;margin-top:6px">Write path: inventory events → Kafka. Read path: pre-computed ATP per node/DG from Redis. Separate scaling for read-heavy ATP queries.</p>
+      </div>
+      <div class="card">
+        <div class="svc-name" style="font-family:var(--sans);font-size:13px;color:var(--warn)">③ Microservices</div>
+        <p style="font-size:12.5px;color:#cdd9e5;margin-top:6px">Supply, Demand, ATP Calculation, Reservation, and Publish as independent services. Each owns its data store. Deploy, scale, and fail independently.</p>
+      </div>
+      <div class="card">
+        <div class="svc-name" style="font-family:var(--sans);font-size:13px;color:var(--accent)">④ Eventual Consistency</div>
+        <p style="font-size:12.5px;color:#cdd9e5;margin-top:6px">Accept that display ATP (channel cache) and order-time ATP (live check) may differ by milliseconds. Design for it with optimistic locking at reservation.</p>
+      </div>
+      <div class="card">
+        <div class="svc-name" style="font-family:var(--sans);font-size:13px;color:var(--accent2)">⑤ API-First</div>
+        <p style="font-size:12.5px;color:#cdd9e5;margin-top:6px">All inventory capabilities exposed as versioned REST/gRPC APIs. No internal direct-DB access from consuming systems. Contract-first design.</p>
+      </div>
+    </div>
+
+    <h3>Sterling Concept → Modern Equivalent Mapping</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sterling GIV Concept</th><th>Modern Equivalent</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td>YFS_INVENTORY_SUPPLY table</td><td>Supply Ledger Service (event-sourced)</td><td>PostgreSQL (write) + Kafka topic <code>inventory.supply.events</code></td></tr>
+          <tr><td>YFS_INVENTORY_DEMAND table</td><td>Demand Ledger Service (event-sourced)</td><td>PostgreSQL (write) + Kafka topic <code>inventory.demand.events</code></td></tr>
+          <tr><td>getATP / findInventory API</td><td>ATP Query Service</td><td>Redis sorted sets (pre-computed ATP per node) + fallback to live calculation</td></tr>
+          <tr><td>RTAM Agent</td><td>ATP Publisher Service</td><td>Kafka consumer → Redis update → WebSocket/SSE push to channels</td></tr>
+          <tr><td>Schedule Agent (demand state machine)</td><td>Order Promising Service</td><td>Stateless Java/Go service consuming order events from Kafka</td></tr>
+          <tr><td>Distribution Groups</td><td>Fulfillment Location Groups</td><td>Config-driven (YAML/DB) + in Redis as location-set keys</td></tr>
+          <tr><td>Inventory Considerations Matrix</td><td>ATP Rules Engine</td><td>Rule configuration in DB, evaluated at ATP calc time</td></tr>
+          <tr><td>YFS_INVENTORY_ALERTS</td><td>Inventory Events on Kafka</td><td>Kafka topic <code>inventory.alerts</code> (replaces poll-based alert table)</td></tr>
+          <tr><td>ONHAND supply type</td><td>on_hand_quantity field in Supply Ledger</td><td>Postgres column + Kafka event with type=ADJUSTMENT</td></tr>
+          <tr><td>Safety Factor</td><td>Safety Stock config per item-location</td><td>Config service (Redis cache of item-location safety stock %)</td></tr>
+          <tr><td>Dirty Node (manageInventoryNodeControl)</td><td>Location Exclusion Service</td><td>Redis SET of excluded location-item combos with TTL</td></tr>
+          <tr><td>Hot SKU locking (INV_INVENTORY_ITEM_LOCK)</td><td>Optimistic Locking + Kafka ordering</td><td>DB optimistic lock (version column) + Kafka partition by item-location key</td></tr>
+          <tr><td>reserveAvailableInventory API</td><td>Reservation Service</td><td>Atomic Redis DECRBY + Postgres event write (two-phase commit or saga)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 18 ===== -->
+    <section class="section" id="s18">
+  <div class="section-header">
+    <span class="section-num">18</span>
+    <h2>Service Decomposition Map</h2>
+  </div>
+  <div class="content">
+    <p>The replacement system decomposes Sterling GIV into <strong>six bounded microservices</strong>, each with a single clear responsibility, its own data store, and communication via Kafka events.</p>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Fig 8 — Modern Inventory Service Decomposition</div>
+      <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    classDef svc fill:#1f2d3d,stroke:#1f6feb,color:#58a6ff
+    classDef store fill:#162416,stroke:#2ea043,color:#3fb950
+    classDef kafka fill:#2d2a1f,stroke:#d29922,color:#d29922
+    classDef ext fill:#1c2128,stroke:#30363d,color:#8b949e
+    classDef api fill:#2d1f1f,stroke:#f85149,color:#ffa198
+
+    subgraph INGESTION["Supply Ingestion Layer"]
+        WMS_ADAPTER["WMS Adapter Service<br/>(per WMS vendor)"]:::ext
+        ERP_ADAPTER["ERP/PO Adapter<br/>(SAP/Oracle)"]:::ext
+        STORE_ADAPTER["Store Adapter<br/>(POS delta feed)"]:::ext
+        VENDOR_ADAPTER["Vendor EDI Adapter<br/>(EDI 846)"]:::ext
+    end
+
+    subgraph CORE["Core Inventory Services"]
+        SUPPLY_SVC["Supply Ledger Service<br/>POST /supply/adjust<br/>POST /supply/po/update"]:::svc
+        DEMAND_SVC["Demand Ledger Service<br/>POST /demand/create<br/>PATCH /demand/transition"]:::svc
+        RESERVATION_SVC["Reservation Service<br/>POST /reservations<br/>DELETE /reservations/:id"]:::svc
+        ATP_SVC["ATP Calculator Service<br/>GET /atp?item&amp;location&amp;qty<br/>GET /atp/batch"]:::svc
+        LOCATION_SVC["Location Service<br/>GET /locations<br/>GET /location-groups"]:::svc
+        PUBLISH_SVC["ATP Publisher Service<br/>(replaces RTAM Agent)"]:::svc
+    end
+
+    subgraph STREAMING["Event Backbone — Kafka"]
+        K_SUPPLY["Topic: inventory.supply.events"]:::kafka
+        K_DEMAND["Topic: inventory.demand.events"]:::kafka
+        K_ATP["Topic: inventory.atp.updates"]:::kafka
+        K_ALERTS["Topic: inventory.alerts"]:::kafka
+    end
+
+    subgraph DATASTORES["Data Stores"]
+        PG_SUPPLY["PostgreSQL<br/>Supply Ledger DB"]:::store
+        PG_DEMAND["PostgreSQL<br/>Demand Ledger DB"]:::store
+        REDIS_ATP["Redis Cluster<br/>ATP Cache<br/>(pre-computed per node)"]:::store
+        REDIS_RES["Redis<br/>Reservation Locks"]:::store
+    end
+
+    subgraph CONSUMERS["Downstream Consumers"]
+        ORDER_SVC["Order Promising Service<br/>(replaces Schedule Agent)"]:::api
+        CHANNEL_SVC["Channel Availability API<br/>(replaces findInventory)"]:::api
+        REPLENISH["Replenishment Service<br/>(replaces Inventory Monitor)"]:::api
+    end
+
+    INGESTION --> SUPPLY_SVC
+    SUPPLY_SVC --> PG_SUPPLY
+    SUPPLY_SVC --> K_SUPPLY
+    DEMAND_SVC --> PG_DEMAND
+    DEMAND_SVC --> K_DEMAND
+    RESERVATION_SVC --> REDIS_RES
+    RESERVATION_SVC --> DEMAND_SVC
+    K_SUPPLY --> ATP_SVC
+    K_DEMAND --> ATP_SVC
+    ATP_SVC --> REDIS_ATP
+    ATP_SVC --> K_ATP
+    K_ATP --> PUBLISH_SVC
+    K_ATP --> REPLENISH
+    PUBLISH_SVC --> CONSUMERS
+    CHANNEL_SVC --> REDIS_ATP
+    ORDER_SVC --> ATP_SVC
+    ORDER_SVC --> DEMAND_SVC
+    LOCATION_SVC --> ATP_SVC
+      </div>
+    </div>
+
+    <h3>Service Ownership & Boundaries</h3>
+    <div class="four-col">
+      <div class="service-card">
+        <div class="svc-name">Supply Ledger Service</div>
+        <div class="svc-maps">Replaces: YFS_INVENTORY_SUPPLY + adjustInventory + manageInventory</div>
+        <p>Owns all supply records. Accepts adjustments from WMS, ERP (PO updates), store feeds. Publishes supply events to Kafka. Source of truth for "what we have".</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">Demand Ledger Service</div>
+        <div class="svc-maps">Replaces: YFS_INVENTORY_DEMAND + demand state transitions</div>
+        <p>Owns all demand records and their lifecycle (OPEN_ORDER → SCHEDULED → ALLOCATED → SHIPPED). State machine implemented as explicit transitions. Publishes demand events.</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">Reservation Service</div>
+        <div class="svc-maps">Replaces: reserveAvailableInventory + cancelReservation</div>
+        <p>Handles atomic inventory reservation at checkout. Uses Redis DECRBY for lock-free atomic quantity reduction + writes RSRV_ORDER demand. TTL-based auto-release for abandoned carts.</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">ATP Calculator Service</div>
+        <div class="svc-maps">Replaces: getATP + findInventory + Inventory Considerations Matrix</div>
+        <p>Consumes supply and demand events. Maintains pre-computed ATP per item-location in Redis sorted sets. Exposes live ATP API for order time checks. Handles node, group, and enterprise scopes.</p>
+      </div>
+    </div>
+    <div class="four-col" style="margin-top:0">
+      <div class="service-card">
+        <div class="svc-name">ATP Publisher Service</div>
+        <div class="svc-maps">Replaces: RTAM Agent + RTAM ATP publish</div>
+        <p>Consumes <code>inventory.atp.updates</code> topic. Pushes ATP snapshots to external channels via WebSocket, SSE, or REST callback. Replaces RTAM's agent-based polling model with reactive event-driven push.</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">Location Service</div>
+        <div class="svc-maps">Replaces: Distribution Groups + ShipNode config</div>
+        <p>Manages locations (nodes) and location groups (DGs). Provides location metadata for ATP scope resolution. Config-driven — changes without code deployment.</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">Order Promising Service</div>
+        <div class="svc-maps">Replaces: Schedule Agent + sourcing rules</div>
+        <p>Receives new orders. Calls ATP Calculator for availability. Applies sourcing rules (rule engine or simple config). Stamps ship node on order. Transitions OPEN_ORDER → SCHEDULED demand.</p>
+      </div>
+      <div class="service-card">
+        <div class="svc-name">Replenishment Service</div>
+        <div class="svc-maps">Replaces: Onhand Inventory Monitor + Action-Based Monitor</div>
+        <p>Subscribes to ATP update events. When ATP falls below configured threshold for an item-location, triggers replenishment workflow (Transfer Order creation, PO suggestion).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 19 ===== -->
+    <section class="section" id="s19">
+  <div class="section-header">
+    <span class="section-num">19</span>
+    <h2>Transition Architecture — Strangler Fig Pattern</h2>
+  </div>
+  <div class="content">
+    <p>The migration uses the <strong>Strangler Fig pattern</strong> — new services are built alongside Sterling, a proxy layer routes traffic selectively, and Sterling is incrementally replaced domain by domain. <strong>There is never a big-bang cutover.</strong></p>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">Non-Negotiable Principle</div>
+      At no point during the migration does inventory availability have two different "truths" visible to the same user. Either Sterling answers the ATP query, or the new service does — never both simultaneously for the same item-node. The proxy enforces this via feature flags per item, per enterprise, per channel.
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Fig 9 — Transition Architecture (Strangler Fig with Dual-Write)</div>
+      <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    classDef new fill:#162416,stroke:#2ea043,color:#3fb950
+    classDef legacy fill:#2d1f1f,stroke:#da3633,color:#ffa198
+    classDef proxy fill:#1f2d3d,stroke:#1f6feb,color:#58a6ff
+    classDef shadow fill:#2d2a1f,stroke:#d29922,color:#d29922
+    classDef kafka fill:#2d2a1f,stroke:#d29922,color:#d29922
+
+    CHANNEL["Selling Channels<br/>(Web, App, POS, B2B)"]
+
+    subgraph PROXY["Inventory API Gateway / BFF (NEW)"]
+        FF["Feature Flag Router<br/>(LaunchDarkly / ConfigCat)"]:::proxy
+        SHADOW["Shadow Mode Comparator<br/>(logs divergence, no user impact)"]:::shadow
+    end
+
+    subgraph STERLING["IBM Sterling OMS 9.3 (LEGACY — being strangled)"]
+        GIV_OLD["GIV Engine<br/>getATP / findInventory"]:::legacy
+        RTAM_OLD["RTAM Agent"]:::legacy
+        SCHED_OLD["Schedule Agent"]:::legacy
+    end
+
+    subgraph MODERN["Modern Inventory Platform (NEW — growing)"]
+        ATP_NEW["ATP Calculator Service"]:::new
+        SUPPLY_NEW["Supply Ledger"]:::new
+        DEMAND_NEW["Demand Ledger"]:::new
+        RES_NEW["Reservation Service"]:::new
+        PUB_NEW["ATP Publisher"]:::new
+    end
+
+    subgraph SYNC["Dual-Write / Shadow Sync Layer"]
+        CDC["CDC from YFS_INVENTORY_SUPPLY<br/>(Debezium → Kafka)"]:::kafka
+        DEMAND_SYNC["Demand Event Bridge<br/>(Sterling UExit → Kafka)"]:::kafka
+    end
+
+    CHANNEL --> FF
+    FF -->|"flag = NEW"| ATP_NEW
+    FF -->|"flag = STERLING"| GIV_OLD
+    FF -->|"shadow mode"| SHADOW
+    SHADOW --> GIV_OLD
+    SHADOW --> ATP_NEW
+
+    CDC --> SUPPLY_NEW
+    DEMAND_SYNC --> DEMAND_NEW
+
+    GIV_OLD -.->|"routes while active"| RTAM_OLD
+    ATP_NEW -.->|"grows over 18 months"| PUB_NEW
+
+    style STERLING fill:#1a0a0a,stroke:#da3633
+    style MODERN fill:#0a1a0a,stroke:#2ea043
+    style PROXY fill:#0a0f1a,stroke:#1f6feb
+      </div>
+    </div>
+
+    <h3>Dual-Write Bridge — Sterling → Modern</h3>
+    <p>During co-existence, Sterling remains the write-master for inventory. The modern platform shadows Sterling data via two mechanisms:</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3 style="margin-top:0">CDC via Debezium (Supply)</h3>
+        <p>Debezium captures row-level changes from Sterling's Oracle/DB2 database on <code>YFS_INVENTORY_SUPPLY</code>. Change events are published to Kafka topic <code>sterling.cdc.supply</code>. A transformer service converts Sterling's schema to the modern Supply Ledger format and writes to the new Supply Ledger Service.</p>
+        <pre><code>Sterling DB → Debezium → Kafka:sterling.cdc.supply
+  → Supply Transformer → Supply Ledger Service
+  → PostgreSQL (new) + Kafka:inventory.supply.events</code></pre>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">User Exit Bridge (Demand)</h3>
+        <p>Sterling's User Exit framework is used to publish demand state transitions to Kafka. A lightweight UExit implementation on key APIs (createOrder, scheduleOrder, releaseOrder) publishes events to <code>sterling.demand.events</code>. Transformer maps to modern demand format.</p>
+        <pre><code>Sterling UExit (createOrder/scheduleOrder)
+  → Kafka: sterling.demand.events
+  → Demand Transformer → Demand Ledger Service
+  → PostgreSQL (new) + Kafka:inventory.demand.events</code></pre>
+      </div>
+    </div>
+
+    <h3>Shadow Mode Comparator</h3>
+    <p>Before any production traffic is switched, the ATP Gateway runs in <strong>shadow mode</strong> for targeted items: it calls both Sterling's <code>getATP</code> AND the new ATP Calculator, compares results, and logs divergence. <strong>Sterling's answer is always served to the user</strong>. Divergence metrics are tracked on a Grafana dashboard. Only when divergence &lt; 0.1% for 2 weeks does the feature flag flip to the modern service.</p>
+
+    <div class="callout callout-success">
+      <div class="callout-title">Shadow Mode Success Criteria</div>
+      ATP value divergence &lt; 0.1% | Response time of new service ≤ Sterling P99 | Zero demand double-counting events over 2-week window | Reservation rollback rate &lt; 0.01%
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 20 ===== -->
+    <section class="section" id="s20">
+  <div class="section-header">
+    <span class="section-num">20</span>
+    <h2>4-Phase Migration Plan</h2>
+  </div>
+  <div class="content">
+    <div class="tab-group">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="ph0">Phase 0: Foundation</button>
+        <button class="tab-btn" data-tab="ph1">Phase 1: Shadow</button>
+        <button class="tab-btn" data-tab="ph2">Phase 2: Extraction</button>
+        <button class="tab-btn" data-tab="ph3">Phase 3: Cutover</button>
+        <button class="tab-btn" data-tab="ph4">Phase 4: Decommission</button>
+      </div>
+      <div class="tab-panel active" id="ph0">
+        <div class="phase-badge phase-0">PHASE 0 · Months 1–3 · Foundation</div>
+        <h3 style="margin-top:8px">Discovery, Platform, and Bridge</h3>
+        <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+          <li><strong>Dependency mapping:</strong> Map all systems consuming Sterling GIV APIs. Identify direct DB consumers (anti-pattern). Document all User Exits modifying inventory.</li>
+          <li><strong>Data classification:</strong> Classify inventory data — hot (ONHAND, active demands) vs. warm (PO future supply) vs. cold (historical audit). Determines migration priority.</li>
+          <li><strong>Platform build:</strong> Provision Kubernetes cluster, Kafka cluster (3 brokers, 6 partitions per topic initially), PostgreSQL (2 instances: supply + demand), Redis Cluster (6 nodes). Set up CI/CD pipelines.</li>
+          <li><strong>Debezium CDC setup:</strong> Deploy Debezium on Sterling DB. Validate YFS_INVENTORY_SUPPLY CDC capture. Set up transformer service. Target: &lt;500ms lag from Sterling write to Kafka event.</li>
+          <li><strong>User Exit bridge:</strong> Implement minimal Sterling UExits to publish createOrder / scheduleOrder / releaseOrder / shipOrder demand events to Kafka. No logic change in Sterling — pure event publication.</li>
+          <li><strong>Inventory API Gateway:</strong> Deploy API Gateway (Kong) with feature-flag middleware. All inventory API calls routed through it. Initially 100% → Sterling.</li>
+          <li><strong>Build Supply Ledger and Demand Ledger services</strong> with API contracts. Load historical data from Sterling DB via one-time backfill.</li>
+        </ul>
+        <div class="callout callout-info" style="margin-top:16px">
+          <div class="callout-title">Exit Criteria</div>
+          CDC lag &lt; 500ms | Historical supply/demand backfill complete and reconciled | All GIV API consumers identified and updated to call API Gateway | Kafka operational with monitoring
+        </div>
+      </div>
+      <div class="tab-panel" id="ph1">
+        <div class="phase-badge phase-1">PHASE 1 · Months 4–6 · Shadow Mode</div>
+        <h3 style="margin-top:8px">Build ATP Calculator + Shadow Validation</h3>
+        <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+          <li><strong>Build ATP Calculator Service:</strong> Implement supply-demand calculation logic, Inventory Considerations matrix (configurable), safety factor, unassigned demand handling. Population of Redis ATP cache from Kafka events.</li>
+          <li><strong>Build Reservation Service:</strong> Redis-based atomic reservation with Lua scripts (DECRBY + SET in single atomic op). Cart abandonment TTL (30 min default). Demand Ledger write on successful reservation.</li>
+          <li><strong>Shadow mode activation:</strong> For a pilot item range (e.g., 500 SKUs across 5 DCs), enable shadow mode in API Gateway. Both Sterling getATP and new ATP Calculator are called; Sterling result is returned to user; divergence logged.</li>
+          <li><strong>Divergence dashboard:</strong> Grafana dashboard shows ATP divergence %, response time comparison, demand count comparison per item. On-call team reviews daily.</li>
+          <li><strong>Iteration loop:</strong> Fix divergences (typically: unassigned demand not handled correctly, safety factor rounding, date boundary edge cases). Target: divergence &lt;0.1%.</li>
+        </ul>
+        <div class="callout callout-warn" style="margin-top:16px">
+          <div class="callout-title">Common Divergence Sources in Shadow Mode</div>
+          (1) Unassigned BACKORDER demands not being distributed correctly across DGs. (2) Lead time timezone edge cases — Sterling uses server TZ, new service uses UTC. (3) INFINITE node items where Sterling always returns unlimited — new service needs same config. (4) Tag-controlled items if not initially scoped in.
+        </div>
+      </div>
+      <div class="tab-panel" id="ph2">
+        <div class="phase-badge phase-2">PHASE 2 · Months 7–12 · Rolling Extraction</div>
+        <h3 style="margin-top:8px">Domain-by-Domain Cutover (Warehouse First)</h3>
+        <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+          <li><strong>Wave 1 — Warehouse nodes (Month 7–8):</strong> Flip feature flag for warehouse-sourced items. ATP queries → new ATP Calculator. Reservation → new Reservation Service. Order promising → new Order Promising Service for warehouse orders. Monitor for 2 weeks before proceeding.</li>
+          <li><strong>Wave 2 — DC-to-Store fulfillment (Month 9–10):</strong> Extend to store-sourced BOPIS/SFS orders. Dirty Node mechanism implemented in Location Exclusion Service. Shadow mode for store items for 4 weeks before flip (stores have dirtier data).</li>
+          <li><strong>Wave 3 — Vendor/Drop-ship nodes (Month 11–12):</strong> Implement Infinite location concept (no ATP check, always available). EDI 846 vendor feed → Supply Ledger. Chained order supply/demand replicated.</li>
+          <li><strong>Build ATP Publisher Service</strong> to replace RTAM Agent. Subscribe to <code>inventory.atp.updates</code> topic. Push to channel systems via WebSocket. Validate that channel ATP matches what order-time ATP returns.</li>
+        </ul>
+        <div class="callout callout-info" style="margin-top:16px">
+          <div class="callout-title">Rollback at Each Wave</div>
+          Feature flag flip takes &lt;60 seconds to route 100% back to Sterling. No DB changes needed for rollback. Keep Sterling running and receiving CDC updates throughout Phase 2.
+        </div>
+      </div>
+      <div class="tab-panel" id="ph3">
+        <div class="phase-badge phase-3">PHASE 3 · Months 13–15 · Full Cutover</div>
+        <h3 style="margin-top:8px">Stop Sterling, Modern Platform is Primary</h3>
+        <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+          <li><strong>Feature flag → 100% modern:</strong> All items, all nodes, all channels route to modern inventory platform. Sterling GIV receives no new inventory queries.</li>
+          <li><strong>Stop CDC bridge:</strong> Debezium connector stopped. New platform is now the write master. Sterling DB becomes read-only archive.</li>
+          <li><strong>Stop UExit bridge:</strong> Sterling demand UExits disabled. Demand state transitions handled exclusively by modern Demand Ledger Service.</li>
+          <li><strong>Decommission RTAM Agent:</strong> Sterling RTAM agent stopped. ATP Publisher Service handles all channel ATP push notifications.</li>
+          <li><strong>72-hour war room monitoring:</strong> Full team on-call. Divergence checks switched to anomaly detection on production ATP values. Rollback plan: re-enable feature flags to route back to Sterling (Sterling DB still live for 30 days).</li>
+        </ul>
+      </div>
+      <div class="tab-panel" id="ph4">
+        <div class="phase-badge phase-4">PHASE 4 · Months 16–18 · Decommission Sterling GIV</div>
+        <h3 style="margin-top:8px">Remove Sterling Inventory Modules</h3>
+        <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+          <li><strong>Archive Sterling inventory data:</strong> Snapshot YFS_INVENTORY_SUPPLY, YFS_INVENTORY_DEMAND, YFS_INVENTORY_ALERTS to cold storage (S3/GCS). Retain for compliance audit period.</li>
+          <li><strong>Remove Sterling GIV configuration:</strong> Remove Inventory Considerations, ATP Rules, Distribution Groups from Sterling Application Manager. These are now owned by the modern platform.</li>
+          <li><strong>Retire Sterling agents:</strong> Disable Schedule Agent (replaced by Order Promising Service), Release Agent (replaced), RTAM Agent (replaced by Publisher Service), Inventory Monitor Agent (replaced by Replenishment Service).</li>
+          <li><strong>Sterling OMS remaining scope:</strong> Sterling may continue to handle non-inventory functions (order capture, shipment execution, returns) if not yet migrated. GIV extraction is independent of those modules.</li>
+          <li><strong>License renegotiation:</strong> With GIV extracted, IBM license scope reduces. Begin renegotiation at month 16 with data on reduced Sterling utilization.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Migration Timeline</h3>
+    <div class="diagram-wrap">
+      <div class="diagram-label">Fig 10 — Migration Gantt</div>
+      <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+gantt
+    title Sterling GIV → Modern Inventory Migration
+    dateFormat  YYYY-MM
+    axisFormat  %b %Y
+
+    section Phase 0 · Foundation
+    Platform infra & K8s setup         :done, p0a, 2024-01, 2024-02
+    Debezium CDC bridge                 :done, p0b, 2024-01, 2024-03
+    UExit demand bridge                 :done, p0c, 2024-02, 2024-03
+    Supply + Demand Ledger build        :done, p0d, 2024-02, 2024-04
+    Historical data backfill            :done, p0e, 2024-03, 2024-04
+
+    section Phase 1 · Shadow Mode
+    ATP Calculator Service build        :active, p1a, 2024-04, 2024-06
+    Reservation Service build           :p1b, 2024-04, 2024-06
+    Shadow mode pilot (500 SKUs)        :p1c, 2024-05, 2024-07
+    Divergence fix iterations           :p1d, 2024-06, 2024-07
+
+    section Phase 2 · Rolling Extraction
+    Wave 1 — Warehouse nodes            :p2a, 2024-07, 2024-09
+    Wave 2 — Store/SFS nodes            :p2b, 2024-09, 2024-11
+    Wave 3 — Vendor/Drop-ship           :p2c, 2024-11, 2025-01
+    ATP Publisher (replaces RTAM)       :p2d, 2024-10, 2024-12
+
+    section Phase 3 · Full Cutover
+    100% modern traffic                 :p3a, 2025-01, 2025-02
+    Stop CDC + UExit bridges            :p3b, 2025-02, 2025-03
+    72hr war room                       :crit, p3c, 2025-02, 2025-03
+
+    section Phase 4 · Decommission
+    Archive Sterling inv data           :p4a, 2025-03, 2025-04
+    Retire Sterling agents              :p4b, 2025-03, 2025-04
+    License renegotiation               :p4c, 2025-04, 2025-07
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 21 ===== -->
+    <section class="section" id="s21">
+  <div class="section-header">
+    <span class="section-num">21</span>
+    <h2>Data Migration Strategy</h2>
+  </div>
+  <div class="content">
+    <h3>Sterling → Modern Schema Mapping (Key Tables)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sterling Table</th><th>Modern Schema</th><th>Migration Approach</th><th>Special Handling</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>YFS_INVENTORY_SUPPLY</code></td>
+            <td><code>supply_ledger.inventory_positions</code><br/>(item_id, location_id, supply_type, quantity, effective_date)</td>
+            <td>CDC (Debezium) ongoing + one-time historical backfill via Kafka bulk load</td>
+            <td class="warn-cell">SUPPLY_TYPE mapping: Sterling codes → modern enum. INFO type excluded (not counted in ATP).</td>
+          </tr>
+          <tr>
+            <td><code>YFS_INVENTORY_DEMAND</code></td>
+            <td><code>demand_ledger.demand_positions</code><br/>(demand_id, order_id, item_id, location_id, demand_type, quantity, status)</td>
+            <td>UExit bridge for live data. Historical demands: batch job exporting active orders with SCHEDULED/ALLOCATED status only.</td>
+            <td class="warn-cell">Only migrate ACTIVE demands (not SHIPPED/CANCELLED). OPEN_ORDER demands need location_id = null (unassigned).</td>
+          </tr>
+          <tr>
+            <td><code>YFS_INVENTORY_ITEM</code></td>
+            <td><code>inventory_config.item_settings</code><br/>(item_id, safety_factor_pct, allow_unplanned, is_infinite)</td>
+            <td>One-time bulk export from Sterling Application Manager XML → seed config DB</td>
+            <td>Infinity flag per node must be preserved exactly. Safety factor per item-node combination.</td>
+          </tr>
+          <tr>
+            <td>Distribution Groups (Application Manager config)</td>
+            <td><code>location_service.location_groups</code><br/>(group_id, name, location_ids[], priority)</td>
+            <td>Manual export from Sterling Application Manager UI → YAML config → Location Service seed</td>
+            <td>DG priority for unassigned demand distribution (replaces random 9.3 behavior — implement correctly from day 1).</td>
+          </tr>
+          <tr>
+            <td>ATP Rules / Inventory Considerations</td>
+            <td><code>atp_config.supply_type_rules</code><br/>(demand_type, qualifying_supply_types[])</td>
+            <td>Manual extraction from GIV Application Manager → JSON config → ATP Calculator Service config</td>
+            <td>Validate all custom DemandType mappings. Do not assume OOB defaults — export actual config from Sterling.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Dual-Write Reconciliation Checklist</h3>
+    <div class="card">
+      <p>Run daily during shadow mode and Phase 2, hourly during Phase 3 cutover window:</p>
+      <ul style="font-size:14px;color:#cdd9e5;padding-left:20px">
+        <li>Supply quantity sum per item-node: <code>SUM(YFS_INVENTORY_SUPPLY.QUANTITY) = SUM(modern supply_ledger.quantity)</code> — tolerance ≤ 0.01%</li>
+        <li>Active demand count per item: demand record count comparison (exclude SHIPPED from Sterling)</li>
+        <li>ATP value comparison for top 1000 SKUs per DG: call both getATP (Sterling) and GET /atp (modern), compare results</li>
+        <li>Reservation count: compare RSRV_ORDER count in Sterling vs. active reservations in Redis Reservation Service</li>
+        <li>Dirty node flags: <code>YFS_INVENTORY_NODE_CONTROL</code> active records match Location Exclusion Service Redis keys</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 22 ===== -->
+    <section class="section" id="s22">
+  <div class="section-header">
+    <span class="section-num">22</span>
+    <h2>Tech Stack — Build vs Buy Analysis</h2>
+  </div>
+  <div class="content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Option A</th>
+            <th>Option B</th>
+            <th>Option C (SaaS)</th>
+            <th>Recommended</th>
+            <th>Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Inventory Platform</strong></td>
+            <td>Custom build (this architecture)</td>
+            <td>Fluent Commerce OMS</td>
+            <td>Fabric OMS / Deck Commerce</td>
+            <td class="rec">Custom if team &gt;20 devs + high scale; Fluent if mid-market</td>
+            <td>Custom gives full control + no licensing; SaaS faster to market</td>
+          </tr>
+          <tr>
+            <td><strong>Event Backbone</strong></td>
+            <td>Apache Kafka (self-managed)</td>
+            <td>Confluent Cloud</td>
+            <td>AWS MSK</td>
+            <td class="rec">Confluent Cloud (managed Kafka)</td>
+            <td>Inventory events are high-volume, need replay, ordering by partition key. Kafka is the only right choice. Managed reduces ops overhead.</td>
+          </tr>
+          <tr>
+            <td><strong>Supply/Demand DB</strong></td>
+            <td>PostgreSQL (RDS)</td>
+            <td>CockroachDB</td>
+            <td>DynamoDB</td>
+            <td class="rec">PostgreSQL (Aurora)</td>
+            <td>ACID transactions critical for supply/demand consistency. Aurora gives managed ops + read replicas for query scale. CockroachDB if multi-region active-active needed.</td>
+          </tr>
+          <tr>
+            <td><strong>ATP Cache (Read)</strong></td>
+            <td>Redis OSS (K8s)</td>
+            <td>Redis Enterprise</td>
+            <td>AWS ElastiCache</td>
+            <td class="rec">ElastiCache (Redis) or Redis Cluster on K8s</td>
+            <td>Sub-millisecond ATP reads require in-memory. Redis sorted sets are perfect for ATP-per-location queries. ElastiCache for managed ops.</td>
+          </tr>
+          <tr>
+            <td><strong>Reservation Store</strong></td>
+            <td>Redis (same cluster, separate keyspace)</td>
+            <td>Postgres (optimistic lock)</td>
+            <td>DynamoDB (conditional writes)</td>
+            <td class="rec">Redis for &gt;5K TPS; Postgres for &lt;5K TPS</td>
+            <td>Redis DECRBY is atomic and blazing fast. Postgres optimistic lock is simpler but slower under high concurrency.</td>
+          </tr>
+          <tr>
+            <td><strong>CDC (Sterling bridge)</strong></td>
+            <td>Debezium (OSS)</td>
+            <td>AWS DMS</td>
+            <td>Fivetran</td>
+            <td class="rec">Debezium on K8s</td>
+            <td>Debezium is the gold standard for DB CDC into Kafka. AWS DMS has gaps with Oracle/DB2 (Sterling's typical DB). Fivetran is batch, not real-time.</td>
+          </tr>
+          <tr>
+            <td><strong>API Gateway</strong></td>
+            <td>Kong (OSS)</td>
+            <td>AWS API Gateway</td>
+            <td>Apigee</td>
+            <td class="rec">Kong on K8s</td>
+            <td>Feature flag routing via Kong plugin. Rate limiting critical for ATP query burst. Multi-cloud portability. Low latency overhead (&lt;1ms).</td>
+          </tr>
+          <tr>
+            <td><strong>Service Mesh</strong></td>
+            <td>Istio</td>
+            <td>Linkerd</td>
+            <td>AWS App Mesh</td>
+            <td class="rec">Linkerd (Phase 3+) or no mesh initially</td>
+            <td>Start without mesh (adds complexity). Add Linkerd when service count &gt;10. mTLS, circuit breaking, retry policies needed for inventory services at scale.</td>
+          </tr>
+          <tr>
+            <td><strong>Observability</strong></td>
+            <td>Grafana Stack (Prometheus + Loki + Tempo)</td>
+            <td>Datadog</td>
+            <td>New Relic</td>
+            <td class="rec">Grafana Stack (GCC cost-conscious)</td>
+            <td>3-yr TCO ~$25K vs $85K+ for Datadog. Critical metrics: ATP divergence %, reservation success rate, Kafka consumer lag per topic, CDC lag ms.</td>
+          </tr>
+          <tr>
+            <td><strong>Feature Flags</strong></td>
+            <td>LaunchDarkly</td>
+            <td>ConfigCat</td>
+            <td>AWS AppConfig</td>
+            <td class="rec">LaunchDarkly</td>
+            <td>Item-level, node-level, channel-level feature flags required. LaunchDarkly supports complex targeting rules. Critical for safe migration increments.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 23 ===== -->
+    <section class="section" id="s23">
+  <div class="section-header">
+    <span class="section-num">23</span>
+    <h2>Architecture Decision Records</h2>
+  </div>
+  <div class="content">
+
+    <div class="adr">
+      <div class="adr-header">
+        <span class="adr-title">ADR-001 — Event Sourcing for Inventory Ledger over Mutable Records</span>
+        <span class="badge badge-green">Accepted</span>
+        <span class="adr-toggle">+</span>
+      </div>
+      <div class="adr-body">
+        <div class="adr-field"><label>Context</label><p>Sterling OMS uses mutable rows in YFS_INVENTORY_SUPPLY/DEMAND — a direct update model. This means the history is lost and audit trails require separate audit tables. We need to design the replacement data model.</p></div>
+        <div class="adr-field"><label>Decision</label><p>Use an event-sourced append-only log as the write model. Every inventory change (adjustment, PO receipt, demand creation, demand transition) is recorded as an immutable event in PostgreSQL and simultaneously published to Kafka. The current state (ATP) is a projection from the event stream, not a mutable row.</p></div>
+        <div class="adr-field"><label>Consequences</label><p>✅ Full audit trail by design. ✅ Any point-in-time ATP snapshot is computable by replaying events. ✅ Kafka acts as the source of truth, enabling downstream projections. ❌ Query complexity — "what's the current inventory?" requires projection. Mitigated by pre-computed Redis cache.</p></div>
+        <div class="adr-field"><label>Alternatives Rejected</label><p>Mutable update model (same as Sterling): rejected — loses history, same constraints we're migrating away from. Full event sourcing with event store (EventStoreDB): rejected — overkill, adds operational complexity; Kafka + Postgres provides 90% of the value at lower complexity.</p></div>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-header">
+        <span class="adr-title">ADR-002 — Redis as ATP Read Cache (CQRS Read Model)</span>
+        <span class="badge badge-green">Accepted</span>
+        <span class="adr-toggle">+</span>
+      </div>
+      <div class="adr-body">
+        <div class="adr-field"><label>Context</label><p>ATP queries are the highest-volume, most latency-sensitive operations — called at product browse time (millions of calls/hour) and at checkout (requires sub-10ms response). A full DB scan of supply and demand tables for every query is not viable at scale.</p></div>
+        <div class="adr-field"><label>Decision</label><p>Maintain a pre-computed ATP value per item-location-group in Redis. The ATP Calculator Service consumes supply and demand events from Kafka and updates the Redis ATP hash in real time. All ATP queries read from Redis first; fall back to live DB calculation only on cache miss.</p></div>
+        <div class="adr-field"><label>Consequences</label><p>✅ Sub-millisecond ATP reads at any scale. ✅ Redis update lag is typically &lt;100ms from inventory event to ATP update. ❌ ATP cache is slightly stale between event and Redis update — acceptable for display; live DB check used at order commit (reservation). ❌ Redis failover requires ATP recalculation from Kafka replay.</p></div>
+        <div class="adr-field"><label>Alternatives Rejected</label><p>Materialized view in PostgreSQL: rejected — refresh latency of 1–5 seconds, lock issues during refresh under high write load. ElasticSearch ATP index: rejected — good for search but overkill for simple ATP key-value lookups; Redis sorted sets are more natural.</p></div>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-header">
+        <span class="adr-title">ADR-003 — Strangler Fig over Big-Bang Rewrite</span>
+        <span class="badge badge-green">Accepted</span>
+        <span class="adr-toggle">+</span>
+      </div>
+      <div class="adr-body">
+        <div class="adr-field"><label>Context</label><p>Sterling GIV processes millions of inventory events per day and is the availability backbone for all order promising. A single cutover event carries unacceptable business risk — one bug in the new system means all order promising fails.</p></div>
+        <div class="adr-field"><label>Decision</label><p>Use Strangler Fig with feature-flag-based routing at the API Gateway. New system is built and validated in shadow mode. Traffic is migrated node-type by node-type (Warehouse → Store → Vendor) over 12 months. Sterling is always available as a rollback target during each wave.</p></div>
+        <div class="adr-field"><label>Consequences</label><p>✅ Zero-downtime migration. ✅ Rollback in &lt;60 seconds at any phase. ✅ Shadow mode catches ATP divergences before real users are affected. ❌ Dual system operational cost for 15 months. ❌ CDC bridge adds complexity and is a temporary dependency. ❌ Team must maintain both systems in parallel.</p></div>
+        <div class="adr-field"><label>Alternatives Rejected</label><p>Big-bang rewrite (all nodes at once): rejected — catastrophic blast radius. Any ATP calculation bug silently causes oversell or stock-out across all channels. Blue-green deployment (full parallel for one cutover): rejected — requires full feature parity before any production traffic; delays value delivery by 12+ months.</p></div>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-header">
+        <span class="adr-title">ADR-004 — Kafka Partition Key = item_id + location_id</span>
+        <span class="badge badge-green">Accepted</span>
+        <span class="adr-toggle">+</span>
+      </div>
+      <div class="adr-body">
+        <div class="adr-field"><label>Context</label><p>Inventory events for the same item at the same location must be processed in order — otherwise a later "decrease" could be applied before an earlier "increase", resulting in negative inventory. This is the distributed equivalent of Sterling's Hot SKU locking.</p></div>
+        <div class="adr-field"><label>Decision</label><p>All Kafka topics use <code>item_id:location_id</code> as the partition key. All events for a given item-location always land on the same partition and are consumed by the same consumer instance — preserving order without any locking. This also collocates supply and demand events for the same item-location on the same partition, simplifying the ATP Calculator's join logic.</p></div>
+        <div class="adr-field"><label>Consequences</label><p>✅ No DB-level locking required for Hot SKU scenarios. ✅ Per-item-location ordering guarantee. ✅ Replaces Sterling's INV_INVENTORY_ITEM_LOCK table entirely. ❌ Hot partitions possible if a single item-location gets 100K events/sec during a flash sale. Mitigated by: (1) separate Kafka cluster/topic for Hot SKU items with higher partition count; (2) Redis atomic DECRBY for reservation (bypasses Kafka write for checkout).</p></div>
+        <div class="adr-field"><label>Alternatives Rejected</label><p>Round-robin partitioning: rejected — no ordering guarantee, ATP Calculator needs distributed locking to compensate. Sharding by item_id only (not location_id): rejected — a single high-volume item across many locations would create a hot partition unnecessarily.</p></div>
+      </div>
+    </div>
+
+    <div class="adr">
+      <div class="adr-header">
+        <span class="adr-title">ADR-005 — Reservation via Redis Atomic Decrement (not DB lock)</span>
+        <span class="badge badge-green">Accepted</span>
+        <span class="adr-toggle">+</span>
+      </div>
+      <div class="adr-body">
+        <div class="adr-field"><label>Context</label><p>At checkout, multiple customers may attempt to reserve the last unit of a Hot SKU simultaneously. Sterling handles this with DB row-level locking on YFS_INVENTORY_ITEM — causing contention at scale. We need a reservation mechanism that handles 50K+ concurrent reservations/sec.</p></div>
+        <div class="adr-field"><label>Decision</label><p>Reservation uses a two-step approach: (1) Redis DECRBY on the ATP counter — atomic, lock-free, ~200μs latency. If result ≥ 0, reservation succeeds. If &lt; 0, INCRBY to revert and return "out of stock". (2) On success, asynchronously write RSRV_ORDER demand event to Kafka → Demand Ledger. If Kafka write fails, a saga compensates by INCRBY back in Redis.</p></div>
+        <div class="adr-field"><label>Consequences</label><p>✅ 50K+ reservations/sec without DB contention. ✅ Reservation latency &lt;1ms (Redis) vs 10–50ms (DB lock). ✅ Eventual consistency with Kafka — acceptable because DB is not the source of truth anyway. ❌ Redis failure during window between DECRBY and Kafka write requires saga compensation. ❌ Redis cluster split-brain could temporarily allow double-reservation. Mitigated by Redis Cluster with async replication + Lua script for atomic reservation.</p></div>
+        <div class="adr-field"><label>Alternatives Rejected</label><p>Postgres optimistic lock (version column): viable at &lt;5K TPS but fails under flash sale load. DB SELECT FOR UPDATE (same as Sterling model): rejected — same contention problem being solved. Distributed lock (Redlock): rejected — adds latency and complexity; DECRBY is already atomic.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 24 ===== -->
+    <section class="section" id="s24">
+  <div class="section-header">
+    <span class="section-num">24</span>
+    <h2>End-State Target Architecture</h2>
+  </div>
+  <div class="content">
+    <p>This is the fully-migrated state — Sterling GIV is gone. The modern inventory platform is the sole source of truth for supply, demand, and ATP across all channels and fulfillment nodes.</p>
+
+    <div class="diagram-wrap">
+      <div class="diagram-label">Fig 11 — End-State: Modern Inventory Platform (No Sterling)</div>
+      <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    classDef channel fill:#1c2128,stroke:#58a6ff,color:#58a6ff
+    classDef adapter fill:#162416,stroke:#2ea043,color:#3fb950
+    classDef svc fill:#1f2d3d,stroke:#1f6feb,color:#e6edf3
+    classDef kafka fill:#2d2a1f,stroke:#d29922,color:#d29922
+    classDef db fill:#0d1117,stroke:#30363d,color:#8b949e
+    classDef api fill:#2d1f1f,stroke:#f85149,color:#ffa198
+    classDef platform fill:#0d1117,stroke:#30363d,color:#8b949e
+
+    subgraph SUPPLY_FEED["Supply Feed Layer (Adapters)"]
+        WMS_A["WMS Adapter<br/>(Manhattan/JDA/custom)"]:::adapter
+        ERP_A["ERP PO Adapter<br/>(SAP/Oracle)"]:::adapter
+        POS_A["Store POS Adapter<br/>(intraday delta)"]:::adapter
+        EDI_A["Vendor EDI 846 Adapter"]:::adapter
+    end
+
+    subgraph GATEWAY["API Gateway — Kong"]
+        GW["Kong API Gateway<br/>Auth + Rate Limit + Feature Flags<br/>(LaunchDarkly integration)"]:::svc
+    end
+
+    subgraph INV_PLATFORM["Modern Inventory Platform (Kubernetes)"]
+        direction TB
+        SUPPLY["Supply Ledger Service<br/>POST /supply/adjust<br/>POST /supply/po"]:::svc
+        DEMAND["Demand Ledger Service<br/>POST /demand<br/>PATCH /demand/:id/transition"]:::svc
+        RESERVATION["Reservation Service<br/>POST /reservations<br/>DELETE /reservations/:id"]:::svc
+        ATP["ATP Calculator<br/>Consumes supply+demand events<br/>Maintains Redis ATP cache"]:::svc
+        LOCATION["Location Service<br/>Nodes + Groups Config"]:::svc
+        PUBLISH["ATP Publisher<br/>WebSocket / SSE / REST push"]:::svc
+        PROMISING["Order Promising Service<br/>Sourcing rules + ATP check<br/>OPEN_ORDER → SCHEDULED"]:::svc
+        REPLENISH["Replenishment Service<br/>Low stock → transfer/PO trigger"]:::svc
+
+        subgraph DATASTORES["Data Layer"]
+            PG_S["PostgreSQL<br/>Supply Ledger"]:::db
+            PG_D["PostgreSQL<br/>Demand Ledger"]:::db
+            REDIS["Redis Cluster<br/>ATP Cache + Reservations"]:::db
+            PG_C["PostgreSQL<br/>Config (Rules, Locations)"]:::db
+        end
+
+        subgraph KAFKA["Kafka (Confluent Cloud)"]
+            K1["inventory.supply.events"]:::kafka
+            K2["inventory.demand.events"]:::kafka
+            K3["inventory.atp.updates"]:::kafka
+            K4["inventory.alerts"]:::kafka
+            K5["orders.events"]:::kafka
+        end
+    end
+
+    subgraph CHANNELS["Downstream Channels"]
+        WEB["Web / Mobile<br/>(Browse + Checkout)"]:::channel
+        STORE_CH["Store POS<br/>(BOPIS pickup)"]:::channel
+        B2B["B2B / EDI Channel"]:::channel
+        ORDER_MGMT["Order Management Service<br/>(non-inventory OMS)"]:::channel
+    end
+
+    SUPPLY_FEED --> SUPPLY
+    SUPPLY --> PG_S
+    SUPPLY --> K1
+    K1 --> ATP
+    K2 --> ATP
+    ATP --> REDIS
+    ATP --> K3
+    K3 --> PUBLISH
+    K3 --> REPLENISH
+    K5 --> PROMISING
+    PROMISING --> DEMAND
+    PROMISING --> GW
+    DEMAND --> PG_D
+    DEMAND --> K2
+    RESERVATION --> REDIS
+    RESERVATION --> DEMAND
+    LOCATION --> PG_C
+    LOCATION --> ATP
+
+    GW --> CHANNELS
+    GW --> SUPPLY
+    GW --> DEMAND
+    GW --> RESERVATION
+    GW --> ATP
+
+    PUBLISH --> WEB & STORE_CH & B2B
+    WEB --> GW
+    STORE_CH --> GW
+    B2B --> GW
+    ORDER_MGMT --> GW
+      </div>
+    </div>
+
+    <h3>End-State NFR Targets</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Sterling GIV 9.3 Baseline</th><th>Modern Platform Target</th></tr></thead>
+        <tbody>
+          <tr><td>ATP Query P99 (live)</td><td>50–200ms (DB hit)</td><td class="rec">&lt;5ms (Redis hit) / &lt;30ms (DB fallback)</td></tr>
+          <tr><td>ATP Query throughput</td><td>~5K RPS (before contention)</td><td class="rec">500K+ RPS (Redis cluster)</td></tr>
+          <tr><td>Inventory update lag (event → ATP cache)</td><td>30sec–5min (RTAM agent cycle)</td><td class="rec">&lt;500ms (event-driven)</td></tr>
+          <tr><td>Reservation throughput</td><td>~2K TPS (DB lock contention)</td><td class="rec">50K+ TPS (Redis atomic)</td></tr>
+          <tr><td>Hot SKU handling</td><td>DB contention, manual property tuning</td><td class="rec">Partition-based ordering, zero tuning</td></tr>
+          <tr><td>Deployment frequency</td><td>Monthly (EAR deploy cycle)</td><td class="rec">Multiple per day (per service)</td></tr>
+          <tr><td>Inventory audit trail</td><td>Separate audit table (incomplete)</td><td class="rec">Complete event log in Kafka (replayed anytime)</td></tr>
+          <tr><td>ATP divergence (display vs. order-time)</td><td>Up to 30min (RTAM cycle) + backorder node-lock bug</td><td class="rec">&lt;500ms convergence</td></tr>
+          <tr><td>Disaster Recovery RTO</td><td>Hours (EAR redeploy)</td><td class="rec">&lt;5min (K8s pod reschedule + Redis replay from Kafka)</td></tr>
+          <tr><td>3-yr TCO (mid-scale GCC)</td><td>$2M–$4M (IBM licensing + infra)</td><td class="rec">$400K–$800K (OSS stack + cloud infra)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Risk Register</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Risk</th><th>Probability</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr class="risk-row-high"><td><strong>ATP divergence between systems during migration</strong></td><td>High</td><td>High — oversell</td><td>Shadow mode + divergence dashboard. Flip only when &lt;0.1% divergence for 14 days.</td></tr>
+          <tr class="risk-row-high"><td><strong>CDC bridge lag spike</strong></td><td>Medium</td><td>High — stale new system</td><td>Debezium lag alert at &gt;2sec. Automatic fallback to Sterling routing for affected items.</td></tr>
+          <tr class="risk-row-med"><td><strong>Redis ATP cache invalidation on failure</strong></td><td>Medium</td><td>Medium — stale ATP reads</td><td>Redis sentinel + AOF persistence. ATP recalc from Kafka replay on startup. Fall back to live DB calc on Redis miss.</td></tr>
+          <tr class="risk-row-med"><td><strong>Team unfamiliar with event-sourcing patterns</strong></td><td>Medium</td><td>Medium — implementation bugs</td><td>6-month training runway before Phase 1. Hire 1–2 engineers with Kafka/event-sourcing experience.</td></tr>
+          <tr class="risk-row-low"><td><strong>Kafka partition hotspot on viral SKU</strong></td><td>Low</td><td>Medium — event lag for hot item</td><td>Dedicated topic for Hot SKU with 3x partition count. Monitor consumer lag per partition.</td></tr>
+          <tr class="risk-row-low"><td><strong>IBM Sterling license exit fees</strong></td><td>Low</td><td>Medium — cost spike</td><td>Review IBM contract for early termination clauses. Plan license reduction in 6-month increments as nodes migrate.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-success" style="margin-top:24px">
+      <div class="callout-title">The End State in One Sentence</div>
+      A fully event-driven, cloud-native inventory platform where every supply change and demand transition is an immutable Kafka event, ATP is pre-computed in Redis and served in under 5ms, reservations are atomic lock-free Redis operations handling 50K+ TPS, and no IBM licensing stands between you and your inventory data.
+    </div>
+  </div>
+</section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb', primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d', lineColor: '#58a6ff',
+      secondaryColor: '#161b22', tertiaryColor: '#0d1117',
+      background: '#0d1117', mainBkg: '#161b22',
+      nodeBorder: '#30363d', clusterBkg: '#1c2128',
+      titleColor: '#e6edf3', edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function scrollToSection(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.target.closest('.nav-item')?.classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      if(toggle) toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  // Tab switcher for migration phases
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.tab-group');
+      group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      group.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      group.querySelector('#' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
