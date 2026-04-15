@@ -13,6 +13,7 @@ Practitioner-level system design and architecture modernization guides.
 | Sterling OMS 9.3 — Orchestrator-Based Microservices | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/sterling-oms-orchestrator-pattern.html) |
 | DDoS & Inventory Hoarding Defense | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/ddos-inventory-hoarding-detection.html) |
 | IBM Sterling OMS — Agent Architecture Deep Dive | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/sterling-oms-agents.html) |
+| Behavioral & Strategy Q&A — EM/Director Interview Playbook (GCC Edition) | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/em-interview-playbook.html) |
 
 ## About
 
