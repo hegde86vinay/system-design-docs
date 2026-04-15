@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDoS & Inventory Hoarding Defense — System Design Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --bg-card: #161b22; --bg-hover: #1c2128;
+      --border: #30363d; --text: #e6edf3; --text-muted: #8b949e;
+      --accent: #58a6ff; --accent2: #3fb950; --warn: #d29922;
+      --danger: #f85149; --tag-bg: #1f6feb33;
+      --mono: 'JetBrains Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; min-width: 250px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .nav-item { display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none; font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer; }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 26px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #23863633; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 60px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; gap: 12px; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; flex: 1; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .signal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .signal-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .signal-card .signal-type { font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; font-weight: 600; }
+    .signal-card ul { padding-left: 16px; }
+    .signal-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 4px; }
+    .layer-stack { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .layer { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 16px; }
+    .layer-num { font-family: var(--mono); font-size: 11px; background: var(--tag-bg); color: var(--accent); padding: 2px 8px; border-radius: 4px; min-width: 40px; text-align: center; }
+    .layer-name { font-weight: 600; font-size: 14px; min-width: 220px; }
+    .layer-desc { font-size: 13px; color: var(--text-muted); }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid, .signal-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Inventory Hoarding Defense</div>
+    <a class="nav-item active" onclick="scrollToSection('s1', event)"><span class="num">01</span>Executive Summary</a>
+    <a class="nav-item" onclick="scrollToSection('s2', event)"><span class="num">02</span>Requirements</a>
+    <a class="nav-item" onclick="scrollToSection('s3', event)"><span class="num">03</span>Threat Model</a>
+    <a class="nav-item" onclick="scrollToSection('s4', event)"><span class="num">04</span>Defense Architecture</a>
+    <a class="nav-item" onclick="scrollToSection('s5', event)"><span class="num">05</span>Detection Signals</a>
+    <a class="nav-item" onclick="scrollToSection('s6', event)"><span class="num">06</span>Reservation Design</a>
+    <a class="nav-item" onclick="scrollToSection('s7', event)"><span class="num">07</span>Bot Mitigation Flows</a>
+    <a class="nav-item" onclick="scrollToSection('s8', event)"><span class="num">08</span>Tech Stack</a>
+    <a class="nav-item" onclick="scrollToSection('s9', event)"><span class="num">09</span>Observability</a>
+    <a class="nav-item" onclick="scrollToSection('s10', event)"><span class="num">10</span>ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="scrollToSection('s11', event)"><span class="num">11</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>DDoS & Inventory Hoarding Defense <span>System Design Guide</span></h1>
+      <p style="color:var(--text-muted);font-size:14px;">Detecting and neutralizing bot-driven inventory reservation abuse in high-demand ecommerce checkout flows</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Retail / Ecommerce</span>
+        <span class="badge badge-red">Security / Anti-Bot</span>
+        <span class="badge badge-yellow">PCI-DSS · GDPR</span>
+        <span class="badge badge-green">Flash Sale Scale</span>
+        <span class="badge badge-blue">AWS · Cloudflare</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">Generated: <span id="gen-date"></span></span>
+      </div>
+    </header>
+
+    <!-- S1: Executive Summary -->
+    <section class="section" id="s1">
+      <div class="section-header"><span class="section-num">01</span><h2>Executive Summary</h2></div>
+      <div class="content">
+        <p><strong>Problem:</strong> An ecommerce platform reserves inventory at checkout initiation — the moment a customer lands on the checkout page — rather than at confirmed payment. This design is common in high-demand limited-inventory scenarios (sneaker drops, concert tickets, flash sales, limited-edition product launches). The upfront reservation blocks real stock from other buyers for the reservation TTL window, typically 10–15 minutes. Bots and coordinated human actors exploit this by hammering the checkout page to hoard reservations without any intent to purchase, causing genuine customers to see "Out of Stock" while actual inventory sits locked in unconfirmed reservations.</p>
+        <div class="callout callout-danger">
+          <div class="callout-title">⚠ Business Impact</div>
+          This is not just a DDoS problem — it is a <strong>business integrity attack</strong>. Unlike a classic volumetric DDoS that aims to take the site down, inventory hoarding attacks are designed to stay under the radar while causing maximum commercial damage: suppressed conversion rates, customer trust erosion, and revenue loss that often isn't visible until post-event analysis.
+        </div>
+        <p><strong>Key constraints:</strong> Detection must operate at P99 &lt; 50ms (inline with checkout flow), false-positive rate &lt; 0.1% (wrongly blocking real customers is as damaging as letting bots through), reservation TTL is a hard business constraint, and the system must handle 50–200x traffic spikes during sale events with zero degradation in detection accuracy.</p>
+        <p><strong>Primary architectural decision:</strong> A <strong>multi-layer defense-in-depth model</strong> — edge (Cloudflare WAF + Bot Management), gateway (behavioral fingerprinting + rate limiting), application (reservation circuit breaker + risk scoring), and async fraud pipeline (ML scoring + real-time feedback loop). No single layer is sufficient; the key insight is that bots evolved past single-layer defenses years ago.</p>
+      </div>
+    </section>
+
+    <!-- S2: Requirements -->
+    <section class="section" id="s2">
+      <div class="section-header"><span class="section-num">02</span><h2>Requirements</h2></div>
+      <div class="content">
+        <h3>Functional Requirements</h3>
+        <ul>
+          <li>Detect and block bot-driven checkout page hits before inventory reservation is triggered</li>
+          <li>Classify incoming sessions as: <strong>legitimate human</strong>, <strong>suspicious</strong>, <strong>confirmed bot</strong></li>
+          <li>Enforce per-user, per-device, per-IP reservation limits for high-demand SKUs</li>
+          <li>Implement reservation expiry with guaranteed release back to available pool</li>
+          <li>Support a virtual queue (waiting room) pattern for flash sale entry</li>
+          <li>Provide real-time inventory hoarding dashboards for ops teams</li>
+          <li>Support bot challenge escalation (CAPTCHA, device fingerprint challenge, 2FA)</li>
+          <li>Allowlist known good actors (loyalty members, pre-registered users)</li>
+        </ul>
+        <h3>Non-Functional Requirements</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Dimension</th><th>Target</th><th>Notes</th></tr>
+            <tr><td>Inline detection latency</td><td>P99 &lt; 50ms</td><td>Must not add perceivable lag to checkout load</td></tr>
+            <tr><td>False positive rate</td><td>&lt; 0.1%</td><td>Wrongly blocking real users is a customer service crisis</td></tr>
+            <tr><td>False negative rate</td><td>&lt; 5%</td><td>Some evasive bots will slip through; tiered response acceptable</td></tr>
+            <tr><td>Throughput (peak)</td><td>50K–500K RPS</td><td>Flash sale burst on limited SKU drops</td></tr>
+            <tr><td>Reservation release SLA</td><td>&lt; 200ms post-TTL expiry</td><td>Expired stock must return to pool near-instantly</td></tr>
+            <tr><td>Availability</td><td>99.99%</td><td>Defense system failing = undefended = worse than no system</td></tr>
+            <tr><td>ML scoring latency</td><td>Async, &lt; 2s</td><td>Can be post-reservation for risk scoring; cancels async if high risk</td></tr>
+          </table>
+        </div>
+        <h3>Out of Scope</h3>
+        <ul>
+          <li>Payment fraud detection (separate system, post-payment)</li>
+          <li>Account takeover (ATO) — separate authentication concern</li>
+          <li>Content scraping defense</li>
+          <li>Full volumetric DDoS mitigation at L3/L4 — handled by CDN/cloud provider upstreams</li>
+        </ul>
+        <h3>GCC-Specific Concerns</h3>
+        <ul>
+          <li><strong>Data residency:</strong> Behavioral signals and user fingerprints may contain PII — must comply with India DPDP Act, GDPR (EU), and local data localization rules per market</li>
+          <li><strong>Vendor lock-in:</strong> Cloudflare Bot Management vs AWS WAF vs in-house — evaluate exit strategy before commitment</li>
+          <li><strong>Cost at scale:</strong> Cloudflare/Akamai bot management fees scale with request volume — can be significant at flash sale peaks</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- S3: Threat Model -->
+    <section class="section" id="s3">
+      <div class="section-header"><span class="section-num">03</span><h2>Threat Model</h2></div>
+      <div class="content">
+        <h3>Attack Taxonomy</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Attack Type</th><th>Mechanism</th><th>Scale</th><th>Detectability</th><th>Primary Defense</th></tr>
+            <tr><td><strong>Simple Bot Flood</strong></td><td>Single IP or small IP range, no JS execution, no cookies</td><td>High volume</td><td><span class="badge badge-green">Easy</span></td><td>IP rate limit + JS challenge</td></tr>
+            <tr><td><strong>Headless Browser Bots</strong></td><td>Puppeteer/Playwright, executes JS, appears browser-like</td><td>Medium volume</td><td><span class="badge badge-yellow">Moderate</span></td><td>Behavioral fingerprinting, Canvas/WebGL fingerprint</td></tr>
+            <tr><td><strong>Residential Proxy Network</strong></td><td>Rotates IPs across residential ranges, hard to block by IP</td><td>Distributed</td><td><span class="badge badge-red">Hard</span></td><td>Behavioral signals, device fingerprint, session graph</td></tr>
+            <tr><td><strong>Human-Assisted Bot Farm</strong></td><td>Real humans in low-cost labor markets clicking coordinated</td><td>Lower volume</td><td><span class="badge badge-red">Very Hard</span></td><td>Purchase limit enforcement, loyalty tier gating</td></tr>
+            <tr><td><strong>Coordinated Scalpers</strong></td><td>Legitimate accounts, distribute across many users/devices</td><td>Low volume per actor</td><td><span class="badge badge-red">Very Hard</span></td><td>Graph analysis, purchase history, velocity across accounts</td></tr>
+            <tr><td><strong>Internal Abuse (Employee)</strong></td><td>Employees using access to pre-reserve for scalping</td><td>Very low</td><td><span class="badge badge-yellow">Moderate</span></td><td>Role-based inventory access control, audit logs</td></tr>
+          </table>
+        </div>
+
+        <h3>Attack Flow — What Happens Without Defense</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — Undefended Inventory Hoarding Attack Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant B as Bot Fleet (1000s)
+    participant GW as API Gateway
+    participant CS as Checkout Service
+    participant IS as Inventory Service
+    participant RealUser as Real Customer
+
+    Note over B,IS: Attack begins at sale start T+0
+    B->>GW: POST /checkout/initiate (x1000 concurrent)
+    GW->>CS: Forwards all requests (no gate)
+    CS->>IS: reserve(SKU-X, qty=1) x1000
+    IS-->>CS: reserved=true (stock drains to 0 in seconds)
+    CS-->>B: reservation_token (TTL=10min)
+    Note over B: Bots hold tokens, never pay
+    RealUser->>GW: POST /checkout/initiate
+    GW->>CS: Forward
+    CS->>IS: reserve(SKU-X, qty=1)
+    IS-->>CS: insufficient_stock
+    CS-->>RealUser: ❌ Out of Stock
+    Note over B,IS: T+10min: reservation TTL expires
+    IS->>IS: Release stock back to pool
+    Note over B: Bots re-hit immediately, repeat cycle
+          </div>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Key Insight: The TTL Trap</div>
+          If reservation TTL is 10 minutes and bots re-hit every 9 minutes, they can permanently lock inventory in a "zombie reservation" cycle. Even with TTL expiry, bot re-reservation can be faster than real customer discovery — you need to <strong>break the re-reservation cycle</strong>, not just rely on TTL cleanup.
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: Defense Architecture -->
+    <section class="section" id="s4">
+      <div class="section-header"><span class="section-num">04</span><h2>Defense Architecture</h2></div>
+      <div class="content">
+        <h3>Defense-in-Depth: 5 Concentric Layers</h3>
+        <div class="layer-stack">
+          <div class="layer">
+            <span class="layer-num">L1</span>
+            <span class="layer-name" style="color:var(--danger)">Edge Shield</span>
+            <span class="layer-desc">Cloudflare / Akamai — IP reputation, volumetric DDoS, BGP anycast absorption, TLS fingerprinting (JA3/JA4)</span>
+          </div>
+          <div class="layer">
+            <span class="layer-num">L2</span>
+            <span class="layer-name" style="color:var(--warn)">Virtual Queue / Waiting Room</span>
+            <span class="layer-desc">Metered entry into checkout funnel for high-demand SKUs — Cloudflare Waiting Room or custom Redis queue</span>
+          </div>
+          <div class="layer">
+            <span class="layer-num">L3</span>
+            <span class="layer-name" style="color:var(--accent)">API Gateway Enforcement</span>
+            <span class="layer-desc">Token bucket rate limiting per IP/user/device, JWT device binding, behavioral anomaly scoring</span>
+          </div>
+          <div class="layer">
+            <span class="layer-num">L4</span>
+            <span class="layer-name" style="color:var(--accent2)">Application-Layer Risk Engine</span>
+            <span class="layer-desc">Real-time risk score per session, reservation circuit breaker, purchase limit enforcement, CAPTCHA challenge escalation</span>
+          </div>
+          <div class="layer">
+            <span class="layer-num">L5</span>
+            <span class="layer-name" style="color:#a371f7)">Async ML Fraud Pipeline</span>
+            <span class="layer-desc">Post-reservation ML scoring, graph-based collusion detection, retroactive cancellation, feedback loop to L3/L4</span>
+          </div>
+        </div>
+
+        <h3>High-Level Architecture Diagram</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Defense Architecture Overview</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    Users([Users & Bots]) --> CF[Cloudflare\nEdge — L1]
+    CF -->|Blocked| Sink1[🚫 Drop / Challenge]
+    CF -->|Passed| WQ[Virtual Waiting Queue\nRedis + Token Bucket — L2]
+    WQ -->|Queue Full / Bot Signal| Sink2[🚫 Queue Denial / CAPTCHA]
+    WQ -->|Admitted| APIGW[API Gateway\nKong / AWS API GW — L3]
+    
+    APIGW --> FP[Device Fingerprint\n+ Behavioral Scorer]
+    FP -->|Risk Score HIGH| CH[Challenge Service\nCAPTCHA / 2FA]
+    CH -->|Fail| Sink3[🚫 Block Session]
+    CH -->|Pass| CS[Checkout Service]
+    FP -->|Risk Score LOW/MED| CS
+
+    CS --> RE[Risk Engine — L4\nReal-time scoring]
+    RE --> IL[Inventory Reservation\nCircuit Breaker]
+    IL -->|Reserve| RQ[(Redis\nReservation Store)]
+    IL -->|Publish Event| Kafka[(Kafka\nreservation.events)]
+
+    Kafka --> ML[Async ML Pipeline — L5\nFraud Scoring]
+    ML -->|High Risk| CancelQ[Async Cancel\nReservation]
+    CancelQ --> RQ
+    ML -->|Update Rules| RE
+    ML -->|Update Blocklist| CF
+
+    subgraph Observability
+      RQ --> Grafana[Grafana\nInventory Heatmap]
+      Kafka --> Grafana
+      ML --> Grafana
+    end
+
+    style CF fill:#da363333,stroke:#f85149
+    style WQ fill:#9e670022,stroke:#d29922
+    style APIGW fill:#1f6feb22,stroke:#58a6ff
+    style RE fill:#23863622,stroke:#3fb950
+    style ML fill:#8957e522,stroke:#a371f7
+          </div>
+        </div>
+
+        <h3>Critical Design Decisions</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">💡 The "Gate Before Reserve" Principle</div>
+          The single most impactful decision: <strong>no inventory touch until a session passes L1–L4 gates</strong>. Inventory reservation must be the last action, not the first. This seems obvious but is often violated in legacy OMS integrations where stock is reserved in a pre-checkout hook before auth/risk checks complete.
+        </div>
+      </div>
+    </section>
+
+    <!-- S5: Detection Signals -->
+    <section class="section" id="s5">
+      <div class="section-header"><span class="section-num">05</span><h2>Detection Signals & Scoring</h2></div>
+      <div class="content">
+        <h3>Signal Categories</h3>
+        <div class="signal-grid">
+          <div class="signal-card">
+            <div class="signal-type" style="color:var(--danger)">🌐 Network Signals</div>
+            <ul>
+              <li>IP reputation score (threat intel feeds)</li>
+              <li>ASN category (datacenter vs residential)</li>
+              <li>IP velocity: &gt;N checkouts/min from same IP</li>
+              <li>Geo anomaly: IP geo ≠ shipping address</li>
+              <li>TLS fingerprint (JA3/JA4) mismatch vs declared UA</li>
+              <li>IPv6 /64 subnet concentration</li>
+              <li>Tor exit node / VPN detection</li>
+            </ul>
+          </div>
+          <div class="signal-card">
+            <div class="signal-type" style="color:var(--warn)">🖥 Device & Browser Signals</div>
+            <ul>
+              <li>Canvas/WebGL fingerprint consistency</li>
+              <li>Navigator.webdriver = true (Selenium/Playwright)</li>
+              <li>Missing browser APIs (automation leak)</li>
+              <li>Font enumeration anomaly</li>
+              <li>Screen resolution / DPI outlier</li>
+              <li>Cookie/localStorage absence</li>
+              <li>Headless Chrome UA patterns</li>
+              <li>Mouse movement entropy (absent = bot)</li>
+            </ul>
+          </div>
+          <div class="signal-card">
+            <div class="signal-type" style="color:var(--accent)">⏱ Behavioral Signals</div>
+            <ul>
+              <li>Time-to-checkout: &lt; 2 sec from page load</li>
+              <li>No product page view before checkout</li>
+              <li>Form fill speed: too fast or perfectly spaced</li>
+              <li>Scroll/click events absent or synthetic</li>
+              <li>Session duration anomaly</li>
+              <li>Checkout-to-payment conversion: 0%</li>
+              <li>Repeated checkout for same SKU</li>
+            </ul>
+          </div>
+          <div class="signal-card">
+            <div class="signal-type" style="color:var(--accent2)">👤 Identity / Account Signals</div>
+            <ul>
+              <li>Account age &lt; 24h + high-demand SKU checkout</li>
+              <li>No purchase history</li>
+              <li>Email domain: disposable (mailinator, etc.)</li>
+              <li>Multiple accounts sharing device fingerprint</li>
+              <li>Multiple accounts sharing payment method</li>
+              <li>Loyalty tier mismatch for early access</li>
+            </ul>
+          </div>
+          <div class="signal-card">
+            <div class="signal-type" style="color:#a371f7">📦 Inventory Signals</div>
+            <ul>
+              <li>Single user reserving across multiple SKU variants</li>
+              <li>Reservation-to-purchase ratio &lt; 5%</li>
+              <li>TTL expiry + immediate re-reservation</li>
+              <li>Reservation spike correlated with sale start</li>
+              <li>SKU concentration: &gt;X% of stock reserved by &lt;Y% of users</li>
+            </ul>
+          </div>
+          <div class="signal-card">
+            <div class="signal-type" style="color:var(--warn)">🕸 Graph / Collusion Signals</div>
+            <ul>
+              <li>Accounts sharing IP history</li>
+              <li>Accounts sharing device fingerprint</li>
+              <li>Accounts sharing shipping address</li>
+              <li>Account cluster activated within same 5-min window</li>
+              <li>Payment method sharing across accounts</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Risk Scoring Model</h3>
+        <div class="card">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Each session receives a composite risk score 0–100 computed from weighted signals. Thresholds drive action:</p>
+          <pre><code>Risk Score Composition (example weights):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IP Reputation (threat intel)         : 0–25 pts
+Device Fingerprint Anomaly           : 0–20 pts
+Behavioral (timing, mouse, scroll)   : 0–20 pts
+Identity (account age, email, history): 0–15 pts
+Inventory Pattern                    : 0–10 pts
+Graph Signals (shared attrs)         : 0–10 pts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL                                : 0–100
+
+Thresholds:
+  0–30   → ALLOW  — proceed to checkout
+  31–60  → CHALLENGE — soft CAPTCHA / behavioral challenge
+  61–80  → HARD BLOCK for session, log for review
+  81–100 → IP/device/account ban + async ML review</code></pre>
+        </div>
+
+        <h3>Key Detection: Time-to-Checkout Signal</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">⚡ Most Reliable Single Signal</div>
+          A human browsing a high-demand product page, adding to cart, and initiating checkout takes <strong>typically 45–180 seconds</strong> from first page load. Any session hitting the checkout API within <strong>2–5 seconds</strong> of session start — with no product page view event — is almost certainly a bot. This signal alone, combined with IP reputation, catches &gt;80% of simple bot attacks.
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: Reservation Design -->
+    <section class="section" id="s6">
+      <div class="section-header"><span class="section-num">06</span><h2>Resilient Reservation Design</h2></div>
+      <div class="content">
+        <h3>Reservation State Machine</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Inventory Reservation State Machine</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+stateDiagram-v2
+    [*] --> PENDING_GATE: Checkout initiated
+    PENDING_GATE --> CHALLENGED: Risk score 31-60
+    PENDING_GATE --> BLOCKED: Risk score 61+
+    CHALLENGED --> PENDING_GATE: Challenge passed
+    CHALLENGED --> BLOCKED: Challenge failed
+    PENDING_GATE --> RESERVED: Risk score 0-30, stock available
+    PENDING_GATE --> UNAVAILABLE: Stock exhausted
+    RESERVED --> CONFIRMED: Payment completed
+    RESERVED --> EXPIRED: TTL elapsed (10 min)
+    RESERVED --> CANCELLED_ASYNC: ML pipeline flags HIGH RISK
+    RESERVED --> CANCELLED_USER: User abandons
+    EXPIRED --> [*]: Stock released to pool
+    CONFIRMED --> [*]: Order created in OMS
+    CANCELLED_ASYNC --> [*]: Stock released + session banned
+    CANCELLED_USER --> [*]: Stock released
+    BLOCKED --> [*]: No reservation made
+          </div>
+        </div>
+
+        <h3>Reservation Circuit Breaker</h3>
+        <p>The reservation service implements a circuit breaker pattern specifically for hoarding scenarios. When the reservation rate for a SKU exceeds a defined threshold (e.g., more than 30% of stock reserved in under 60 seconds with &lt;5% conversion), the circuit trips:</p>
+        <pre><code>// Pseudocode: Reservation Circuit Breaker
+class ReservationCircuitBreaker {
+
+  STATES = { CLOSED, OPEN, HALF_OPEN }
+
+  // Trip conditions (per SKU)
+  tripConditions = {
+    reservationVelocity: "> 30% stock reserved in < 60s",
+    conversionRate: "< 5% reservation-to-payment in last 5min",
+    uniqueIPConcentration: "> 50% reservations from < 10 IPs",
+    botScoreAggregate: "> 40% sessions with risk score > 50"
+  }
+
+  // OPEN state actions (circuit tripped)
+  openActions = [
+    "Pause new reservations for SKU",
+    "Flush zombie reservations (risk score > 70)",
+    "Trigger CAPTCHA for all new sessions",
+    "Notify ops team via PagerDuty",
+    "Log to fraud audit trail"
+  ]
+
+  // Re-close after 2min if conditions normalize
+  halfOpenCheck = "Allow 5% traffic through, measure conversion"
+}</code></pre>
+
+        <h3>Anti-Re-Reservation: Cooldown Enforcement</h3>
+        <p>After a reservation expires without purchase, enforce a per-user/device cooldown before allowing a new reservation for the same SKU. This breaks the bot re-reservation cycle:</p>
+        <pre><code>// Redis-based cooldown after TTL expiry
+SET reservation:cooldown:{userId}:{skuId} 1
+EXPIREAT reservation:cooldown:{userId}:{skuId} {unix_ts + cooldown_seconds}
+
+// Cooldown config by risk tier:
+// CLEAN session expired  → 30 sec cooldown
+// SUSPECT session expired → 5 min cooldown  
+// HIGH-RISK expired      → 30 min cooldown + ops review</code></pre>
+
+        <h3>Tiered Purchase Limits</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>User Tier</th><th>Max Reservation / SKU</th><th>Max Active Reservations</th><th>Early Access</th></tr>
+            <tr><td>Guest (unauthenticated)</td><td>1</td><td>1</td><td>No</td></tr>
+            <tr><td>New Account (&lt;30 days)</td><td>1</td><td>2</td><td>No</td></tr>
+            <tr><td>Standard Member</td><td>1</td><td>3</td><td>No</td></tr>
+            <tr><td>Loyalty Tier 2+</td><td>2</td><td>5</td><td>+15 min early access</td></tr>
+            <tr><td>VIP / Gold Member</td><td>2</td><td>5</td><td>+30 min early access</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S7: Bot Mitigation Flows -->
+    <section class="section" id="s7">
+      <div class="section-header"><span class="section-num">07</span><h2>Bot Mitigation Flows</h2></div>
+      <div class="content">
+        <h3>Inline Detection & Challenge Flow</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Real-time Detection Sequence</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant U as User Session
+    participant CF as Cloudflare Edge
+    participant FPS as Fingerprint Service
+    participant RS as Risk Scoring Engine
+    participant CS as Checkout Service
+    participant IS as Inventory Service
+    participant Kafka as Kafka
+    participant ML as ML Pipeline (async)
+
+    U->>CF: GET /checkout (with TLS, UA, IP)
+    CF->>CF: JA3 fingerprint + IP reputation check
+    alt IP in blocklist / datacenter ASN
+        CF-->>U: 403 / JS Challenge
+    else Passes edge check
+        CF->>FPS: Forward with edge score
+    end
+    
+    FPS->>FPS: Canvas FP, webdriver check, mouse entropy
+    FPS->>RS: {edgeScore, deviceScore, behavioralSignals}
+    RS->>RS: Compute composite risk score
+    
+    alt Risk > 60
+        RS-->>CS: Block — return 403 with session ID for audit
+    else Risk 31-60
+        RS-->>U: Trigger CAPTCHA challenge
+        U-->>RS: CAPTCHA response
+        RS->>RS: Re-score with CAPTCHA result
+    else Risk ≤ 30
+        RS-->>CS: Allow with risk metadata header
+    end
+
+    CS->>IS: reserve(skuId, userId, riskScore)
+    IS->>IS: Check limits, circuit breaker state
+    IS-->>CS: reservation_token OR error
+    IS->>Kafka: Publish reservation.created event
+
+    Note over Kafka,ML: Async — doesn't block checkout response
+    Kafka->>ML: Consume reservation.created
+    ML->>ML: Deep score: graph analysis, history, pattern match
+    alt ML score HIGH RISK
+        ML->>IS: cancel_reservation(token)
+        ML->>CF: Update blocklist (IP/device/account)
+    else ML confirms CLEAN
+        ML->>RS: Reinforce model with clean signal
+    end
+          </div>
+        </div>
+
+        <h3>Virtual Waiting Room Architecture</h3>
+        <p>For known high-demand SKU launches, replace immediate checkout access with a metered virtual queue. This caps the concurrent checkout load AND makes bot attacks less effective since queue position is randomly assigned rather than first-come-first-served:</p>
+        <pre><code>// Virtual Queue Design (Redis-backed)
+
+// On sale start:
+// 1. Assign all arriving users a random queue position token
+// 2. Admit N users per second based on checkout service capacity
+// 3. Show real-time position estimate to queued users
+// 4. Assign queue tokens with session binding (prevents resell/transfer)
+
+Key Redis structures:
+  ZADD queue:sku:{skuId} {timestamp + random_jitter} {sessionId}
+  // Jitter prevents exact arrival-time ordering — removes bot advantage
+  // of hitting exactly at T+0 vs 5ms later
+
+Admission rate: 
+  checkout_service_capacity / avg_checkout_duration_seconds
+  Example: 200 concurrent checkouts / 45s avg = ~4 admissions/sec
+
+Bot impact:
+  - Bots can queue, but queue position is randomized
+  - Queue token is bound to device fingerprint
+  - Transferring queue tokens is detected by device mismatch
+  - Bots holding queue positions without checkout conversion 
+    are expelled after 30s at front of queue</code></pre>
+      </div>
+    </section>
+
+    <!-- S8: Tech Stack -->
+    <section class="section" id="s8">
+      <div class="section-header"><span class="section-num">08</span><h2>Tech Stack — Build vs Buy Analysis</h2></div>
+      <div class="content">
+        <h3>Bot Detection & WAF Layer</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Dimension</th><th>Cloudflare Bot Mgmt</th><th>AWS WAF + Shield</th><th>Akamai Bot Manager</th><th>In-House</th></tr>
+            <tr><td>Edge Detection Quality</td><td>Excellent (ML-based, JA3, fingerprinting)</td><td>Good (rule-based, slower to adapt)</td><td>Excellent (market leader)</td><td>Poor initially, improves with data</td></tr>
+            <tr><td>Residential Proxy Detection</td><td>Strong</td><td>Weak without 3rd-party feed</td><td>Strongest</td><td>Very hard to replicate</td></tr>
+            <tr><td>Latency added</td><td>&lt; 1ms (anycast)</td><td>2–5ms</td><td>&lt; 1ms</td><td>Variable</td></tr>
+            <tr><td>TCO (3yr, 500K RPS peak)</td><td>$150K–300K</td><td>$80K–150K</td><td>$400K–600K</td><td>$500K+ eng cost</td></tr>
+            <tr><td>Vendor lock-in risk</td><td>Medium</td><td>Low (AWS-native)</td><td>High</td><td>None</td></tr>
+            <tr><td class="rec">Recommended</td><td class="rec">✓ Primary</td><td>Fallback / supplement</td><td>If budget allows</td><td>Only for custom signals</td></tr>
+          </table>
+        </div>
+
+        <h3>Risk Scoring & Rate Limiting</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Dimension</th><th>Redis + Custom Rules</th><th>Stripe Radar (adapted)</th><th>Sift Science</th><th>AWS Fraud Detector</th></tr>
+            <tr><td>Custom signal support</td><td>Full control</td><td>Limited</td><td>Good</td><td>Good</td></tr>
+            <tr><td>Inventory-specific signals</td><td>Build required</td><td>No</td><td>Configurable</td><td>Configurable</td></tr>
+            <tr><td>Real-time latency</td><td>&lt;5ms</td><td>~20ms</td><td>~30ms</td><td>~50ms</td></tr>
+            <tr><td>ML model ownership</td><td>Yours</td><td>Theirs</td><td>Shared</td><td>Yours</td></tr>
+            <tr><td class="rec">Recommended</td><td class="rec">✓ For inventory signals</td><td>For payment risk</td><td>If budget allows</td><td>For regulated markets</td></tr>
+          </table>
+        </div>
+
+        <h3>Reservation Store</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Dimension</th><th>Redis (ElastiCache)</th><th>DynamoDB</th><th>Postgres (advisory locks)</th></tr>
+            <tr><td>TTL enforcement</td><td>Native EXPIREAT</td><td>TTL attribute</td><td>Manual job required</td></tr>
+            <tr><td>Atomic check-and-reserve</td><td>Lua script / MULTI-EXEC</td><td>Conditional writes</td><td>SELECT FOR UPDATE</td></tr>
+            <tr><td>Latency</td><td>&lt;1ms p99</td><td>~5ms p99</td><td>~10ms p99</td></tr>
+            <tr><td>At-scale cost</td><td>Low</td><td>Medium (on-demand)</td><td>High (connection pool)</td></tr>
+            <tr><td class="rec">Recommended</td><td class="rec">✓ Primary reservation store</td><td>Durable backup / audit</td><td>Not for reservations</td></tr>
+          </table>
+        </div>
+
+        <h3>ML Pipeline</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Component</th><th>Technology Choice</th><th>Rationale</th></tr>
+            <tr><td>Feature store</td><td>Redis + S3 (dual-tier)</td><td>Hot features in Redis (&lt;5ms), cold historical in S3</td></tr>
+            <tr><td>Model serving</td><td>SageMaker Endpoints or Seldon</td><td>Auto-scaling, A/B model serving</td></tr>
+            <tr><td>Model type</td><td>Gradient Boosted Trees (XGBoost) + heuristic rules</td><td>Interpretable, fast inference, rule overrides for ops</td></tr>
+            <tr><td>Graph analysis</td><td>Neptune (AWS) or in-house Neo4j</td><td>Account cluster detection, collusion rings</td></tr>
+            <tr><td>Stream processing</td><td>Kafka Streams or Flink</td><td>Real-time feature computation from reservation events</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S9: Observability -->
+    <section class="section" id="s9">
+      <div class="section-header"><span class="section-num">09</span><h2>Observability & Operational Excellence</h2></div>
+      <div class="content">
+        <h3>Key Metrics to Monitor</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Metric</th><th>Normal Range</th><th>Alert Threshold</th><th>What It Signals</th></tr>
+            <tr><td>Reservation-to-Purchase Rate (per SKU)</td><td>30–70%</td><td>&lt; 10%</td><td>Active hoarding attack</td></tr>
+            <tr><td>Reservation Velocity (SKU/min)</td><td>Baseline ± 2σ</td><td>&gt; 5σ spike</td><td>Flash attack in progress</td></tr>
+            <tr><td>Unique IPs per 100 reservations</td><td>&gt; 80</td><td>&lt; 20</td><td>IP concentration / bot cluster</td></tr>
+            <tr><td>Bot Score Distribution (% &gt;60)</td><td>&lt; 5%</td><td>&gt; 20%</td><td>Active bot campaign</td></tr>
+            <tr><td>CAPTCHA challenge pass rate</td><td>&gt; 85%</td><td>&lt; 50%</td><td>Bot traffic being challenged</td></tr>
+            <tr><td>Async ML cancellation rate</td><td>&lt; 2%</td><td>&gt; 10%</td><td>Post-reservation fraud surge</td></tr>
+            <tr><td>Circuit breaker trips / hour</td><td>0</td><td>≥ 1</td><td>Reservation attack in progress</td></tr>
+          </table>
+        </div>
+
+        <h3>Dashboard Architecture</h3>
+        <p>Run a dedicated <strong>Inventory Health Dashboard</strong> in Grafana with these panels:</p>
+        <ul>
+          <li><strong>Heatmap:</strong> Reservations per SKU over time, colored by risk score distribution</li>
+          <li><strong>Funnel chart:</strong> Checkout initiated → Reserved → Payment completed — drop-off at each stage</li>
+          <li><strong>Geo map:</strong> Reservation origins — spikes from unexpected geographies flag proxy networks</li>
+          <li><strong>Bot score histogram:</strong> Distribution of risk scores across all sessions in real time</li>
+          <li><strong>Top 20 attacking IPs/ASNs:</strong> Auto-refreshing blocklist candidates</li>
+          <li><strong>Circuit breaker state panel:</strong> Per-SKU circuit state (OPEN/CLOSED/HALF_OPEN)</li>
+        </ul>
+
+        <h3>Runbook: Active Hoarding Attack Response</h3>
+        <div class="card">
+          <pre><code>INCIDENT: Inventory hoarding attack detected
+Trigger: Reservation-to-purchase rate < 10% for SKU-X, circuit breaker OPEN
+
+Step 1 (T+0): Verify in Grafana — is this a real attack or data pipeline lag?
+Step 2 (T+2min): Check bot score histogram — if >30% sessions >60 score, confirm attack
+Step 3 (T+3min): Manually trigger "High-Demand Mode" for affected SKUs
+  → Enable CAPTCHA for ALL sessions (override threshold)
+  → Reduce reservation TTL from 10min to 3min (flush stale reservations faster)
+  → Enable waiting room entry for the SKU
+Step 4 (T+5min): Export top attacking IPs/ASNs → push to Cloudflare blocklist via API
+Step 5 (T+10min): Flush all reservations with risk_score > 75 for the SKU
+Step 6 (T+15min): Monitor recovery — reservation-to-purchase rate should climb back > 20%
+Step 7 (T+30min): Post-incident: ML pipeline auto-learns from flagged sessions</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- S10: ADRs -->
+    <section class="section" id="s10">
+      <div class="section-header"><span class="section-num">10</span><h2>ADRs & Trade-offs</h2></div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Gate Before Reserve: Risk scoring must complete before inventory touch</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>In many existing OMS integrations (including IBM Sterling), inventory reservation is triggered early in the checkout pipeline — sometimes before authentication completes. Bots exploit this to reserve stock before any gate can inspect the request.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Enforce a strict "no inventory touch" rule until the session clears L1–L4 gates. Risk scoring is synchronous and inline. Inventory reservation is the final step, not the first.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>Adds ~20–30ms latency to the checkout initiation path (risk scoring compute). Requires refactoring existing checkout flow that calls OMS early. Benefit: bots never touch inventory even if they reach the checkout API.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>Post-reservation async cancellation only: too slow — bots can re-reserve faster than async pipeline cancels. Pre-payment reservation only: breaks UX since customers need to know stock is held for them during payment input.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — Randomized Queue Positioning (not FIFO) for high-demand SKU waiting rooms</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>A strict FIFO waiting room rewards whoever hits the endpoint first — which is always bots. Bots with precise timing infrastructure will consistently win FIFO queues, defeating the purpose of metered entry.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Assign queue positions with a random jitter (e.g., timestamp + random(0, 30 seconds)) within a 60-second window at sale start. All users arriving in the first 60 seconds are treated as equal, and admission order is randomized among them.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>Less deterministic for genuine users too — some real customers who arrived at T+0 will be behind others who arrived at T+30s. Transparent communication ("you're in the queue, positions are randomized to ensure fairness") can mitigate perceived unfairness. Neutralizes the bot timing advantage.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>Strict FIFO: always won by bots. Lottery (random selection from all arrivals): acceptable but less transparent than queue metaphor. First-come-first-served limited to authenticated loyalty members only: good supplemental measure but leaves guest traffic unprotected.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — Shorter Adaptive TTL for high-risk sessions vs fixed 10-min TTL</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>A fixed 10-minute reservation TTL is the standard UX design to give customers time to enter payment details. However, bots exploit this to keep inventory locked for 10 minutes per cycle, and simply re-hit at TTL-1 minute.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement risk-tiered TTLs: clean sessions get 10 minutes; suspect sessions get 3 minutes; the post-TTL cooldown for suspect sessions is 5 minutes (preventing immediate re-reservation). This is invisible to genuine users (who won't be in suspect tier) and dramatically reduces bot hoarding window.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>Requires storing risk tier in reservation record. Requires risk score to be available at reservation time (already mandated by ADR-001). Edge case: a real user mis-classified as suspect gets only 3 minutes, which may be too short for payment entry. Mitigation: CAPTCHA pass bumps them to clean tier automatically.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>Global TTL reduction to 3 minutes: hurts all users including genuine ones who need time to enter card details. No TTL (reservation held until explicit abandon): catastrophic for hoarding. Server-side heartbeat renewal: bots can send heartbeats too.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-004 — Async ML pipeline for deep scoring (not inline) with async cancellation</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Deep ML scoring (graph analysis, historical patterns, collusion rings) takes 500ms–2s. Adding this to the inline checkout path would create an unacceptable latency hit.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Run fast heuristic scoring inline (target &lt;50ms). Publish reservation event to Kafka. Async ML pipeline consumes events, scores deeply within 2 seconds, and triggers cancellation if high risk. The reservation is made but may be cancelled within 2 seconds — before the customer has a chance to enter payment.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>Small window (~2s) where a bot has a valid reservation before ML cancels it. Acceptable trade-off given inline scoring already blocks the vast majority. If ML cancellation arrives while customer is entering payment, the checkout page shows "reservation expired — item no longer available" — same UX as TTL expiry. Requires idempotent cancellation handling in checkout service.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>Fully synchronous ML scoring: adds 500ms–2s to checkout load, user-visible. No async ML at all: inline heuristics alone miss sophisticated attacks. Pre-reservation ML scoring (before any reservation): too slow to be practical for all sessions at peak load.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S11: Interview Cheat Sheet -->
+    <section class="section" id="s11">
+      <div class="section-header"><span class="section-num">11</span><h2>Interview Cheat Sheet — Director / Principal Level</h2></div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top 5 Clarifying Questions</h4>
+            <ul>
+              <li>When does reservation happen — on checkout page load, or on explicit user action? (This determines attack surface)</li>
+              <li>What's the reservation TTL, and is it business-negotiable? (Shorter TTL = smaller hoarding window)</li>
+              <li>Do we have authenticated vs guest checkout? (Guest checkout is massively harder to defend)</li>
+              <li>What's the acceptable false-positive rate — would we rather block 1% of real users or let 5% of bots through? (This calibrates the threshold strategy)</li>
+              <li>Are we defending against casual scalpers, organized bot networks, or both? (Drives sophistication of the ML pipeline)</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚖ Trade-offs to Verbalize Proactively</h4>
+            <ul>
+              <li>False positive rate vs false negative rate — explicitly state you're optimizing for low FP first in ecommerce (blocking real customers is a brand crisis)</li>
+              <li>Inline latency vs detection depth — async ML is the right answer; explain why</li>
+              <li>Build vs Buy for bot detection — acknowledge Cloudflare Bot Mgmt wins on residential proxy detection; in-house can't replicate their network view</li>
+              <li>Fixed TTL vs adaptive TTL — proactively raise this; it's a non-obvious improvement that interviewers love</li>
+              <li>Randomized queue vs FIFO — this is a "wow" insight most candidates miss</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔍 Failure Modes Interviewers Probe</h4>
+            <ul>
+              <li>"What if bots start using real residential IPs?" → Behavioral signals become primary; IP alone is insufficient — this is why you need the multi-signal composite score</li>
+              <li>"What if the ML pipeline is down?" → Defense still runs via heuristic L1–L4 layers; ML is additive, not critical path</li>
+              <li>"What if a real flash sale causes the same traffic pattern as a bot attack?" → Calibrate thresholds per-event; baseline changes for known sale windows (shift alert thresholds upward during planned events)</li>
+              <li>"How do you handle the ML model being gamed by bots learning your signals?" → Model retraining loop, feature drift detection, signal diversification</li>
+              <li>"What about human bot farms that pass all technical signals?" → Purchase limits per identity + loyalty gating for high-demand SKUs is the last resort</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>✨ "Wow" Depth Signals</h4>
+            <ul>
+              <li><strong>Randomized queue positioning:</strong> Mentioning that FIFO queues always reward bots — and proposing randomized admission windows — signals deep domain thinking</li>
+              <li><strong>Adaptive TTL by risk tier:</strong> Most candidates talk about TTL but don't differentiate by session risk — this is a nuanced, implementable insight</li>
+              <li><strong>Circuit breaker on reservations:</strong> Applying the circuit breaker pattern not to service failures but to business metric anomalies (conversion rate) shows systems thinking beyond textbook definitions</li>
+              <li><strong>JA3/JA4 TLS fingerprinting:</strong> Mentioning TLS fingerprinting at the edge demonstrates edge security depth beyond just IP blocking</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>❓ Questions to Ask the Interviewer</h4>
+            <ul>
+              <li>Has the team experienced a specific hoarding incident? What was the impact and what existing mitigations are in place?</li>
+              <li>Is the OMS (Sterling or custom) reservation flow decoupled enough to add a pre-reserve gate, or is it tightly coupled to the checkout pipeline today?</li>
+              <li>What's the current reservation-to-purchase rate for high-demand SKUs — do we have that baseline?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>📌 Sterling OMS-Specific Context</h4>
+            <ul>
+              <li>Sterling's <strong>GIV (Global Inventory Visibility)</strong> and <strong>ATP (Available-to-Promise)</strong> calls are synchronous — wrapping them in a reservation circuit breaker requires a sidecar or proxy layer</li>
+              <li>Sterling's reservation can be implemented as a <strong>pending order with hold</strong> — these orders clutter OMS if not cleaned up; automated TTL-based cancellation pipelines are critical</li>
+              <li>The <strong>pipeline agent framework</strong> in Sterling is too slow for real-time risk gate integration — the gate must live upstream of OMS, not inside it</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb', primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d', lineColor: '#58a6ff',
+      secondaryColor: '#161b22', tertiaryColor: '#0d1117',
+      background: '#0d1117', mainBkg: '#161b22',
+      nodeBorder: '#30363d', clusterBkg: '#1c2128',
+      titleColor: '#e6edf3', edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function scrollToSection(id, event) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
