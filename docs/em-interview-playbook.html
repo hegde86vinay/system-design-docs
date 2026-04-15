@@ -155,7 +155,49 @@
     transition: all 0.15s;
     cursor: pointer;
   }
-  .nav-q-item:hover { color: var(--text-muted); border-left-color: var(--border); }
+  .nav-q-item:hover { color: var(--text-muted); border-left-color: var(--border); background: rgba(255,255,255,0.02); }
+
+  /* Collapsible nav groups */
+  .nav-group { border-bottom: 1px solid var(--border); }
+  .nav-group:last-child { border-bottom: none; }
+  .nav-group-header {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 16px; cursor: pointer; user-select: none; transition: background 0.15s;
+  }
+  .nav-group-header:hover { background: rgba(91,141,238,0.05); }
+  .nav-group-icon { font-size: 14px; flex-shrink: 0; }
+  .nav-group-label { font-size: 13px; font-weight: 500; color: var(--text-muted); flex: 1; transition: color 0.15s; }
+  .nav-group-header:hover .nav-group-label,
+  .nav-group.open .nav-group-label { color: var(--accent); }
+  .nav-group-chevron { font-size: 16px; color: var(--text-dim); transition: transform 0.25s; line-height: 1; }
+  .nav-group.open .nav-group-chevron { transform: rotate(180deg); color: var(--accent); }
+  .nav-group-body { display: none; padding-bottom: 6px; }
+  .nav-group.open .nav-group-body { display: block; }
+
+  /* Hamburger */
+  .hamburger {
+    display: none; position: fixed; top: 14px; left: 14px; z-index: 300;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    width: 40px; height: 40px; align-items: center; justify-content: center;
+    cursor: pointer; flex-direction: column; gap: 5px; padding: 0; transition: border-color 0.2s;
+  }
+  .hamburger:hover { border-color: var(--accent); }
+  .hamburger span { display: block; width: 18px; height: 2px; background: var(--text-muted); border-radius: 2px; transition: all 0.25s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; backdrop-filter: blur(2px); }
+  .sidebar-overlay.visible { display: block; }
+
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    #sidebar { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); z-index: 200; width: 280px; }
+    #sidebar.mobile-open { transform: translateX(0); }
+    #main { margin-left: 0 !important; padding: 24px 18px 60px !important; }
+    .hero { padding: 52px 20px 28px !important; }
+    .hero h1 { font-size: 24px !important; }
+    .section-header h2 { font-size: 17px !important; }
+  }
 
   /* ── MAIN ── */
   #main {
@@ -497,6 +539,9 @@
 
 <div class="reading-progress" id="readingProgress"></div>
 
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarMobile()"></div>
+
 <!-- ── SIDEBAR ── -->
 <nav id="sidebar">
   <div class="sidebar-header">
@@ -509,11 +554,112 @@
   </div>
   <div class="sidebar-nav" id="sidebarNav">
     <div class="nav-section-title">Sections</div>
-    <a class="nav-item" onclick="scrollToSection('sec-people')">👥 People Leadership</a>
-    <a class="nav-item" onclick="scrollToSection('sec-tech')">🏗 Technical &amp; Strategy</a>
-    <a class="nav-item" onclick="scrollToSection('sec-values')">🎯 Values &amp; Culture Fit</a>
-    <a class="nav-item" onclick="scrollToSection('sec-scenarios')">⚡ Scenario-Based</a>
-    <a class="nav-item" onclick="scrollToSection('sec-salary')">💰 Compensation &amp; Negotiation</a>
+    <div class="nav-group open" id="ng-people">
+      <div class="nav-group-header" onclick="toggleNavGroup(this)">
+        <span class="nav-group-icon">👥</span><span class="nav-group-label">People Leadership</span><span class="nav-group-chevron">⌄</span>
+      </div>
+      <div class="nav-group-body">
+        <a class="nav-q-item" onclick="scrollToSection('sec-people'); closeSidebarMobile()">→ Section overview</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p1'); closeSidebarMobile()">P01 · Leadership style</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p2'); closeSidebarMobile()">P02 · Cross-functional squads</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p3'); closeSidebarMobile()">P03 · Delivery vs. tech debt</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p4'); closeSidebarMobile()">P04 · Coaching &amp; autonomy</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p5'); closeSidebarMobile()">P05 · Product vs. tech conflict</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p6'); closeSidebarMobile()">P06 · Re-scoping under pressure</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p7'); closeSidebarMobile()">P07 · High-potential engineers</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p8'); closeSidebarMobile()">P08 · Engineering excellence</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p9'); closeSidebarMobile()">P09 · Saying "no" to features</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p10'); closeSidebarMobile()">P10 · Bangalore ↔ global</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p11'); closeSidebarMobile()">P11 · Low performers</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p12'); closeSidebarMobile()">P12 · Senior engineer conflict</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p13'); closeSidebarMobile()">P13 · Influence without authority</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p14'); closeSidebarMobile()">P14 · Delivery vs. morale</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p15'); closeSidebarMobile()">P15 · Coach to lead/manager</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p16'); closeSidebarMobile()">P16 · Building trust</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p17'); closeSidebarMobile()">P17 · Tough feedback received</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p18'); closeSidebarMobile()">P18 · Disagreed with leadership</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p19'); closeSidebarMobile()">P19 · Offshore/onshore teams</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-p20'); closeSidebarMobile()">P20 · Culture of accountability</a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="ng-tech">
+      <div class="nav-group-header" onclick="toggleNavGroup(this)">
+        <span class="nav-group-icon">🏗</span><span class="nav-group-label">Technical &amp; Strategy</span><span class="nav-group-chevron">⌄</span>
+      </div>
+      <div class="nav-group-body">
+        <a class="nav-q-item" onclick="scrollToSection('sec-tech'); closeSidebarMobile()">→ Section overview</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t1'); closeSidebarMobile()">T01 · Platform modernization</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t2'); closeSidebarMobile()">T02 · Innovation vs. stability</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t3'); closeSidebarMobile()">T03 · Critical outage response</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t4'); closeSidebarMobile()">T04 · 3–6 month roadmaps</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t5'); closeSidebarMobile()">T05 · Competing priorities</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t6'); closeSidebarMobile()">T06 · Explain tech tradeoffs</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t7'); closeSidebarMobile()">T07 · Engineering metrics</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t8'); closeSidebarMobile()">T08 · Align with biz goals</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t9'); closeSidebarMobile()">T09 · Dealing with ambiguity</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t10'); closeSidebarMobile()">T10 · AI in engineering teams</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t11'); closeSidebarMobile()">T11 · Resistance to modernization</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t12'); closeSidebarMobile()">T12 · Delivery risk</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t13'); closeSidebarMobile()">T13 · Productivity &amp; quality</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t14'); closeSidebarMobile()">T14 · Roadmap prioritization</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t15'); closeSidebarMobile()">T15 · Difficult stakeholders</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t16'); closeSidebarMobile()">T16 · Improve effectiveness</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t17'); closeSidebarMobile()">T17 · Staffing transformation</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-t18'); closeSidebarMobile()">T18 · High-performing team</a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="ng-values">
+      <div class="nav-group-header" onclick="toggleNavGroup(this)">
+        <span class="nav-group-icon">🎯</span><span class="nav-group-label">Values &amp; Culture Fit</span><span class="nav-group-chevron">⌄</span>
+      </div>
+      <div class="nav-group-body">
+        <a class="nav-q-item" onclick="scrollToSection('sec-values'); closeSidebarMobile()">→ Section overview</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v1'); closeSidebarMobile()">V01 · Why this company?</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v2'); closeSidebarMobile()">V02 · Leadership philosophy</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v3'); closeSidebarMobile()">V03 · Engineering culture</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v4'); closeSidebarMobile()">V04 · Team conflict</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v5'); closeSidebarMobile()">V05 · Known as a leader</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v6'); closeSidebarMobile()">V06 · Mental well-being</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v7'); closeSidebarMobile()">V07 · Project off track</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v8'); closeSidebarMobile()">V08 · Inclusivity &amp; diversity</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v9'); closeSidebarMobile()">V09 · Responsibility &amp; authenticity</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v10'); closeSidebarMobile()">V10 · Growth path 3–5 yrs</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v11'); closeSidebarMobile()">V11 · Thrive vs. struggle</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-v12'); closeSidebarMobile()">V12 · Psychological safety</a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="ng-scenarios">
+      <div class="nav-group-header" onclick="toggleNavGroup(this)">
+        <span class="nav-group-icon">⚡</span><span class="nav-group-label">Scenario-Based</span><span class="nav-group-chevron">⌄</span>
+      </div>
+      <div class="nav-group-body">
+        <a class="nav-q-item" onclick="scrollToSection('sec-scenarios'); closeSidebarMobile()">→ Section overview</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s1'); closeSidebarMobile()">S01 · Sale event outage</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s2'); closeSidebarMobile()">S02 · Architecture disagreement</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s3'); closeSidebarMobile()">S03 · PM vs. quality tension</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s4'); closeSidebarMobile()">S04 · Difficult senior engineer</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s5'); closeSidebarMobile()">S05 · 90-day entry plan</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-s6'); closeSidebarMobile()">S06 · 6-month ask, 3-month deadline</a>
+      </div>
+    </div>
+
+    <div class="nav-group" id="ng-salary">
+      <div class="nav-group-header" onclick="toggleNavGroup(this)">
+        <span class="nav-group-icon">💰</span><span class="nav-group-label">Compensation</span><span class="nav-group-chevron">⌄</span>
+      </div>
+      <div class="nav-group-body">
+        <a class="nav-q-item" onclick="scrollToSection('sec-salary'); closeSidebarMobile()">→ Section overview</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-c1'); closeSidebarMobile()">C01 · Salary expectations</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-c2'); closeSidebarMobile()">C02 · Negotiate without offer</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-c3'); closeSidebarMobile()">C03 · Beyond compensation</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-c4'); closeSidebarMobile()">C04 · Location &amp; hybrid</a>
+        <a class="nav-q-item" onclick="scrollToSection('q-c5'); closeSidebarMobile()">C05 · Questions to ask them</a>
+      </div>
+    </div>
+
   </div>
 </nav>
 
@@ -1815,18 +1961,38 @@ window.addEventListener('scroll', () => {
   document.getElementById('readingProgress').style.width = progress + '%';
 });
 
-// Active nav item
+// Collapsible nav groups
+function toggleNavGroup(headerEl) { headerEl.closest('.nav-group').classList.toggle('open'); }
+
+// Mobile sidebar
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebarOverlay').classList.toggle('visible');
+  document.getElementById('hamburger').classList.toggle('open');
+}
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+  document.getElementById('hamburger').classList.remove('open');
+}
+
+// Auto-open matching nav group on scroll
 const sections = ['sec-people','sec-tech','sec-values','sec-scenarios','sec-salary'];
-const navItems = document.querySelectorAll('.nav-item');
+const sectionGroupMap = {'sec-people':'ng-people','sec-tech':'ng-tech','sec-values':'ng-values','sec-scenarios':'ng-scenarios','sec-salary':'ng-salary'};
+let lastOpenGroup = 'ng-people';
 window.addEventListener('scroll', () => {
   let current = '';
   sections.forEach(id => {
     const el = document.getElementById(id);
     if (el && window.scrollY >= el.offsetTop - 120) current = id;
   });
-  navItems.forEach(item => {
-    item.classList.toggle('active', item.getAttribute('onclick')?.includes(current));
-  });
+  const tgId = sectionGroupMap[current];
+  if (tgId && tgId !== lastOpenGroup) {
+    lastOpenGroup = tgId;
+    document.querySelectorAll('.nav-group').forEach(g => g.classList.remove('open'));
+    const tg = document.getElementById(tgId);
+    if (tg) tg.classList.add('open');
+  }
 });
 
 // Search
