@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EM/Director Interview Playbook — GCC Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #5b8dee;
+    --accent2: #e85d75;
+    --accent3: #38c9a0;
+    --accent4: #f5a623;
+    --text: #e2e6f0;
+    --text-muted: #7a85a3;
+    --text-dim: #4a5270;
+    --tag-blue: rgba(91,141,238,0.15);
+    --tag-red: rgba(232,93,117,0.15);
+    --tag-green: rgba(56,201,160,0.15);
+    --tag-orange: rgba(245,166,35,0.15);
+    --sidebar-w: 300px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-header {
+    padding: 24px 20px 18px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .sidebar-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .sidebar-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .sidebar-search {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 85px;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .sidebar-search input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .sidebar-search input:focus { border-color: var(--accent); }
+  .sidebar-search input::placeholder { color: var(--text-dim); }
+
+  .sidebar-nav { padding: 12px 0 40px; }
+
+  .nav-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 16px 20px 6px;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 7px 20px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .nav-item:hover { color: var(--text); border-left-color: var(--accent); background: rgba(91,141,238,0.05); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(91,141,238,0.08); font-weight: 500; }
+
+  .nav-q-item {
+    display: block;
+    padding: 5px 20px 5px 30px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .nav-q-item:hover { color: var(--text-muted); border-left-color: var(--border); }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 48px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 44px;
+    margin-bottom: 48px;
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(91,141,238,0.05) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(91,141,238,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero-desc {
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 300;
+    max-width: 600px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .tag {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .tag-blue { background: var(--tag-blue); color: var(--accent); border: 1px solid rgba(91,141,238,0.25); }
+  .tag-red { background: var(--tag-red); color: var(--accent2); border: 1px solid rgba(232,93,117,0.25); }
+  .tag-green { background: var(--tag-green); color: var(--accent3); border: 1px solid rgba(56,201,160,0.25); }
+  .tag-orange { background: var(--tag-orange); color: var(--accent4); border: 1px solid rgba(245,166,35,0.25); }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 56px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: var(--tag-blue); }
+  .icon-red { background: var(--tag-red); }
+  .icon-green { background: var(--tag-green); }
+  .icon-orange { background: var(--tag-orange); }
+
+  .section-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .section-header .section-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  /* ── Q&A CARD ── */
+  .qa-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .qa-card:hover { border-color: rgba(91,141,238,0.35); }
+
+  .qa-question {
+    padding: 18px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    user-select: none;
+  }
+
+  .q-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .q-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    line-height: 1.45;
+  }
+
+  .q-chevron {
+    margin-left: auto;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: transform 0.25s;
+    font-size: 18px;
+    line-height: 1;
+    padding-top: 1px;
+  }
+
+  .qa-card.open .q-chevron { transform: rotate(180deg); }
+  .qa-card.open { border-color: rgba(91,141,238,0.4); }
+  .qa-card.open .q-number { border-color: var(--accent); color: var(--accent); }
+
+  .qa-answer {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 0;
+  }
+
+  .qa-card.open .qa-answer { display: block; }
+
+  .answer-body {
+    padding: 24px 24px 24px 52px;
+  }
+
+  .answer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .answer-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .answer-body p {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.75;
+    margin-bottom: 14px;
+  }
+
+  .answer-body p:last-child { margin-bottom: 0; }
+
+  .answer-body strong { color: var(--text); font-weight: 500; }
+
+  .answer-body ul, .answer-body ol {
+    margin: 12px 0 14px 0;
+    padding-left: 20px;
+  }
+
+  .answer-body li {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+
+  .answer-body li strong { color: var(--text); }
+
+  .star-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 16px 0;
+  }
+
+  .star-block .star-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .star-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 6px 12px;
+    margin-bottom: 6px;
+  }
+
+  .star-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    padding-top: 2px;
+    font-weight: 500;
+  }
+
+  .star-val {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .tip-box {
+    background: rgba(245,166,35,0.07);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .tip-icon { font-size: 14px; flex-shrink: 0; }
+
+  .tip-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .tip-text strong { color: var(--accent4); }
+
+  .scenario-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 14px 0;
+  }
+
+  .scenario-block .sc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .steps-list { counter-reset: steps; list-style: none; padding: 0; }
+  .steps-list li { counter-increment: steps; padding-left: 28px; position: relative; margin-bottom: 8px; font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+  .steps-list li::before { content: counter(steps); position: absolute; left: 0; top: 2px; width: 20px; height: 20px; background: var(--border); border-radius: 50%; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+
+  /* ── PROGRESS BAR ── */
+  .reading-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    z-index: 200;
+    transition: width 0.1s;
+  }
+
+  /* ── EXPAND ALL BTN ── */
+  .expand-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+    letter-spacing: 0.04em;
+  }
+  .expand-all-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,141,238,0.08); }
+
+  /* ── HIGHLIGHT ── */
+  mark {
+    background: rgba(245,166,35,0.25);
+    color: var(--text);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  /* ── HIDDEN ── */
+  .hidden { display: none !important; }
+
+</style>
+</head>
+<body>
+
+<div class="reading-progress" id="readingProgress"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">GCC Interview Series</div>
+    <div class="sidebar-title">EM / Director Playbook</div>
+    <div class="sidebar-subtitle">Engineering Manager · Sr Manager · Director</div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="searchInput" placeholder="Search questions..." />
+  </div>
+  <div class="sidebar-nav" id="sidebarNav">
+    <div class="nav-section-title">Sections</div>
+    <a class="nav-item" onclick="scrollToSection('sec-people')">👥 People Leadership</a>
+    <a class="nav-item" onclick="scrollToSection('sec-tech')">🏗 Technical &amp; Strategy</a>
+    <a class="nav-item" onclick="scrollToSection('sec-values')">🎯 Values &amp; Culture Fit</a>
+    <a class="nav-item" onclick="scrollToSection('sec-scenarios')">⚡ Scenario-Based</a>
+    <a class="nav-item" onclick="scrollToSection('sec-salary')">💰 Compensation &amp; Negotiation</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">// interview_playbook v1.0 · retail_gcc_edition</div>
+    <h1>EM / Director <span>Interview Playbook</span></h1>
+    <p class="hero-desc">
+      A comprehensive question-and-answer reference for Engineering Manager, Senior Manager, and Director-level interviews at Global Capability Centers in Retail &amp; E-commerce. Covers people leadership, technical strategy, cultural fit, scenario responses, and compensation negotiation.
+    </p>
+    <div class="hero-tags">
+      <span class="tag tag-blue">People Leadership</span>
+      <span class="tag tag-green">Technical Strategy</span>
+      <span class="tag tag-red">Values &amp; Culture</span>
+      <span class="tag tag-orange">Scenarios</span>
+      <span class="tag tag-blue">Compensation</span>
+      <span class="tag tag-green">GCC Context</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ SECTION 1 ═══════════════════════════════ -->
+  <section class="section" id="sec-people">
+    <div class="section-header">
+      <div class="section-icon icon-blue">👥</div>
+      <h2>People Leadership &amp; Cross-Functional Collaboration</h2>
+      <span class="section-count">20 Q&amp;A</span>
+    </div>
+
+    <button class="expand-all-btn" onclick="expandAll('sec-people')">⊞ Expand All</button>
+
+    <!-- Q1 -->
+    <div class="qa-card" id="q-p1">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P01</span>
+        <span class="q-text">Tell me about your leadership style.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I'd describe my style as <strong>servant-leader with a bias for clarity</strong>. My job is to remove blockers, create context, and set up engineers to do their best work — not to be the smartest person in the room. I believe in high autonomy paired with high accountability: teams own outcomes, not just tasks.</p>
+          <p>In practice, I invest heavily in 1:1s to understand each person's growth goals and friction points. I rely on clear OKRs at the squad level so everyone understands why their work matters. I'm direct with feedback — I don't let issues fester — but I also make sure people feel psychologically safe to raise problems early.</p>
+          <div class="star-block">
+            <div class="star-label">Example to anchor this</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">Led a 12-member cross-functional squad across OMS modernization during a peak retail season</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to maintain delivery velocity while simultaneously upskilling engineers on cloud-native patterns</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Created a "build-and-learn" pairing model — senior engineers led design sessions; juniors owned implementation POCs with clear review gates</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Delivered on time, and 3 engineers got promoted within the following cycle</span></div>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>GCC angle:</strong> Mention that in a GCC context, your leadership style emphasizes giving Bangalore teams genuine ownership — not just execution — so they operate as a center of excellence, not a cost center.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="qa-card" id="q-p2">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P02</span>
+        <span class="q-text">How do you manage cross-functional squads — product, design, QA, DevOps?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I treat cross-functional squads as <strong>a single team with one mission</strong>, not a collection of functions that hand off to each other. The key is shared goals — when product, QA, and engineering all own the same outcome metric (e.g., CSAT or checkout conversion rate), collaboration becomes natural rather than political.</p>
+          <p>Structurally, I keep squads small (6–10 people), ensure each squad has a clear charter and a single "delivery lead" accountable for coordination, and run lightweight rituals: daily standups, weekly demo/reviews, and quarterly retrospectives. I hold a monthly cross-squad sync to surface dependencies early.</p>
+          <ul>
+            <li><strong>With Product:</strong> Joint roadmap reviews every sprint. I push back on vague "requirements" and insist on measurable outcomes.</li>
+            <li><strong>With QA:</strong> Shift-left testing. QA is involved in requirement reviews, not just UAT gates.</li>
+            <li><strong>With DevOps:</strong> Engineers co-own CI/CD pipelines. Platform is a product — DevOps PMs present SLO dashboards in sprint reviews.</li>
+            <li><strong>With Design:</strong> Design reviews are done with engineers before sprint start — no late "pixel-perfect" surprises.</li>
+          </ul>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Key phrase:</strong> "I focus on dissolving handoff culture and building shared accountability culture."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="qa-card" id="q-p3">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P03</span>
+        <span class="q-text">How do you balance delivery timelines vs. technical debt?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I treat tech debt as a <strong>first-class backlog item with business impact framing</strong>. The mistake most teams make is treating tech debt as an internal concern that product managers don't understand. My approach is to translate debt into business risk: "This monolith coupling means every feature takes 3x longer and carries 40% higher incident risk in Q4 peak season."</p>
+          <p>Practically, I use a <strong>20% allocation rule</strong>: every sprint, 20% of capacity is ring-fenced for tech health — debt paydown, test coverage, observability improvements. This is non-negotiable even under delivery pressure. The remaining 80% is feature delivery. I track a "tech health index" — build times, test coverage, MTTR, deployment frequency — and review it monthly with product leadership.</p>
+          <div class="star-block">
+            <div class="star-label">STAR Anchor</div>
+            <div class="star-row"><span class="star-key">Context</span><span class="star-val">Legacy OMS customizations had accumulated 4+ years of undocumented YFS table extensions — every new feature carried high regression risk</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Created a "debt map" — categorized debt by blast radius and business impact. Proposed a 6-sprint structured paydown plan tied to a major platform upgrade milestone</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Reduced regression incidents by 60% and cut new feature lead time from 4 weeks to 10 days</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="qa-card" id="q-p4">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P04</span>
+        <span class="q-text">How do you coach and mentor engineers — building autonomy and accountability?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Mentoring for me is about <strong>closing the gap between where someone is and where they want to be</strong> — not just where I want them to be. It starts with an honest conversation about career aspirations in every 1:1, then I design stretch assignments that deliberately expose them to their growth edge.</p>
+          <p>For <strong>autonomy</strong>: I give engineers problem statements, not solutions. "This service has 15% error rate under Black Friday load — own the root cause and come back with 3 options." They learn more from owning the analysis than from being handed a fix.</p>
+          <p>For <strong>accountability</strong>: I use public commitments with review gates. Engineers demo their work directly to stakeholders — not through me. This builds ownership and visibility simultaneously. When someone misses a commitment, I do a no-blame retrospective focused on systemic causes, but I also make clear that accountability is cultural — it matters.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Differentiation point:</strong> Mention the "grow your replacement" mindset — your goal as a manager is to make yourself unnecessary for day-to-day decisions by building engineers who can make those calls themselves.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="qa-card" id="q-p5">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P05</span>
+        <span class="q-text">How do you handle conflict or misalignment between product vision and technical priorities?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Conflict between product and engineering usually comes down to <strong>information asymmetry or misaligned incentives</strong> — not malicious intent. My first move is to surface the real trade-off in business language, not technical language.</p>
+          <p>I bring both sides into a structured "trade-off conversation" with three questions: What is the cost of doing this fast and cutting corners? What is the cost of doing this right but slower? What is the cost of not doing this at all? Once product can see that "fast and cheap" has a hidden future cost (outage risk, slower delivery next quarter), the conversation shifts from tension to joint decision-making.</p>
+          <p>When escalation is needed, I document the decision and its rationale — "we chose fast-to-market, accepting X technical risk, and will revisit in Q2." This creates accountability on both sides and prevents post-hoc blame.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="qa-card" id="q-p6">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P06</span>
+        <span class="q-text">Tell me about a time you had to re-scope a deliverable under tight deadlines.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (STAR)</div>
+          <div class="star-block">
+            <div class="star-label">STAR Format</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">Two weeks before a major retail peak launch, a key integration with a third-party payment processor was 60% complete and the lead engineer flagged a 3-week gap in the original estimate</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to either compress timeline (risky) or re-scope without impacting the go-live date for the business</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Ran a scope triage session with product and engineering. Separated "must-have for launch" from "nice-to-have" features. Delivered the core payment flow on time; deferred loyalty points integration and advanced reconciliation to sprint+2. Communicated the change proactively to stakeholders with a clear Phase 2 commitment</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Launched on time. Phase 2 delivered 3 weeks post-launch. Zero incidents at launch. Stakeholders appreciated the early heads-up rather than a surprise delay</span></div>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Key lesson to state:</strong> "The best re-scope is the one communicated early with a clear plan — not a last-minute scramble. I push teams to surface risk at 30% completion, not 90%."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="qa-card" id="q-p7">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P07</span>
+        <span class="q-text">How do you identify and grow high-potential engineers?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I look for <strong>learning velocity and problem framing ability</strong>, not just current technical output. High-potential engineers ask better questions, handle ambiguity without paralysis, and think about impact — not just task completion. A junior who proactively writes an ADR after a design decision is showing more growth signal than a senior who just ships features.</p>
+          <p>Practically: I maintain a "talent map" for my team — a 2x2 of performance vs. potential, updated quarterly. For high-potential engineers, I do three things:</p>
+          <ol>
+            <li>Assign them to projects with system-level visibility, not just component-level work</li>
+            <li>Include them in architecture reviews and product strategy discussions earlier than their title warrants</li>
+            <li>Create internal leadership opportunities: tech lead for a sprint, running a knowledge-sharing session, representing the team in cross-org reviews</li>
+          </ol>
+          <p>I also have honest conversations about their career goals — some want to go IC (principal/architect track) and some want the management track, and I tailor growth paths accordingly.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="qa-card" id="q-p8">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P08</span>
+        <span class="q-text">How do you track engineering excellence — metrics, reviews, rituals?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I use <strong>DORA metrics as a foundation</strong> (deployment frequency, lead time, MTTR, change failure rate) combined with product-facing quality metrics. But I don't treat metrics as the goal — they're a signal. The goal is a team that ships reliably and recovers fast.</p>
+          <p><strong>Rituals I run:</strong></p>
+          <ul>
+            <li><strong>Weekly:</strong> Engineering health check in sprint review — 5-minute look at build status, incident count, and test coverage delta</li>
+            <li><strong>Monthly:</strong> Tech health review with product leadership — DORA trends, debt backlog status, SLO performance</li>
+            <li><strong>Quarterly:</strong> Engineering retrospective — not just "what went wrong" but "what would a 10x better version of our team look like?"</li>
+            <li><strong>Post-incident:</strong> Blameless post-mortems with action items owned by named individuals and tracked in the backlog</li>
+          </ul>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Differentiator:</strong> Mention that you also track "developer experience" — onboarding time for new engineers, build times, local dev environment reliability. A team that struggles to run the app locally is not operating at excellence.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="qa-card" id="q-p9">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P09</span>
+        <span class="q-text">How do you say "no" to a critical feature to protect technical health?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I rarely say "no" outright — I say <strong>"not now, and here's what we can do instead"</strong>. The goal is to make the trade-off visible, not to block delivery.</p>
+          <p>My approach: I quantify the risk. "If we build feature X on top of the current architecture, we increase incident probability by Y% during Black Friday. The cost of one major incident is Z hours of revenue loss. Here's what it would take to build it safely — either 2 additional sprints, or a scoped version now with full implementation in Q2."</p>
+          <p>When I do push back, I bring a counter-proposal, not just a veto. I also document the decision so the conversation doesn't have to repeat every quarter. The key is building a track record where product trusts that when engineering raises technical risk, it's real — not just sandbagging.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="qa-card" id="q-p10">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P10</span>
+        <span class="q-text">How do you keep Bangalore aligned with global goals while maintaining local autonomy?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>This is one of the most important leadership challenges in a GCC context. The failure mode I've seen most often is <strong>"alignment without context"</strong> — Bangalore teams receive decisions without understanding the business rationale, so they either gold-plate or miss the point entirely.</p>
+          <p>My model for this is <strong>context-first alignment</strong>: I make sure my teams understand the "why" behind every roadmap item — the customer problem, the business metric it moves, the strategic bet it supports. When engineers have that context, they make better micro-decisions autonomously without needing constant oversight from a US or EU HQ.</p>
+          <p>Structurally: I maintain a "decision log" shared with global stakeholders — what decisions were made locally, with what rationale. I run bi-weekly alignment calls with global counterparts focused on blockers and upcoming dependencies, not status updates (which I share async). I also ensure the Bangalore team presents their architecture decisions directly to global architects — not through me as a proxy. This builds trust and visibility simultaneously.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="qa-card" id="q-p11">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P11</span>
+        <span class="q-text">How do you handle low performers?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I approach underperformance as a <strong>diagnostic before a prescription</strong>. The root cause matters: is it capability gap, motivation, personal circumstances, wrong role fit, or unclear expectations? Each requires a different response.</p>
+          <p>My process: I have a direct, private conversation early — not after a formal PIP. I share specific observations (not generalizations), ask what's getting in the way, and listen. Then I co-create a 30/60/90-day improvement plan with clear milestones, check-ins, and defined success criteria. I document this.</p>
+          <p>If the issue persists after genuine support, I move to a formal process, but I also have honest conversations about role fit — sometimes the right move is to find a better match within the organization rather than letting someone struggle in the wrong position.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Key phrase:</strong> "I don't let underperformance linger — it's unfair to the individual, unfair to the team, and unfair to the business. Addressing it early and directly is an act of respect."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="qa-card" id="q-p12">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P12</span>
+        <span class="q-text">How do you manage conflict between senior engineers or architects?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Senior engineer conflict is usually <strong>productive disagreement that isn't being channeled correctly</strong>. Two architects debating the right approach is healthy — the same argument repeating in every meeting is a process failure.</p>
+          <p>My approach: I convert the disagreement into a structured decision process. I ask both parties to write up their position as an ADR (Architecture Decision Record) — context, considered options, pros/cons. The act of writing forces precision and often resolves half the debate before the meeting. Then I facilitate a time-boxed decision session — not a debate, a decision — with a clear owner.</p>
+          <p>If the disagreement has interpersonal dimensions, I address those in private 1:1s separately from the technical discussion. I never let team tension play out in public forums.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q13 -->
+    <div class="qa-card" id="q-p13">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P13</span>
+        <span class="q-text">How do you influence teams without direct authority?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Influence without authority is built on <strong>credibility, relationships, and shared goals</strong> — in that order. Credibility comes from demonstrating technical depth and sound judgment consistently over time, not from title.</p>
+          <p>In practice: I invest early in relationships with peer teams — I attend their demos, I understand their constraints, I share relevant context from my own team. When I need them to prioritize something for me, there's already a baseline of mutual investment. I also frame requests in terms of what's in it for them — their OKRs, their pain points — not just my delivery needs.</p>
+          <p>For decisions I don't own, I use the "inform and propose" model — bring data, bring a clear recommendation, and accept that the decision may go a different way. I've found that consistently being the person who shows up with a well-reasoned proposal (rather than opinions) builds influence faster than anything else.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q14 -->
+    <div class="qa-card" id="q-p14">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P14</span>
+        <span class="q-text">How do you balance delivery pressure versus team morale?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>My view is that <strong>sustained delivery pressure without investment in team health is a slow-burning incident</strong>. You can borrow against team morale once or twice — peak season crunch, critical launch — but if that becomes the default mode, you see burnout, attrition, and quality decay.</p>
+          <p>I'm transparent with teams during high-pressure periods: I acknowledge the extra load, I commit to a "decompression plan" after the crunch (reduced scope next sprint, no-meeting weeks, time for learning), and I celebrate the win visibly when we ship. I also protect capacity ruthlessly — I push back on stakeholders when teams are already at limit rather than silently letting engineers absorb unlimited demand.</p>
+          <p>I run a simple monthly pulse check: one question — "On a scale of 1-5, how sustainable does your current workload feel?" Trending below 3 is a signal I act on immediately.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q15 -->
+    <div class="qa-card" id="q-p15">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P15</span>
+        <span class="q-text">How do you coach senior engineers into leads or managers?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>The transition from senior engineer to tech lead or manager is one of the most challenging career shifts — and the most under-supported. The skills that made them excellent engineers (individual depth, precision, independent problem-solving) are not the same skills that make an effective leader (communication, ambiguity tolerance, multiplying others).</p>
+          <p>My approach: I create graduated exposure. I give a senior engineer a "shadow lead" role before the official transition — they run the sprint review, they own the team's response to an incident, they facilitate architecture discussions. This builds muscle memory in a supported environment. I debrief every experience: what worked, what they'd do differently, how they're feeling about the shift.</p>
+          <p>I also explicitly address the identity shift: "You will feel less productive for 6–12 months. That's normal. Your output is now your team's output, not your pull requests." This framing helps them avoid the common failure mode of reverting to individual contribution when they feel uncertain as leaders.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q16 -->
+    <div class="qa-card" id="q-p16">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P16</span>
+        <span class="q-text">How do you build trust with product managers, architects, and business teams?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Trust is built through <strong>consistent follow-through on commitments and transparent communication when things change</strong>. With product managers, I make sure they never hear about a delay or a risk through the grapevine — I tell them first, with context and a mitigation plan. With architects, I share my team's design decisions early and welcome challenge. With business stakeholders, I translate technical milestones into business outcomes.</p>
+          <p>One concrete ritual: I send a weekly "one-pager" to my key stakeholders — a short summary of what shipped, what's in progress, and any risks on the horizon. It takes me 15 minutes but eliminates 4+ status meetings. Over time, stakeholders come to rely on it, and that consistency is the foundation of trust.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q17 -->
+    <div class="qa-card" id="q-p17">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P17</span>
+        <span class="q-text">Tell me about a time you received tough feedback.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (STAR)</div>
+          <div class="star-block">
+            <div class="star-label">STAR Format</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">During a mid-year review, my skip-level told me that my team felt I was "solving problems for them" rather than coaching them to solve problems — creating dependency instead of capability</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to shift my leadership behavior — less individual contributor instinct, more coaching mindset</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Took it seriously. Started using a "consulting approach" in 1:1s — asking questions before offering answers. Explicitly told my team: "Come to me with a problem AND your proposed approach. I'll coach the approach, not replace it." Tracked my own behavior in a weekly reflection journal for 8 weeks</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Next 360 feedback cycle: team rated autonomy and growth opportunities 40% higher. The feedback was uncomfortable but it was the most useful thing I received that year</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q18 -->
+    <div class="qa-card" id="q-p18">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P18</span>
+        <span class="q-text">Tell me about a time you disagreed with leadership and what you did.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (STAR)</div>
+          <div class="star-block">
+            <div class="star-label">STAR Format</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">Leadership pushed for a 6-week delivery of a new order orchestration module that my team assessed needed 14 weeks to build safely — the estimate included test coverage, performance benchmarking, and staging validation for a high-traffic use case</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to push back without damaging the relationship or appearing obstructionist</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Prepared a risk brief: what "6 weeks" actually meant technically — what we'd have to cut, what the incident probability was, and the estimated cost of a production failure during peak. Presented three options with trade-offs. Advocated clearly for my preferred approach. Once leadership chose a middle path (10 weeks with reduced scope), I committed fully and didn't re-litigate the decision</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Delivered in 10 weeks with zero major incidents at launch. Leadership cited the risk brief model as something they wanted other engineering managers to adopt</span></div>
+          </div>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>"Disagree and commit"</strong> is the principle to reference — advocate hard before the decision, align fully after it.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q19 -->
+    <div class="qa-card" id="q-p19">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P19</span>
+        <span class="q-text">How do you manage offshore/onshore teams?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>The biggest mistake in offshore/onshore models is treating the offshore team as an <strong>execution arm rather than a thinking partner</strong>. I've seen the downstream cost: high attrition, low innovation, context loss, and a team that shows up to do tickets rather than to solve problems.</p>
+          <p>My model: I ensure the Bangalore team has direct access to business context, product roadmaps, and architecture decisions — not filtered through an intermediary. I set up "follow-the-sun" handoffs with structured overlap windows (typically 2-hour overlap) and use async-first communication (Confluence, Slack threads, Loom recordings) for everything that doesn't need synchronous discussion.</p>
+          <p>I also invest in rotation and visibility: engineers from the GCC present in global all-hands, join product strategy discussions, and author public design documents. This changes the perception — and reality — of the team from "Bangalore resource pool" to "global engineering partner."</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q20 -->
+    <div class="qa-card" id="q-p20">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">P20</span>
+        <span class="q-text">How do you build a culture of accountability?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Accountability culture starts with <strong>clarity of ownership and visibility of outcomes</strong>. You can't hold people accountable for outcomes they don't understand they own, or for results no one is tracking.</p>
+          <p>I use the RACI principle but simplified: every initiative has one DRI (directly responsible individual) — not a team, one person. That person is in the room when stakeholders ask about progress, they present at demos, they own the post-mortem if something fails. This creates a culture where ownership is visible and valued.</p>
+          <p>Accountability also requires safety: people take ownership when they believe honest failure will be met with coaching, not blame. So I model this — when something on my watch fails, I present the post-mortem publicly, including what I could have done differently as a leader. That sets the tone more powerfully than any policy document.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 2 ═══════════════════════════════ -->
+  <section class="section" id="sec-tech">
+    <div class="section-header">
+      <div class="section-icon icon-green">🏗</div>
+      <h2>Technical Depth &amp; Strategic Thinking</h2>
+      <span class="section-count">18 Q&amp;A</span>
+    </div>
+
+    <button class="expand-all-btn" onclick="expandAll('sec-tech')">⊞ Expand All</button>
+
+    <!-- T1 -->
+    <div class="qa-card" id="q-t1">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T01</span>
+        <span class="q-text">How do you drive platform modernization or observability initiatives?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Platform modernization only succeeds when it has <strong>a business sponsor, not just engineering enthusiasm</strong>. My first move is always to frame modernization in terms of business outcomes: "This migration reduces MTTR from 4 hours to 30 minutes, which means we restore revenue faster during incidents. At our peak traffic volume, each hour of degradation costs $X."</p>
+          <p>For execution, I use the <strong>Strangler Fig pattern</strong>: never a big-bang migration. I identify the highest-risk / highest-value component, modernize it in isolation, validate in production, and repeat. This allows us to demonstrate value early and build confidence with stakeholders.</p>
+          <p>For observability specifically: I treat it as infrastructure, not a nice-to-have. Before any major new service goes to production, it must have: structured logging (with correlation IDs), a Prometheus/Grafana dashboard with SLO alerts, and a documented runbook. This is a non-negotiable gate, not a post-launch cleanup task.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Retail context:</strong> Mention OMS modernization specifically if applicable — moving from on-prem Sterling with MQ to containerized microservices with Kafka is a strong concrete example of this approach.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T2 -->
+    <div class="qa-card" id="q-t2">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T02</span>
+        <span class="q-text">How do you balance innovation vs. stability in a retail/e-commerce environment?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Retail is a <strong>stability-first domain with innovation windows</strong> — unlike a startup where moving fast and breaking things is acceptable, a production OMS incident during Black Friday is a multi-million dollar event. So my framework is: <strong>protect the core, innovate at the edges</strong>.</p>
+          <p>The "core" — order pipeline, inventory accuracy, payment processing — gets strict change management: feature flags, canary releases, extensive load testing, and a hard freeze window around peak season. No major changes 4 weeks before and during the peak event.</p>
+          <p>The "edges" — new customer experiences, analytics pipelines, recommendation engines — can move faster, fail safely, and be experimented on with A/B testing. This is where I encourage innovation: hackathons, innovation sprints, proof-of-concept cycles with a defined 4-week window to prove or abandon.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T3 -->
+    <div class="qa-card" id="q-t3">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T03</span>
+        <span class="q-text">How do you handle a critical outage during a high-traffic event?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (Incident Command Framework)</div>
+          <div class="scenario-block">
+            <div class="sc-label">Incident Response Playbook</div>
+            <ol class="steps-list">
+              <li><strong>Declare and assemble.</strong> Immediately declare the incident in Slack/PagerDuty. Assign Incident Commander (IC), Communications Lead, and Technical Lead. IC owns coordination — not debugging.</li>
+              <li><strong>Assess blast radius.</strong> Within 5 minutes: what is broken, how many users affected, what is the revenue/SLO impact? This drives the severity classification and executive communication cadence.</li>
+              <li><strong>Stabilize first, root-cause second.</strong> Rollback to last known good deployment immediately if available. Don't wait for root cause — restore service first. Investigation comes after.</li>
+              <li><strong>Communicate proactively.</strong> Status page update every 15 minutes minimum. Internal stakeholder updates every 30 minutes. Business leadership briefed by the Communications Lead, not pulled into the technical bridge.</li>
+              <li><strong>Post-incident review.</strong> Within 48 hours: blameless post-mortem with timeline, root cause, contributing factors, and action items. Action items get P1 priority in the next sprint — not "someday."</li>
+            </ol>
+          </div>
+          <p>As a manager, my role in an incident is <strong>command and communication</strong>, not debugging. I trust my engineers to do the technical work. My job is to keep them unblocked, manage stakeholder pressure so they can focus, and ensure we're not creating new risk while fixing the immediate one.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T4 -->
+    <div class="qa-card" id="q-t4">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T04</span>
+        <span class="q-text">How do you plan 3–6 month roadmaps?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I use a <strong>three-bucket model</strong> for roadmap planning: (1) Business commitments — features or capabilities the business has committed to stakeholders or customers; (2) Tech health — debt paydown, reliability improvements, platform investments; (3) Strategic bets — innovation work or foundational capabilities that pay off in 6–12 months.</p>
+          <p>The allocation varies by context, but a healthy baseline is <strong>60% business commitments / 20% tech health / 20% strategic bets</strong>. During transformation programs, I shift more to strategic bets. Under peak season constraints, I protect the 20% tech health floor even when under delivery pressure.</p>
+          <p>For the planning process itself: I start from business OKRs (what does the company need to be true in 6 months?), work backward to engineering capabilities, identify gaps, and size the gaps against available capacity with a 20% buffer for unplanned work. I review the roadmap monthly and make explicit decisions about reprioritization rather than letting scope creep happen invisibly.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T5 -->
+    <div class="qa-card" id="q-t5">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T05</span>
+        <span class="q-text">How do you handle competing priorities from product and engineering?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Competing priorities are a <strong>prioritization failure before they're a people conflict</strong>. They usually mean the team lacks a clear shared framework for making trade-off decisions. My first move is to establish one.</p>
+          <p>I use a simple priority matrix: urgency (time-sensitive business impact) × strategic importance × technical risk. Every backlog item gets scored. When product pushes for feature X and engineering pushes for tech debt Y, we apply the same matrix — no special pleading. If both are high-priority, the conversation shifts from "which one?" to "how do we resource both?"</p>
+          <p>I also believe in making trade-off decisions explicit and documented: "We are choosing feature X over infrastructure Y this sprint. Here is why. Here is the accepted risk. We revisit in Sprint+3." This prevents the same conflict from repeating and builds a shared decision-making culture.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T6 -->
+    <div class="qa-card" id="q-t6">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T06</span>
+        <span class="q-text">How do you explain technical tradeoffs to non-technical stakeholders?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>The key is to <strong>translate architecture decisions into business outcomes</strong>, not technical details. No stakeholder needs to know what Kafka is — they need to know what it enables: "This means we can process 10,000 orders per second without queuing delays, compared to our current 2,000. That matters during Black Friday."</p>
+          <p>My framework for any trade-off conversation with non-technical stakeholders:</p>
+          <ul>
+            <li><strong>Option A:</strong> What we get, what it costs, what risk we accept</li>
+            <li><strong>Option B:</strong> Same framing</li>
+            <li><strong>My recommendation:</strong> Which one and why, in one sentence</li>
+          </ul>
+          <p>I use analogies extensively. Technical debt = deferred maintenance on a building. Monolith vs. microservices = one large truck vs. a fleet of smaller ones (you can lose one without losing everything). Caching = pre-staging the most common items at the checkout counter so the stockroom isn't swamped.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T7 -->
+    <div class="qa-card" id="q-t7">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T07</span>
+        <span class="q-text">What metrics do you use to measure engineering team success?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I group engineering metrics into <strong>three layers</strong> — flow, quality, and impact:</p>
+          <ul>
+            <li><strong>Flow (speed of delivery):</strong> Lead time, deployment frequency, cycle time. DORA metrics as the baseline.</li>
+            <li><strong>Quality (reliability and correctness):</strong> MTTR, change failure rate, test coverage trend, P1/P2 incident count per sprint.</li>
+            <li><strong>Business impact (did it matter?):</strong> Feature adoption rate, SLO attainment, cost-per-transaction trend, revenue influenced by engineering investments.</li>
+          </ul>
+          <p>I also track <strong>team health metrics</strong>: attrition rate, time-to-productivity for new joiners, internal promotions, and qualitative pulse survey results. A team that ships fast but has 40% annual attrition is not a high-performing team — it's burning itself out.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text">Avoid vanity metrics: lines of code, story points velocity, ticket count. These measure activity, not outcomes.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T8 -->
+    <div class="qa-card" id="q-t8">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T08</span>
+        <span class="q-text">How do you ensure teams stay aligned with business goals?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Alignment starts with <strong>context, not control</strong>. If engineers understand the business goal behind their work, they make better day-to-day decisions without needing constant direction. My practice: every sprint kickoff starts with a 3-minute "here's why this sprint matters to the business" framing, not just a feature list.</p>
+          <p>Structurally, I cascade OKRs to the squad level. Each squad has 2–3 key results that directly map to a business-level OKR. This makes the connection visible and gives engineers a way to evaluate whether their work is contributing to what matters. I review alignment quarterly — sometimes the business shifts and engineering priorities need to follow.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T9 -->
+    <div class="qa-card" id="q-t9">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T09</span>
+        <span class="q-text">How do you deal with ambiguity?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Ambiguity is the default state of any interesting problem. My approach: <strong>don't wait for perfect clarity — create clarity iteratively</strong>. I start by documenting my current understanding, listing explicit assumptions, and identifying the 2–3 questions whose answers would most reduce uncertainty. Then I make a time-boxed decision: "We'll proceed with this interpretation for 2 sprints, at which point we review."</p>
+          <p>I explicitly protect my team from ambiguity at the business layer — I absorb unclear requirements, push back on vague mandates, and return to the team with a clearly framed problem statement. When ambiguity is genuinely irreducible, I run a lightweight discovery sprint — 2 engineers, 2 weeks, define what we know and don't know — before committing to delivery estimates.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T10 -->
+    <div class="qa-card" id="q-t10">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T10</span>
+        <span class="q-text">How do you use AI in engineering teams?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I view AI as a <strong>force multiplier for engineering velocity</strong>, not a replacement for engineering judgment. The areas where I've seen the highest ROI: code review acceleration (AI catches common issues before human review, saving senior engineer time), test generation (auto-generating unit and integration test skeletons from function signatures), documentation (generating first drafts of API docs and runbooks from code), and incident summarization (AI-generated incident timelines from logs).</p>
+          <p>At the team level, I've run structured AI adoption programs: a 4-week "build something with AI" sprint where each engineer picks one workflow to improve and demos the result. This drives experimentation with psychological safety — no pressure to use AI everywhere, but space to discover where it actually helps.</p>
+          <p>I'm also deliberate about the risks: over-reliance on AI for code that engineers don't review or understand is a quality and security liability. I enforce code ownership — if you commit it, you own it, regardless of whether AI wrote it.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T11 -->
+    <div class="qa-card" id="q-t11">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T11</span>
+        <span class="q-text">How do you handle resistance to modernization?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Resistance to modernization is usually <strong>rational fear wearing the mask of technical conservatism</strong>. Engineers who've been through failed "big rewrite" projects are right to be skeptical. My approach is to acknowledge the past, validate the concern, and then differentiate the new approach from what failed before.</p>
+          <p>I start with a "why now" conversation — not "the current system is terrible" (which triggers defensiveness) but "here's what this system is costing us in incidents, developer velocity, and market opportunity." Then I de-risk the proposal: strangler fig instead of big-bang, prove value in one bounded context before expanding, define explicit off-ramps if it's not working.</p>
+          <p>I also bring skeptics into the design process early. Engineers who feel ownership over the new approach are far less likely to resist it. The person most resistant to the migration often becomes its best advocate once they've had a hand in the design.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T12 -->
+    <div class="qa-card" id="q-t12">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T12</span>
+        <span class="q-text">How do you handle delivery risk?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I use <strong>proactive risk management, not reactive fire-fighting</strong>. At the start of every major initiative, I run a "pre-mortem" with the team: "Imagine it's 3 months from now and this project has failed — what went wrong?" This surfaces risks the team is already thinking about but hasn't articulated, in a psychologically safe format.</p>
+          <p>From the pre-mortem, I create a risk register with three columns: the risk, its likelihood × impact score, and the mitigation. I review the top 5 risks in every weekly status update. When a risk materializes, we have a pre-thought response rather than improvising under pressure.</p>
+          <p>For delivery specifically: I track "confidence level" at the squad level — a weekly 1-5 score from the tech lead on whether the sprint goal is achievable. A confidence score of 3 or below triggers an immediate blocker conversation, not a sprint-end retrospective.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T13 -->
+    <div class="qa-card" id="q-t13">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T13</span>
+        <span class="q-text">How do you improve team productivity or quality?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Productivity and quality improvements come from <strong>removing friction in the system, not pushing harder on the people</strong>. My first action is always a "friction audit" — I spend a week doing shadow sessions with engineers to observe where time actually goes. Usually I find 3–4 systemic bottlenecks: slow CI/CD pipelines, unclear requirements causing rework, manual QA gates that could be automated, or dependency on another team that blocks progress.</p>
+          <p>Each bottleneck becomes a time-boxed improvement initiative: one engineer, 2 sprints, measurable outcome. For quality specifically: I introduce code review standards with automated enforcement (linting, static analysis in CI), require test coverage gates for new code, and make quality metrics visible in sprint reviews — not hidden in dashboards no one checks.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T14 -->
+    <div class="qa-card" id="q-t14">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T14</span>
+        <span class="q-text">How do you prioritize roadmap work?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I use a <strong>WSJF-inspired model</strong> (Weighted Shortest Job First from SAFe) adapted for engineering contexts: Cost of Delay / Job Size. Cost of Delay has three components: user/business value, time criticality, and risk reduction. This gives a prioritization score that's data-driven rather than "whoever shouts loudest in the planning meeting."</p>
+          <p>For the actual process: quarterly planning sets the 3-month horizon with the top 10 initiatives ranked. Monthly, I review and re-rank based on new information (changed market conditions, tech risks that surfaced, stakeholder priority shifts). Sprint planning is then a narrow selection from the top of the pre-ranked list, with capacity factored in.</p>
+          <p>I make the prioritization criteria and final rankings visible to everyone — product, engineering, and business stakeholders. Transparency reduces the feeling that priorities are set arbitrarily, even when stakeholders disagree with specific decisions.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T15 -->
+    <div class="qa-card" id="q-t15">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T15</span>
+        <span class="q-text">How do you handle difficult client stakeholders?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Difficult stakeholders are usually <strong>frustrated stakeholders — and the frustration is often legitimate</strong>. They've been promised things that weren't delivered, or they feel they don't have visibility into what's happening. My first move is always to listen deeply before responding, and to find the kernel of valid concern underneath the difficult behavior.</p>
+          <p>Once I understand what they actually need (visibility? certainty? speed? quality?), I address that directly. I set up a structured communication cadence — weekly written updates, monthly business reviews — so they don't feel the need to escalate to get information. I also make explicit commitments with specific dates, and then deliver on them consistently. Trust is rebuilt through reliability, not through promises.</p>
+          <p>When stakeholders are genuinely unreasonable, I involve my own leadership to calibrate expectations from above, rather than trying to absorb unlimited demand at the engineering team level.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T16 -->
+    <div class="qa-card" id="q-t16">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T16</span>
+        <span class="q-text">How would you improve engineering effectiveness?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I start with a <strong>90-day listening tour</strong> when entering a new organization: shadow engineers, sit in on sprint ceremonies, review incident history, talk to product and business stakeholders. I'm looking for the three highest-leverage improvement opportunities — the places where a focused intervention will create disproportionate impact.</p>
+          <p>Common high-leverage areas I've found: (1) Slow or unreliable CI/CD pipelines that make engineers afraid to deploy frequently — fixing this unlocks delivery velocity almost immediately. (2) Insufficient test coverage creating regression anxiety — the "if we change it, will it break something else?" culture. (3) Unclear team charters and ownership boundaries, causing constant coordination overhead. Fixing these three usually produces measurable improvement within a quarter.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T17 -->
+    <div class="qa-card" id="q-t17">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T17</span>
+        <span class="q-text">How do you staff teams during transformation?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Transformation staffing requires a <strong>different mix than steady-state delivery</strong>. I look for a core team of engineers who combine domain knowledge (you can't modernize what you don't understand) with a growth mindset toward new patterns. I'm wary of staffing transformation purely with people new to the domain — they move fast but create unexpected risks because they don't know what they don't know about the legacy system.</p>
+          <p>My model: 2–3 "domain anchors" (people who know the legacy system deeply), 3–4 "platform builders" (cloud-native generalists who set the new patterns), and 2 "bridge engineers" (who can understand both worlds and support the strangler fig boundary). I also budget for a dedicated DevOps/platform engineer from day one — transformation without good CI/CD and observability infrastructure just creates a new legacy system faster.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- T18 -->
+    <div class="qa-card" id="q-t18">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">T18</span>
+        <span class="q-text">What does a high-performing team look like to you?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>A high-performing team <strong>ships consistently, recovers fast, and gets better over time</strong>. The three indicators I look for: (1) They can deploy to production multiple times a week without anxiety — CI/CD is reliable, tests catch regressions, rollback is practiced. (2) When incidents happen, they're resolved quickly and don't repeat — post-mortems are taken seriously. (3) Engineers are growing — the team looks visibly different in capability from one year ago.</p>
+          <p>I also look for cultural signals: engineers proactively flag risks (not waiting to be asked), they debate design decisions openly, they share credit generously, and they hold each other accountable peer-to-peer rather than needing the manager to enforce standards. When the team runs well without me in the room, that's when I know I've built something that will outlast my tenure.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 3 ═══════════════════════════════ -->
+  <section class="section" id="sec-values">
+    <div class="section-header">
+      <div class="section-icon icon-red">🎯</div>
+      <h2>Values, Culture Fit &amp; Leadership Philosophy</h2>
+      <span class="section-count">12 Q&amp;A</span>
+    </div>
+
+    <button class="expand-all-btn" onclick="expandAll('sec-values')">⊞ Expand All</button>
+
+    <!-- V1 -->
+    <div class="qa-card" id="q-v1">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V01</span>
+        <span class="q-text">Why this company? (lululemon / Walmart / Target / Retail GCC)</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (customize per company)</div>
+          <p>My background is deeply rooted in <strong>retail and e-commerce engineering</strong> — specifically in the systems that power the customer journey after the "buy" button: order orchestration, inventory accuracy, fulfillment. The problems that companies like lululemon are solving — omnichannel at scale, BOPIS reliability, real-time inventory visibility across a global supply chain — are exactly the problem space I've spent my career on.</p>
+          <p>I'm drawn to this specific role because [company] has invested seriously in building a GCC as a <strong>strategic engineering partner</strong>, not just an execution center. That's the environment where I do my best work — where Bangalore engineers are solving hard problems, not just receiving tickets. And at this stage of the company's growth, there's a unique opportunity to shape the engineering organization, not just maintain it.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Research 3 things before the interview:</strong> A recent tech initiative (store tech, supply chain, app feature), a specific engineering blog post or talk, and a business challenge the company is publicly working on. Reference these specifically — generic answers don't land at Director level.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2 -->
+    <div class="qa-card" id="q-v2">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V02</span>
+        <span class="q-text">What is your leadership philosophy?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>My leadership philosophy is <strong>"context over control"</strong>. The best engineering outcomes happen when people have the context to make good decisions themselves — not when they're waiting for a manager to tell them what to do. My job is to set clear direction, ensure the team has what it needs, and then get out of the way.</p>
+          <p>I believe that psychological safety is the foundation of everything else: innovation, accountability, honest feedback, early risk escalation — none of these happen without it. So I invest heavily in creating an environment where people feel safe to say "I don't know," "I made a mistake," or "I think we're going the wrong direction."</p>
+          <p>I also believe in leading by example. I write post-mortems on my own mistakes. I share my career setbacks in team retrospectives. I ask for feedback on my leadership from every 1:1 partner, not just in annual reviews. The behavior I want to see in my team, I have to model first.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3 -->
+    <div class="qa-card" id="q-v3">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V03</span>
+        <span class="q-text">What kind of engineering culture do you build?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I build a culture of <strong>ownership, craft, and relentless improvement</strong>. Ownership means engineers care about what happens after merge — they monitor their services, they respond to incidents, they care about customer impact. Craft means we care about the quality of what we build — not just "it works" but "it's understandable, testable, and maintainable." Relentless improvement means every sprint, every incident, every quarter is an opportunity to get better as a team.</p>
+          <p>Concretely: I invest in code review culture (reviews are teaching moments, not gatekeeping), knowledge sharing rituals (weekly tech talks owned by engineers, not managers), and visible recognition of craft (public praise for a well-written ADR, a clean refactoring, an elegant test design). Culture is the aggregate of what you celebrate and what you tolerate — I'm deliberate about both.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V4 -->
+    <div class="qa-card" id="q-v4">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V04</span>
+        <span class="q-text">Describe a time you handled a team conflict.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (STAR)</div>
+          <div class="star-block">
+            <div class="star-label">STAR Format</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">Two senior engineers on my team had escalating friction over microservice boundary decisions — the conflict was appearing in code reviews and affecting team morale. Other engineers were starting to take sides</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to resolve the conflict without losing either engineer and without letting the disagreement calcify into team factions</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Held separate 1:1s to understand each person's perspective without judgment. Found that both had valid points but were talking past each other. Facilitated a structured design session with a neutral framing — "we're deciding what's best for the system, not who's right." Introduced an ADR format to formalize the decision and move from debate to documentation</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Decision was made, documented, and accepted by both parties. Within a month, the two engineers were pairing on implementation. The ADR practice spread to the whole team and is now standard</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V5 -->
+    <div class="qa-card" id="q-v5">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V05</span>
+        <span class="q-text">What kind of leader do you want to be known as?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I want to be known as the manager who <strong>made people better than they thought they could be</strong>. Not the one who shipped the most features or managed the biggest team — the one whose former engineers went on to become principal architects, engineering managers, and technical leaders themselves.</p>
+          <p>At a practical level: I want to be known as someone who kept commitments, communicated honestly even when the news was bad, and treated engineers as partners rather than resources. Someone who protected the team from organizational noise while ensuring they had the context and visibility to grow. Someone who built things that lasted beyond their tenure.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V6 -->
+    <div class="qa-card" id="q-v6">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V06</span>
+        <span class="q-text">How do you support mental well-being in high-pressure projects?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>High-pressure periods are inevitable in retail engineering — peak season, major launches, migrations. My approach is to <strong>acknowledge the pressure explicitly, time-box it, and plan the recovery</strong>. "We are going to push hard for the next 3 weeks. Here's what we're asking, here's what we'll do after, and here's how we'll support each other through it."</p>
+          <p>I keep 1:1s during high-pressure periods, even if shorter — 15 minutes is enough to check if someone is struggling. I watch for early burnout signals: quality of work declining, communication becoming terse, camera off in every meeting. When I see these, I address them directly and privately, not in a team standup.</p>
+          <p>After a crunch period: mandatory decompression. No major releases the sprint after a big launch. Flexible hours, team celebration, acknowledgment of the effort in public forums. And I explicitly ask in retrospectives: "What did we do well in taking care of each other? What could we do better?" This makes team well-being a first-class retrospective topic, not an HR afterthought.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V7 -->
+    <div class="qa-card" id="q-v7">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V07</span>
+        <span class="q-text">Tell me about a time a project was off track and what you did.</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (STAR)</div>
+          <div class="star-block">
+            <div class="star-label">STAR Format</div>
+            <div class="star-row"><span class="star-key">Situation</span><span class="star-val">A 6-month OMS modernization program was at Month 4 and we'd completed only 40% of the planned scope. An underestimated data migration dependency and two unplanned team transitions had created a 10-week gap</span></div>
+            <div class="star-row"><span class="star-key">Task</span><span class="star-val">Needed to recover without a major scope cut, and had to communicate the delay to executive stakeholders who were expecting the original date</span></div>
+            <div class="star-row"><span class="star-key">Action</span><span class="star-val">Ran an emergency scope review with product to separate critical-path features from Phase 2 candidates. Brought in two engineers from another squad on loan for 6 weeks to address the data migration gap. Communicated proactively to stakeholders with a revised timeline, revised scope, and daily status updates during the recovery window</span></div>
+            <div class="star-row"><span class="star-key">Result</span><span class="star-val">Delivered Phase 1 (core OMS migration) 3 weeks past original date — no further slippage. Phase 2 (reporting, analytics integration) delivered 6 weeks after. Stakeholders cited the transparent communication and proactive recovery plan as a model for future programs</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V8 -->
+    <div class="qa-card" id="q-v8">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V08</span>
+        <span class="q-text">How do you support inclusivity and diversity in your team?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Inclusion starts with <strong>process design, not just intention</strong>. Structured interviews with standardized rubrics reduce bias in hiring. Round-robin speaking opportunities in design reviews ensure quieter voices (often the most thoughtful) are heard. Async-first documentation means people in different time zones or with different communication styles aren't disadvantaged.</p>
+          <p>I actively watch for and interrupt patterns: whose ideas get amplified and whose get talked over, who gets the high-visibility projects versus the maintenance work, who is nominated for awards and promotions. These patterns, when left unexamined, replicate existing biases. I make the team's diversity metrics visible and review them alongside performance metrics.</p>
+          <p>I also believe in creating space for people to bring their full selves to work — this means celebrating different cultural contexts, being flexible around local holidays, and ensuring that "culture fit" means shared values, not shared background.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V9 -->
+    <div class="qa-card" id="q-v9">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V09</span>
+        <span class="q-text">How do you approach personal responsibility and authenticity as a leader?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Personal responsibility means <strong>owning outcomes, not just inputs</strong>. When something goes wrong on my team, my first statement to stakeholders is never "the team didn't deliver" — it's "we didn't deliver, and here's what I'm doing about it." Leadership accountability flows downward in celebration and upward in accountability. I take responsibility for the system I built, even when individual actions caused the failure.</p>
+          <p>Authenticity, for me, means <strong>consistency between what I say and what I do</strong>. I don't have a different persona in executive reviews than in 1:1s with junior engineers. I share my uncertainties openly — "I don't know the answer, let's figure it out together" is more credible than a confident-sounding guess. I've found that authentic vulnerability from leaders actually builds more trust than projected certainty.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V10 -->
+    <div class="qa-card" id="q-v10">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V10</span>
+        <span class="q-text">How do you think about your growth path — where do you want to be in 3–5 years?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>In the next 3–5 years, I want to grow into a role where I'm shaping <strong>engineering strategy at the organizational level</strong> — influencing how the GCC positions itself as a strategic partner to the global business, how we build engineering talent pipelines, and how we drive technology bets that create competitive differentiation.</p>
+          <p>At this company specifically, I see the opportunity to: build the engineering organization from a delivery-focused team to an innovation-capable center; establish technical credibility that allows Bangalore to lead (not just follow) global architecture decisions; and create a talent brand that makes this GCC a destination for top-tier engineering talent in Bangalore.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text">Always connect your growth aspiration to value for the company — not just personal career advancement. "I want VP" is weak. "I want to build the kind of engineering org that gives this company a 5-year competitive advantage" is compelling.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V11 -->
+    <div class="qa-card" id="q-v11">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V11</span>
+        <span class="q-text">What kind of environment do you thrive in vs. struggle in?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I thrive in <strong>environments with high ambiguity and high autonomy</strong> — where there's a clear outcome to achieve but significant latitude in how to get there. I'm energized by organizations that are in a transformation phase — moving from legacy to modern, from execution-focused to product-minded, from siloed to collaborative. The problems are hard and the stakes are real.</p>
+          <p>I struggle most in organizations where process is more important than outcome — where following the template matters more than solving the actual problem, or where politics consistently override data in decision-making. I'm also less effective in environments with very low trust, where every decision requires multiple approvals and engineers can't move quickly.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text">Be honest but frame your struggles constructively: "I've learned to navigate these environments but I work best when..." shows self-awareness without sounding like a complaint about past employers.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V12 -->
+    <div class="qa-card" id="q-v12">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">V12</span>
+        <span class="q-text">How do you build psychological safety in the team?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Psychological safety is built through <strong>repeated evidence that speaking up is safe</strong>. This can't be mandated — it has to be demonstrated through behavior over time. The most powerful thing a leader can do is be the first person to admit a mistake publicly, ask for help openly, or say "I don't know" in front of the team.</p>
+          <p>Specific practices: I run monthly "what's slowing us down?" sessions — anonymous submissions, discussed openly. I celebrate "smart failures" — when someone tried a bold approach, it didn't work, and they documented what they learned. I explicitly thank people for raising concerns early, even when the concern turns out to be unfounded. And I address it visibly when I see behavior that suppresses safety — interrupting, dismissing ideas, or making people feel embarrassed for asking questions.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 4 ═══════════════════════════════ -->
+  <section class="section" id="sec-scenarios">
+    <div class="section-header">
+      <div class="section-icon icon-orange">⚡</div>
+      <h2>Scenario-Based Questions</h2>
+      <span class="section-count">6 Q&amp;A</span>
+    </div>
+
+    <button class="expand-all-btn" onclick="expandAll('sec-scenarios')">⊞ Expand All</button>
+
+    <!-- S1 -->
+    <div class="qa-card" id="q-s1">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S01</span>
+        <span class="q-text">"You have a critical production issue during a major sale event. What do you do?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <div class="scenario-block">
+            <div class="sc-label">Incident Response — Sale Event</div>
+            <ol class="steps-list">
+              <li><strong>Declare immediately.</strong> Don't wait to understand root cause before declaring. Severity 1 bridge open, IC assigned within 2 minutes.</li>
+              <li><strong>Assess and quantify.</strong> How many customers are affected? Is checkout broken, or is it one payment method? Is revenue completely blocked or degraded? This determines response intensity and escalation path.</li>
+              <li><strong>Stabilize — rollback or workaround first.</strong> Can we roll back the last deployment? Can we failover to a backup region? Can we enable a graceful degraded mode (e.g., disable the broken feature, keep core checkout working)? Restore service before root-cause.</li>
+              <li><strong>Manage communication in parallel.</strong> Communications Lead updates status page every 15 minutes. I brief VP/Director every 30 minutes — one sentence: what's broken, what we're doing, when next update is. I keep my engineers on the technical bridge focused — I absorb stakeholder pressure so they don't have to.</li>
+              <li><strong>Root cause and prevent recurrence.</strong> Once stable, 48-hour post-mortem. Was this caught in staging? Why not? What monitoring would have caught this earlier? Action items in next sprint as P1.</li>
+            </ol>
+          </div>
+          <p>As the manager, my role is <strong>command, communication, and unblocking</strong> — not debugging. If I'm in the Slack bridge fixing the bug myself, no one is managing the incident, communicating to the business, or keeping the team coordinated. My most valuable move in an incident is often to get out of the technical conversation and focus on the organizational one.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- S2 -->
+    <div class="qa-card" id="q-s2">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S02</span>
+        <span class="q-text">"Two teams disagree on architecture direction. How would you resolve it?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Architecture disagreements are often <strong>agreement on different versions of the problem</strong>. Before attempting resolution, I want to understand whether the teams disagree on the problem, the constraints, or the solution. Different answers to those questions require different interventions.</p>
+          <div class="scenario-block">
+            <div class="sc-label">Resolution Framework</div>
+            <ol class="steps-list">
+              <li><strong>Define the decision criteria together.</strong> What are we optimizing for? Latency? Maintainability? Team autonomy? Cost? Putting shared criteria on paper first transforms "who's right" into "which option best meets our stated criteria."</li>
+              <li><strong>ADR process.</strong> Ask each team to write up their position — context, decision drivers, considered options, rationale. The writing process alone resolves 40% of disputes because people find their own logical gaps.</li>
+              <li><strong>Time-boxed decision session.</strong> 90 minutes, structured: each team presents, Q&A, explicit decision vote or designation to the architect-of-record. Document the decision and reasoning.</li>
+              <li><strong>Escalate when needed.</strong> If teams are at genuine impasse and the decision is blocking delivery, escalate to a principal architect or CTO for a binding decision. Move fast — paralysis is worse than a suboptimal architecture.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S3 -->
+    <div class="qa-card" id="q-s3">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S03</span>
+        <span class="q-text">"A product manager wants a fast launch, but engineering says quality is poor. What do you do?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>This is a <strong>shared risk conversation, not an engineering vs. product conflict</strong>. My first move is to make the quality risk concrete and quantified, not abstract: "Here are the 3 failure modes we've observed in testing. Failure Mode A has a 30% probability under peak load and would result in X% of orders failing silently."</p>
+          <p>Then I offer structured options: (1) Delay 2 weeks — here's what we'd fix. (2) Launch to 10% of users (canary) with explicit rollback criteria — if error rate exceeds X% we pull back. (3) Launch with feature-flagged degraded mode — the feature is live but disables automatically under certain error conditions. The PM can now make an informed decision about business risk, not just hear "engineering isn't ready."</p>
+          <p>If the PM chooses to launch over engineering's objection: document the risk acceptance decision with names and date. Ensure you have rollback capability ready. Alert on-call rotation doubled during launch window. And do an honest retrospective regardless of outcome — to learn, not to assign blame.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- S4 -->
+    <div class="qa-card" id="q-s4">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S04</span>
+        <span class="q-text">"A senior engineer is technically strong but difficult to work with. How do you handle it?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>"Difficult to work with" needs to be <strong>decoded before it's acted on</strong>. Is this about communication style (blunt, but not malicious)? Is it about interpersonal behavior (dismissing others' ideas, credit-taking)? Or is it about values (undermining decisions after they're made, circumventing process)? The approach differs significantly.</p>
+          <p>For communication style: I have a direct 1:1 conversation with specific observations ("I've noticed in the last three design reviews, your responses to other engineers' proposals have shut down discussion rather than advancing it. That's limiting the team's collective thinking."). I don't make it about personality — I frame it as a skills conversation. Most technically strong engineers respond well to direct, specific feedback about professional behaviors.</p>
+          <p>For deeper behavioral issues: I assess the team cost. If one engineer's presence is causing other team members to disengage, contribute less, or leave — that is a performance issue, regardless of technical output. Technical contribution is not enough. I set explicit behavioral expectations with the same rigor I'd set technical expectations, and I hold the person to them.</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Key principle:</strong> "I don't protect team culture for the average employee — I protect it for the best employee. If a difficult person is making your best engineers want to leave, that's the loss you're accepting."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S5 -->
+    <div class="qa-card" id="q-s5">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S05</span>
+        <span class="q-text">"You join a new GCC and find the team is in execution mode — no innovation, low morale. What do you do in 90 days?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer (90-Day Plan)</div>
+          <div class="scenario-block">
+            <div class="sc-label">90-Day Framework</div>
+            <div class="star-row" style="margin-top:8px"><span class="star-key">Days 1–30</span><span class="star-val"><strong>Listen and diagnose.</strong> Shadow engineers, attend all rituals, read last 6 months of incident reports and retrospectives. 1:1 with every team member and key stakeholders. Build trust by not making changes yet — listen first.</span></div>
+            <div class="star-row" style="margin-top:12px"><span class="star-key">Days 30–60</span><span class="star-val"><strong>Share findings and co-create solutions.</strong> Present my observations back to the team — not my agenda, but a mirror of what I heard. Identify 2–3 quick wins that address immediate pain points. Start weekly "what's slowing us down?" retros. Give engineers agency to propose improvements.</span></div>
+            <div class="star-row" style="margin-top:12px"><span class="star-key">Days 60–90</span><span class="star-val"><strong>Structural changes and morale investments.</strong> Introduce 20% innovation time. Kill 1–2 low-value meetings. Create visibility for team's work to global stakeholders. Celebrate a small win loudly. Start the narrative shift: "this is what this team is capable of."</span></div>
+          </div>
+          <p>The key insight: teams in execution-only mode are often there because no one ever gave them permission or space to do anything else. Sometimes the single highest-leverage change is simply <strong>creating protected time and asking "what would you build if you could?"</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- S6 -->
+    <div class="qa-card" id="q-s6">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">S06</span>
+        <span class="q-text">"Your team's delivery estimate is 6 months. Leadership wants it in 3. What do you do?"</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I start by understanding whether this is a <strong>constraint or a preference</strong>. A 3-month deadline driven by a contractual commitment, a competitive launch window, or a platform dependency is fundamentally different from "leadership wants it sooner." If it's a genuine constraint, I work with it. If it's a preference, I make the trade-offs visible.</p>
+          <p>My response: I present a scope and risk analysis — what can we deliver in 3 months with acceptable quality, what is the risk of delivering everything in 3 months, and what is the cost (future delivery velocity, incident probability) if we cut corners. I offer three options: Option A (3 months, reduced scope), Option B (5 months, full scope), Option C (3 months, full scope, but here's what breaks and why). I make a clear recommendation and advocate for it, then accept the decision made above me.</p>
+          <p>What I never do: silently take the 3-month deadline and hope the team somehow pulls it off without any change in scope or approach. That path ends in burnout, poor quality, and a delivery that's late anyway — just 5 months late instead of 6.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════ SECTION 5 ═══════════════════════════════ -->
+  <section class="section" id="sec-salary">
+    <div class="section-header">
+      <div class="section-icon icon-orange">💰</div>
+      <h2>Compensation, Negotiation &amp; Role Fit</h2>
+      <span class="section-count">5 Q&amp;A</span>
+    </div>
+
+    <button class="expand-all-btn" onclick="expandAll('sec-salary')">⊞ Expand All</button>
+
+    <!-- C1 -->
+    <div class="qa-card" id="q-c1">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">C01</span>
+        <span class="q-text">What are your compensation expectations?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>Frame this with <strong>market research and a range, not a single number</strong>. Research Levels.fyi, LinkedIn Salary, and GCC-specific benchmarks before the conversation. Know the market band for EM/Director at companies like Walmart GTC, Target India, Fidelity, and lululemon Bangalore.</p>
+          <p><strong>Sample answer:</strong> "Based on my research into market rates for Director-level engineering roles at Retail/Ecommerce GCCs in Bangalore, combined with my experience leading [X-size teams / major transformation programs], I'm targeting a total compensation in the range of ₹[X] to ₹[Y] — with the specific mix of base, variable, and equity depending on your structure. I'm open to discussing the full package and am more interested in the right role and growth opportunity than optimizing purely for a number."</p>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Important:</strong> Always anchor on a range, not a point. The top of your range should be what you'd be genuinely happy to accept. Lead with research justification, not just what you want.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C2 -->
+    <div class="qa-card" id="q-c2">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">C02</span>
+        <span class="q-text">How do you negotiate salary when there is no competing offer?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer / Strategy</div>
+          <p>Not having a competing offer does not mean you have no leverage. <strong>Your leverage comes from your BATNA (Best Alternative to No Agreement)</strong> — staying in your current role — and from the market value of your skills, which you document with research.</p>
+          <p><strong>Three-step negotiation approach:</strong></p>
+          <ol>
+            <li><strong>Anchor on market, not emotion.</strong> "Based on Levels.fyi, LinkedIn Salary data, and conversations with peers in similar roles, the market rate for a Director of Engineering at a Retail GCC with [X] years of experience and [Y] domain expertise is in the ₹[range]. That's what I'm looking for."</li>
+            <li><strong>Negotiate the total package, not just base.</strong> If the base is fixed, ask about signing bonus, variable target %, equity/ESOP, role level (Director vs. Sr. Director), reporting structure, and growth timeline. There are many negotiable dimensions beyond base salary.</li>
+            <li><strong>Create time pressure without lying.</strong> "I'm in final discussions with a couple of other opportunities and would appreciate knowing your best offer so I can make a fully informed decision by [date]." You don't need a competing offer to have a timeline.</li>
+          </ol>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text"><strong>Never negotiate against yourself.</strong> Once you state a number, stop talking. Silence after stating your ask is not awkward — it's leverage. The first person to speak after a number is named loses negotiating ground.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C3 -->
+    <div class="qa-card" id="q-c3">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">C03</span>
+        <span class="q-text">How do you evaluate a role beyond compensation — what factors matter to you?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>I evaluate opportunities across five dimensions — compensation is one of five, not the only one:</p>
+          <ul>
+            <li><strong>Scope and ownership:</strong> Will I have genuine decision-making authority, or is this a coordination role?</li>
+            <li><strong>Growth trajectory:</strong> Is there a clear path from this role to the next one? Does the company promote from within?</li>
+            <li><strong>Team quality and engineering culture:</strong> Are the engineers strong? Is there a culture of craft, learning, and feedback?</li>
+            <li><strong>Business health and domain:</strong> Is the company growing? Is the domain (retail/ecommerce) one where I'll be building relevant, transferable experience?</li>
+            <li><strong>Manager quality:</strong> Who will I report to? What is their leadership style? Will they invest in my growth or just hold me to delivery metrics?</li>
+          </ul>
+          <p>I recommend asking directly in interviews: "What does success look like in this role after 12 months?" and "What's the growth path for the right person in this role?" The quality of the answers tells you a lot about the organization's maturity.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- C4 -->
+    <div class="qa-card" id="q-c4">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">C04</span>
+        <span class="q-text">How do you think about location flexibility and hybrid work expectations?</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Model Answer</div>
+          <p>At Director/EM level, my approach to location is <strong>outcome-driven rather than presence-driven</strong>. I'm comfortable with the hybrid model standard for GCC leadership roles and I understand that in-person presence matters for team building, stakeholder relationships, and high-stakes decisions.</p>
+          <p>For global collaboration: I'm used to navigating time zone overlap windows and have built async-first communication habits. I'm open to periodic travel to HQ (US/Canada/Europe) — typically 2–3 times per year — for strategic alignment, planning cycles, and relationship building. I'd ask clarifying questions about the specific travel expectations for this role rather than assuming.</p>
+          <p>The key question I'd want answered: "Is the Bangalore team empowered to make decisions locally, or is the expectation constant synchronous availability with a US team?" The answer to that shapes how I think about the working model significantly.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- C5 -->
+    <div class="qa-card" id="q-c5">
+      <div class="qa-question" onclick="toggle(this)">
+        <span class="q-number">C05</span>
+        <span class="q-text">Do you have questions for us? (Questions to ask interviewers)</span>
+        <span class="q-chevron">⌄</span>
+      </div>
+      <div class="qa-answer">
+        <div class="answer-body">
+          <div class="answer-label">Power Questions to Ask</div>
+          <p>Asking strong questions at Director level signals strategic thinking and genuine interest. Use 3–4 of these depending on the interviewer:</p>
+          <ul>
+            <li>"What does success look like for this role in the first 12 months — and how would you measure it?"</li>
+            <li>"What are the 2–3 biggest engineering challenges the Bangalore team is facing right now that this role is expected to address?"</li>
+            <li>"How does the GCC here interact with the global engineering org — is Bangalore a delivery center, or does it have genuine architecture and product ownership?"</li>
+            <li>"What's one thing about the engineering culture here that you're proud of, and one thing you're still working on?"</li>
+            <li>"What has made previous people in this role successful or unsuccessful?"</li>
+            <li>"How does leadership here think about the growth path for the right person in this role over the next 2–3 years?"</li>
+            <li>"What is the biggest technology bet the company is making in the next 18 months, and how does this team's work connect to it?"</li>
+          </ul>
+          <div class="tip-box">
+            <span class="tip-icon">💡</span>
+            <span class="tip-text">The quality of your questions signals your seniority as much as your answers. Avoid questions about policies, benefits, or information clearly on the website. Focus on strategic, forward-looking questions that only an insider can answer.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+// Toggle Q&A
+function toggle(questionEl) {
+  const card = questionEl.closest('.qa-card');
+  card.classList.toggle('open');
+}
+
+// Expand all in a section
+function expandAll(sectionId) {
+  const section = document.getElementById(sectionId);
+  const cards = section.querySelectorAll('.qa-card');
+  const allOpen = [...cards].every(c => c.classList.contains('open'));
+  cards.forEach(c => allOpen ? c.classList.remove('open') : c.classList.add('open'));
+  section.querySelector('.expand-all-btn').textContent = allOpen ? '⊞ Expand All' : '⊟ Collapse All';
+}
+
+// Scroll to section
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const offset = el.getBoundingClientRect().top + window.pageYOffset - 20;
+  window.scrollTo({ top: offset, behavior: 'smooth' });
+}
+
+// Reading progress
+window.addEventListener('scroll', () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = (window.scrollY / total) * 100;
+  document.getElementById('readingProgress').style.width = progress + '%';
+});
+
+// Active nav item
+const sections = ['sec-people','sec-tech','sec-values','sec-scenarios','sec-salary'];
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 120) current = id;
+  });
+  navItems.forEach(item => {
+    item.classList.toggle('active', item.getAttribute('onclick')?.includes(current));
+  });
+});
+
+// Search
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', e => {
+  const query = e.target.value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.qa-card');
+
+  if (!query) {
+    cards.forEach(c => {
+      c.classList.remove('hidden');
+      c.querySelectorAll('mark').forEach(m => m.outerHTML = m.textContent);
+    });
+    return;
+  }
+
+  cards.forEach(card => {
+    const qText = card.querySelector('.q-text').textContent.toLowerCase();
+    const answerText = card.querySelector('.qa-answer')?.textContent.toLowerCase() || '';
+    const match = qText.includes(query) || answerText.includes(query);
+    card.classList.toggle('hidden', !match);
+    if (match) card.classList.add('open');
+  });
+});
+</script>
+</body>
+</html>
