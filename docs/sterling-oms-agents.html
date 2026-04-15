@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBM Sterling OMS — Agent Architecture Deep Dive</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-hover:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --tag-bg:    #1f6feb33;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 250px; min-width: 250px; background: var(--bg-card);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted); padding: 0 20px 12px;
+      border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .nav-item {
+      display: block; padding: 7px 20px; color: var(--text-muted);
+      text-decoration: none; font-size: 13px; border-left: 2px solid transparent;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 28px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #238636aa; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    td.warn { color: var(--warn); }
+    td.danger { color: var(--danger); }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .agent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+    .agent-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .agent-card.task-q { border-top: 3px solid var(--accent); }
+    .agent-card.time-t { border-top: 3px solid var(--accent2); }
+    .agent-card.integ  { border-top: 3px solid var(--warn); }
+    .agent-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    .agent-card.task-q h4 { color: var(--accent); }
+    .agent-card.time-t h4 { color: var(--accent2); }
+    .agent-card.integ h4  { color: var(--warn); }
+    .agent-card p { font-size: 13px; color: var(--text-muted); margin: 0; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid { grid-template-columns: 1fr; } .agent-grid { grid-template-columns: 1fr; } .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Sterling OMS Agents</div>
+    <a class="nav-item active" onclick="scrollToSec('s1',event)"><span class="num">01</span>Overview</a>
+    <a class="nav-item" onclick="scrollToSec('s2',event)"><span class="num">02</span>Agent Runtime Architecture</a>
+    <a class="nav-item" onclick="scrollToSec('s3',event)"><span class="num">03</span>Task Queue (Q) Agents</a>
+    <a class="nav-item" onclick="scrollToSec('s4',event)"><span class="num">04</span>Time-Triggered Agents</a>
+    <a class="nav-item" onclick="scrollToSec('s5',event)"><span class="num">05</span>Integration Server</a>
+    <a class="nav-item" onclick="scrollToSec('s6',event)"><span class="num">06</span>Agent Configuration</a>
+    <a class="nav-item" onclick="scrollToSec('s7',event)"><span class="num">07</span>Common OMS Agents Reference</a>
+    <a class="nav-item" onclick="scrollToSec('s8',event)"><span class="num">08</span>Non-Task Q Agents</a>
+    <a class="nav-item" onclick="scrollToSec('s9',event)"><span class="num">09</span>Failure Modes & Ops</a>
+    <a class="nav-item" onclick="scrollToSec('s10',event)"><span class="num">10</span>Containerized Deployment</a>
+    <a class="nav-item" onclick="scrollToSec('s11',event)"><span class="num">11</span>Interview Cheat Sheet</a>
+    <a class="nav-item" onclick="scrollToSec('s12',event)"><span class="num">12</span>Custom Framework — Design</a>
+    <a class="nav-item" onclick="scrollToSec('s13',event)"><span class="num">13</span>Custom Framework — Implementation</a>
+    <a class="nav-item" onclick="scrollToSec('s14',event)"><span class="num">14</span>Custom Framework — ADRs</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>IBM Sterling OMS — <span>Agent Architecture Deep Dive</span></h1>
+      <p style="color:var(--text-muted); font-size:14px;">Task Q Agents · Time-Triggered Agents · Integration Server · Non-Task Q Agents — Practitioner Reference</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">IBM Sterling OMS</span>
+        <span class="badge badge-green">Retail / Ecommerce</span>
+        <span class="badge badge-yellow">v9.x / v10.x</span>
+        <span class="badge badge-blue">GCC Context</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">
+          Generated: <span id="gen-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- SECTION 1: Overview -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>Overview — The Agent Processing Model</h2>
+      </div>
+      <div class="content">
+        <p>IBM Sterling OMS uses an <strong>agent-based asynchronous processing model</strong> to execute the vast majority of its order lifecycle logic. Rather than performing long-running operations synchronously in the API layer, Sterling delegates them to background agents that poll for work, process it, and advance order state.</p>
+        <p>This design is core to Sterling's architecture and directly shapes how you tune performance, troubleshoot stuck orders, and plan for modernization. Every engineer working with Sterling must deeply understand these three processing constructs:</p>
+
+        <div class="agent-grid" style="grid-template-columns: repeat(2,1fr);">
+          <div class="agent-card task-q">
+            <h4>⚡ Task Queue (Q) Agent</h4>
+            <p>Event-driven. Polls the <code>YFS_TASK_Q</code> table. Fires when a triggering condition (status change, event) deposits a row. The workhorse of order state transitions.</p>
+          </div>
+          <div class="agent-card time-t">
+            <h4>🕐 Time-Triggered Agent</h4>
+            <p>Cron-style. Runs on a fixed schedule regardless of demand. Used for batch operations, SLA monitoring, inventory synchronization, and housekeeping.</p>
+          </div>
+          <div class="agent-card integ">
+            <h4>🔌 Integration Server</h4>
+            <p>Message-bus bridge. Consumes from JMS/MQ queues and dispatches inbound XML payloads to Sterling APIs. Also publishes outbound events to external queues.</p>
+          </div>
+          <div class="agent-card" style="border-top:3px solid #bc8cff;">
+            <h4 style="color:#bc8cff;">🧩 Non-Task Q Agent</h4>
+            <p>Custom batch agent using <code>getJobs()</code> + <code>executeJob()</code>. Extends <code>YCPBaseAgent</code>. Works on records not tied to order/shipment entities — e.g. custom table purges, external data sync.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">💡 Why This Matters for GCC Interviews</div>
+          At director/principal level, you're expected to explain <strong>why orders get stuck</strong>, how to tune throughput for peak sale events, and how agents map to Kubernetes workloads in v10.x. These three constructs are the answer to all three questions.
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Agent Runtime Architecture -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Agent Runtime Architecture</h2>
+      </div>
+      <div class="content">
+        <p>All three agent types run inside the <strong>Agent Server JVM</strong> (or <code>om-agent</code> pod in v10.x). The agent tier is separate from the application server tier (<code>smcfs.ear</code> / <code>om-app</code>) and connects to the same database and JMS broker.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — Sterling Agent Runtime Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    subgraph EXT["External Systems"]
+        MQ["IBM MQ / JMS Broker"]
+        ERP["ERP / WMS / 3PL APIs"]
+    end
+
+    subgraph AGENT["Agent Server JVM  (om-agent pod in v10.x)"]
+        direction TB
+        TQA["Task Queue Agent\nPolls YFS_TASK_Q\nEvent-driven"]
+        TTA["Time-Triggered Agent\nCron scheduler\nBatch operations"]
+        IS["Integration Server\nJMS listener\nInbound/Outbound routing"]
+
+        TQA -- "invoke API" --> APIS
+        TTA -- "invoke API / SQL" --> APIS
+        IS -- "route to API" --> APIS
+
+        APIS["Sterling Java API Layer\n(YIFApi / callMultiApi)"]
+    end
+
+    subgraph DATA["Data Tier"]
+        OMS_DB[("OMS Database\nYFS_ORDER / YFS_TASK_Q\nYFS_EVENT / etc.")]
+    end
+
+    subgraph APP["App Server (om-app pod)"]
+        REST_API["REST / SOAP APIs\nOrder Create, Status, etc."]
+    end
+
+    REST_API -- "status change fires event\nwrites YFS_TASK_Q row" --> OMS_DB
+    TQA -- "SELECT / UPDATE\nYFS_TASK_Q" --> OMS_DB
+    TTA -- "SELECT / batch UPDATE" --> OMS_DB
+    IS -- "consume JMS msg" --> MQ
+    IS -- "publish outbound event" --> MQ
+    APIS -- "read/write order state" --> OMS_DB
+    APIS -- "call external system" --> ERP
+          </div>
+        </div>
+
+        <h3>Key Deployment Facts</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Attribute</th><th>v9.x (On-Prem / WebSphere)</th><th>v10.x (Containerized / OpenShift)</th></tr></thead>
+            <tbody>
+              <tr><td>Agent JVM artifact</td><td><code>smcfs.ear</code> with agent profile</td><td><code>om-agent</code> Docker image</td></tr>
+              <tr><td>Deployment model</td><td>Standalone JVM on VM</td><td>Kubernetes Deployment / Pod</td></tr>
+              <tr><td>Scaling</td><td>Manual: add JVM instances</td><td>HPA on CPU/queue depth metrics</td></tr>
+              <tr><td>Config source</td><td>agent_cfg.xml / DB tables</td><td>ConfigMap + DB tables</td></tr>
+              <tr><td>JMS broker</td><td>IBM MQ (typically)</td><td>IBM MQ or ActiveMQ Artemis</td></tr>
+              <tr><td>Thread pool config</td><td>JVM startup args + agent_cfg.xml</td><td>Environment vars in pod spec</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Common Pitfall</div>
+          In v9.x, a single agent server JVM can run ALL three agent types simultaneously. This means a runaway time-triggered agent can starve task queue agents of threads. Always size thread pools separately and consider dedicated JVMs for IS in high-volume environments.
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Task Queue Agents -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Task Queue (Q) Based Agents</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-info">
+          <div class="callout-title">Core Concept</div>
+          Task Q agents are <strong>event-driven</strong> agents that react to order lifecycle events. When Sterling's event framework fires an event (e.g., <code>ON_SUCCESS</code> of order creation), it writes a row into <code>YFS_TASK_Q</code>. Task Q agents poll this table, pick up rows, and execute the configured action (typically invoking an API or custom Java class).
+        </div>
+
+        <h3>How It Works — Step by Step</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Task Queue Agent Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    participant API as Sterling API<br/>(om-app)
+    participant DB as OMS Database
+    participant TQ as Task Q Agent<br/>(om-agent)
+    participant SVC as Target Service<br/>(API / External)
+
+    API->>DB: Order status transitions to CREATED
+    DB->>DB: Event framework evaluates subscriptions
+    DB->>DB: Writes row to YFS_TASK_Q<br/>(STATUS=OPEN, TRANSACTION_ID, ORDER_HDR_KEY)
+    loop Every poll interval (default 5s)
+        TQ->>DB: SELECT rows WHERE STATUS='OPEN'<br/>FOR UPDATE SKIP LOCKED
+        DB-->>TQ: Returns up to N rows (batch size)
+        TQ->>DB: UPDATE STATUS='INPROCESS'
+        TQ->>SVC: Execute action<br/>(callMultiApi / custom handler)
+        alt Success
+            TQ->>DB: UPDATE STATUS='COMPLETED'\nDELETE or archive row
+        else Failure
+            TQ->>DB: UPDATE STATUS='OPEN'\nincrement RETRY_COUNT
+            Note over TQ,DB: Retried up to max_retries<br/>then STATUS='FAILED'
+        end
+    end
+          </div>
+        </div>
+
+        <h3>YFS_TASK_Q — Key Columns</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Column</th><th>Purpose</th><th>What to Watch</th></tr></thead>
+            <tbody>
+              <tr><td><code>TASK_Q_KEY</code></td><td>Primary key (UUID)</td><td>—</td></tr>
+              <tr><td><code>STATUS</code></td><td>OPEN / INPROCESS / COMPLETED / FAILED</td><td class="warn">INPROCESS with old timestamps = stuck agent / JVM crash</td></tr>
+              <tr><td><code>TRANSACTION_ID</code></td><td>Which Sterling transaction/action to fire</td><td>Links to YFS_TRANSACTION config</td></tr>
+              <tr><td><code>ORDER_HDR_KEY</code></td><td>The order being processed</td><td>Join to YFS_ORDER_HEADER for debugging</td></tr>
+              <tr><td><code>RETRY_COUNT</code></td><td>Number of attempts so far</td><td class="warn">High count = upstream failure, check logs</td></tr>
+              <tr><td><code>NEXT_ATTEMPT_TIME</code></td><td>Earliest time to retry</td><td>Back-off window between retries</td></tr>
+              <tr><td><code>PRIORITY</code></td><td>Lower number = higher priority</td><td>Configure rush orders / VIP customers higher priority</td></tr>
+              <tr><td><code>ORGANIZATION_CODE</code></td><td>Multi-tenant partitioning key</td><td>Index this for multi-enterprise deployments</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Event Subscription Model</h3>
+        <p>Task Q agents don't register interest directly — instead, you configure <strong>Event Subscriptions</strong> in the OMS Console (or via XML import). An event subscription says: <em>"when event E fires on transaction T, create a task queue entry for handler H."</em></p>
+
+        <pre><code>&lt;!-- Simplified event subscription config --&gt;
+&lt;Event EventId="ON_SUCCESS.CREATE_ORDER"&gt;
+  &lt;Subscription
+    TransactionId="SCHEDULE_ORDER"
+    HandlerClass="com.yantra.yfs.japi.agents.YFCDefaultEventHandler"
+    SequenceNo="1"
+    DateOfLastInvocation=""
+  /&gt;
+&lt;/Event&gt;</code></pre>
+
+        <h3>Thread Pool Configuration</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Parameter</th><th>Default</th><th>Tuning Guidance</th></tr></thead>
+            <tbody>
+              <tr><td><code>MaxThreads</code></td><td>5</td><td>Increase for high-volume; watch DB connection pool — each thread needs a connection</td></tr>
+              <tr><td><code>MinThreads</code></td><td>1</td><td>Keep at 1 to avoid cold start; set to MaxThreads for predictable latency</td></tr>
+              <tr><td><code>PollInterval</code></td><td>5000ms</td><td>Lower for near-real-time; lower bound ~500ms before DB hammering</td></tr>
+              <tr><td><code>BatchSize</code></td><td>10</td><td>Rows fetched per poll cycle; increase with larger thread pools</td></tr>
+              <tr><td><code>MaxRetries</code></td><td>3</td><td>Set based on downstream SLA; failures go to FAILED state for manual reprocessing</td></tr>
+              <tr><td><code>AgentCriteriaGroup</code></td><td>DEFAULT</td><td>Use named groups to isolate agents by enterprise/order type</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ The "INPROCESS Stuck" Problem</div>
+          If an Agent JVM crashes mid-processing, rows remain in <code>INPROCESS</code> state indefinitely. Sterling provides a <strong>Hung Task Recovery Agent</strong> (a time-triggered agent) that reclaims rows stuck in INPROCESS beyond a configurable timeout. Always configure this agent in production.
+        </div>
+
+        <h3>Use Cases in Retail OMS</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Business Event</th><th>Triggered Transaction</th><th>Task Q Agent Action</th></tr></thead>
+            <tbody>
+              <tr><td>Order created successfully</td><td>CREATE_ORDER → ON_SUCCESS</td><td>Schedule order (inventory promising)</td></tr>
+              <tr><td>Payment captured</td><td>CHANGE_ORDER → ON_SUCCESS</td><td>Release order to fulfillment</td></tr>
+              <tr><td>Shipment confirmed</td><td>CONFIRM_SHIPMENT → ON_SUCCESS</td><td>Invoice order, trigger notifications</td></tr>
+              <tr><td>Return created</td><td>CREATE_RETURN → ON_SUCCESS</td><td>Schedule return fulfillment, trigger refund</td></tr>
+              <tr><td>Order exception flagged</td><td>RAISE_EXCEPTION → ON_SUCCESS</td><td>Assign to resolution queue, notify agent</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Time-Triggered Agents -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>Time-Triggered Agents</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-info">
+          <div class="callout-title">Core Concept</div>
+          Time-triggered agents run on a <strong>fixed schedule</strong> (cron-like). They do not react to events — they scan the database on their own cadence and process whatever they find. They're used for batch operations, SLA enforcement, inventory sweeps, and purges.
+        </div>
+
+        <h3>Execution Model</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Time-Triggered Agent Execution</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    SCHED["Agent Scheduler\n(internal cron)"]
+    CHECK{"Is agent<br/>already running?"}
+    QUERY["Execute SELECT query\nagainst OMS tables\n(parameterized by agent config)"]
+    BATCH["Process batch\n(N records per cycle)"]
+    API["Invoke Sterling API\nor custom Java handler\nper record"]
+    DONE{"More records?"}
+    WAIT["Sleep until\nnext interval"]
+
+    SCHED --> CHECK
+    CHECK -- "No → proceed" --> QUERY
+    CHECK -- "Yes → skip" --> WAIT
+    QUERY --> BATCH
+    BATCH --> API
+    API --> DONE
+    DONE -- "Yes" --> BATCH
+    DONE -- "No" --> WAIT
+    WAIT --> SCHED
+          </div>
+        </div>
+
+        <h3>Configuration Parameters</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Parameter</th><th>Description</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td><code>FrequencyInMillis</code></td><td>How often the agent wakes up</td><td>60000 (1 minute)</td></tr>
+              <tr><td><code>MaxRecordsToBuffer</code></td><td>Max records fetched in one cycle</td><td>500</td></tr>
+              <tr><td><code>NumberOfThreads</code></td><td>Parallel processing threads per cycle</td><td>5</td></tr>
+              <tr><td><code>CriteriaParameters</code></td><td>Filter conditions (enterprise, date range, etc.)</td><td>OrganizationCode=ACME</td></tr>
+              <tr><td><code>RunOnlyOnce</code></td><td>Run once at startup, not repeatedly</td><td>false</td></tr>
+              <tr><td><code>MaximumRecordsToProcess</code></td><td>Hard cap per invocation (safety valve)</td><td>10000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Key Time-Triggered Agents in a Retail Deployment</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Agent Name</th><th>Frequency</th><th>What It Does</th><th>Risk if Disabled</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Availability Agent</strong><br/><code>YFSAvailabilityAgent</code></td>
+                <td>1–5 min</td>
+                <td>Recalculates ATP/ATC availability across supply chains. Publishes inventory changes.</td>
+                <td class="danger">Stale inventory → oversell / undersell</td>
+              </tr>
+              <tr>
+                <td><strong>Release Agent</strong><br/><code>YFSReleaseAgent</code></td>
+                <td>2–5 min</td>
+                <td>Evaluates scheduled orders, releases them to fulfillment when all holds cleared.</td>
+                <td class="danger">Orders never move to WMS / 3PL</td>
+              </tr>
+              <tr>
+                <td><strong>Print Document Agent</strong><br/><code>YFSPrintDocumentAgent</code></td>
+                <td>1 min</td>
+                <td>Triggers label printing, packing slips, invoices via configured printers.</td>
+                <td class="warn">Pick/pack operations stall in warehouse</td>
+              </tr>
+              <tr>
+                <td><strong>Purge Agents</strong><br/><code>YFSPurgeAgent*</code></td>
+                <td>Off-peak (e.g. 2AM)</td>
+                <td>Archives/deletes old order data, task queue rows, audit logs per retention policy.</td>
+                <td class="danger">Table bloat → query slowdowns → full disks</td>
+              </tr>
+              <tr>
+                <td><strong>Payment Collection Agent</strong><br/><code>YFSPaymentCollectionAgent</code></td>
+                <td>5–15 min</td>
+                <td>Retries failed payment captures, triggers settlement sweeps.</td>
+                <td class="danger">Revenue leakage on failed captures</td></tr>
+              <tr>
+                <td><strong>Exception Escalation Agent</strong></td>
+                <td>15 min</td>
+                <td>Escalates unresolved order exceptions beyond SLA thresholds.</td>
+                <td class="warn">SLA breaches undetected</td>
+              </tr>
+              <tr>
+                <td><strong>Hung Task Recovery Agent</strong></td>
+                <td>5 min</td>
+                <td>Reclaims INPROCESS task queue rows that are stuck due to agent crashes.</td>
+                <td class="danger">Orders permanently stuck in INPROCESS</td>
+              </tr>
+              <tr>
+                <td><strong>Inventory Synchronization Agent</strong></td>
+                <td>Variable</td>
+                <td>Pushes inventory snapshots to downstream channels (eComm platform, store systems).</td>
+                <td class="warn">Channel inventory out of sync</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Overlap Risk: Time-Triggered + Task Q Contention</h3>
+        <p>Both agent types share the same thread pool if co-deployed in one JVM. A heavy batch run of the Purge Agent at the wrong time can starve Task Q agents processing live orders. Best practices:</p>
+        <ul>
+          <li>Schedule purge/housekeeping agents <strong>in off-peak windows</strong> (midnight–4AM)</li>
+          <li>Set <code>MaxRecordsToBuffer</code> conservatively for purge agents (500 max) to limit DB lock contention</li>
+          <li>In v10.x, run purge workloads as <strong>separate Kubernetes CronJob pods</strong>, isolated from the main <code>om-agent</code> deployment</li>
+          <li>Monitor thread pool utilization via JMX / Prometheus — alert at >80% saturation</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECTION 5: Integration Server -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>Integration Server</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-info">
+          <div class="callout-title">Core Concept</div>
+          The Integration Server is Sterling's <strong>asynchronous message-bus bridge</strong>. It listens on JMS queues (IBM MQ, ActiveMQ), receives inbound XML messages from external systems (ERP, WMS, store POS), transforms/routes them to Sterling Java APIs, and publishes outbound events back to queues for downstream consumers.
+        </div>
+
+        <h3>Integration Server Architecture</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Integration Server Message Flow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart LR
+    subgraph EXT_IN["Inbound Sources"]
+        ERP["ERP\n(SAP / Oracle)"]
+        WMS["WMS / 3PL"]
+        POS["Store POS"]
+        B2B["B2B Partners\n(EDI → XML)"]
+    end
+
+    subgraph MQ_IN["Inbound JMS Queue"]
+        Q_IN["JMS Queue\n(e.g. STERLING.IN.ORDER)"]
+    end
+
+    subgraph IS["Integration Server (om-agent pod)"]
+        LISTENER["JMS Message Listener\nOnMessage()"]
+        ROUTER["Message Router\nLooks up service config\nby DocType / QueueName"]
+        XFORM["XSL Transformer\n(optional)\nMap external schema → YFS schema"]
+        API_INVOKE["callMultiApi()\nYIFApi.invoke()"]
+        ERR["Error Queue Handler\nDead Letter → STERLING.ERROR"]
+    end
+
+    subgraph OMS["Sterling OMS"]
+        APIS2["Sterling APIs\n(changeOrder, receiveShipment\ncreateOrder, etc.)"]
+        DB2[("OMS Database")]
+    end
+
+    subgraph MQ_OUT["Outbound JMS Queues"]
+        Q_OUT["Event Queue\n(STERLING.OUT.EVENTS)"]
+        Q_ERR["Dead Letter Queue\n(STERLING.ERROR)"]
+    end
+
+    subgraph EXT_OUT["Downstream Consumers"]
+        NOTIF["Notification Service"]
+        ANALYTICS["Analytics Pipeline"]
+        CHANNEL["Channel Systems\n(eComm, Store)"]
+    end
+
+    ERP & WMS & POS & B2B --> Q_IN
+    Q_IN --> LISTENER
+    LISTENER --> ROUTER
+    ROUTER --> XFORM
+    XFORM --> API_INVOKE
+    API_INVOKE --> APIS2
+    APIS2 --> DB2
+    APIS2 -- "ON_SUCCESS event" --> Q_OUT
+    LISTENER -- "parse error / bad XML" --> Q_ERR
+    API_INVOKE -- "API exception" --> ERR
+    ERR --> Q_ERR
+    Q_OUT --> NOTIF & ANALYTICS & CHANNEL
+          </div>
+        </div>
+
+        <h3>Key Configuration Elements</h3>
+        <pre><code>&lt;!-- Integration Server queue configuration (agent_cfg.xml excerpt) --&gt;
+&lt;IntegrationServer&gt;
+  &lt;QueueConfiguration
+    QueueName="STERLING.IN.INVENTORY_UPDATE"
+    InitialContextFactory="com.sun.jndi.fscontext.RefFSContextFactory"
+    ProviderURL="file:/var/mqm/jndi"
+    ConnectionFactory="QueueConnectionFactory"
+    UserName="mquser"
+    Password="ENCRYPTED_VALUE"
+    MaxListenerThreads="10"
+    MaxMessageCacheSize="100"
+    TransactionType="LOCAL"
+    ServiceName="manageInventory"
+    DocumentType="manageInventory"
+  /&gt;
+&lt;/IntegrationServer&gt;</code></pre>
+
+        <h3>Inbound vs. Outbound Processing</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4 style="color:var(--accent);font-size:14px;margin-bottom:12px;">📥 Inbound (External → OMS)</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li>IS listens on one or more JMS queues</li>
+              <li>Each queue mapped to a <strong>service/API name</strong></li>
+              <li>Optional XSL transform to normalize external XML to YFS format</li>
+              <li>Message dispatched to Sterling API (<code>callMultiApi</code>)</li>
+              <li>On success: message ACK'd and removed from queue</li>
+              <li>On failure: retry up to N times → dead letter queue</li>
+              <li>Transactional: LOCAL (per-message) or XA (distributed)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--accent2);font-size:14px;margin-bottom:12px;">📤 Outbound (OMS → External)</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li>Sterling event framework fires on order state changes</li>
+              <li>Event subscription configured to publish to JMS queue</li>
+              <li>IS (or event handler) serializes order XML and posts to queue</li>
+              <li>Downstream consumers (Kafka Connect, notification service) pick up</li>
+              <li>Common outputs: shipment confirmation, inventory change, invoice</li>
+              <li>Can route to multiple queues based on enterprise/document type</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Integration Server vs. Modern Event Streaming</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">Architectural Tension in Modernization</div>
+          The Integration Server was designed for JMS/MQ in an era before Kafka. In modern GCC architectures, teams often bridge Sterling's IS to a <strong>Kafka Connect MQ Source Connector</strong>: IS still talks to MQ, and a Kafka Connect worker replicates MQ messages to Kafka topics consumed by microservices. This avoids rewriting Sterling internals while gaining Kafka's replay, consumer groups, and schema registry benefits.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Integration Server (JMS/MQ)</th><th>Modern: Kafka Connect Bridge</th></tr></thead>
+            <tbody>
+              <tr><td>Message ordering</td><td class="rec">✓ Per-queue FIFO</td><td>✓ Per-partition ordering</td></tr>
+              <tr><td>Replay / rewind</td><td class="danger">✗ Messages consumed = gone</td><td class="rec">✓ Kafka retention window</td></tr>
+              <tr><td>Multiple consumers</td><td class="warn">Limited (competing consumers)</td><td class="rec">✓ Consumer groups, fan-out</td></tr>
+              <tr><td>Schema evolution</td><td class="warn">Manual XSL versioning</td><td class="rec">✓ Schema Registry + Avro</td></tr>
+              <tr><td>Operational tooling</td><td class="warn">MQ Explorer / log files</td><td class="rec">✓ Kafka UI, KSQL, Grafana</td></tr>
+              <tr><td>Sterling code change</td><td class="rec">Zero — IS unchanged</td><td class="rec">Zero — bridge is external</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Dead Letter Queue (DLQ) Handling</h3>
+        <p>Every production IS deployment must have a DLQ strategy. When a message fails all retries:</p>
+        <ul>
+          <li>Message lands in configured error queue (e.g. <code>STERLING.ERROR.DLQ</code>)</li>
+          <li>Build a <strong>DLQ monitor</strong>: alert on non-zero DLQ depth (PagerDuty / Prometheus)</li>
+          <li>Include correlation IDs and original payload in DLQ message for reprocessing</li>
+          <li>Provide an ops runbook for DLQ reprocessing (fix root cause → replay)</li>
+          <li>Never silently swallow exceptions — missing the DLQ is how orders disappear</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Agent Configuration -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Agent Configuration Patterns</h2>
+      </div>
+      <div class="content">
+        <h3>agent_cfg.xml — The Master Config File</h3>
+        <p>All three agent types are configured in <code>agent_cfg.xml</code> (v9.x) or equivalent ConfigMap/environment variables in v10.x. The structure below shows a realistic multi-agent configuration:</p>
+
+        <pre><code>&lt;!-- agent_cfg.xml - Representative configuration --&gt;
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;agent-cfg&gt;
+
+  &lt;!-- ===== TASK QUEUE AGENTS ===== --&gt;
+  &lt;TaskQueueAgent
+    AgentCode="SCHEDULE_ORDER_AGENT"
+    MaxThreads="10"
+    MinThreads="2"
+    PollInterval="2000"
+    BatchSize="20"
+    MaxRetries="3"
+    AgentCriteriaGroup="PROD_ENTERPRISE"
+    OrganizationCode="ACME_RETAIL"
+  /&gt;
+
+  &lt;TaskQueueAgent
+    AgentCode="RELEASE_AGENT_TQ"
+    MaxThreads="5"
+    PollInterval="5000"
+    BatchSize="10"
+    MaxRetries="5"
+  /&gt;
+
+  &lt;!-- ===== TIME-TRIGGERED AGENTS ===== --&gt;
+  &lt;TimeTriggeredAgent
+    AgentCode="AVAILABILITY_AGENT"
+    FrequencyInMillis="60000"
+    MaxRecordsToBuffer="200"
+    NumberOfThreads="3"
+    CriteriaParameter_OrganizationCode="ACME_RETAIL"
+  /&gt;
+
+  &lt;TimeTriggeredAgent
+    AgentCode="ORDER_PURGE_AGENT"
+    FrequencyInMillis="86400000"
+    MaxRecordsToBuffer="500"
+    NumberOfThreads="2"
+    RunBetweenHours="02:00-04:00"
+  /&gt;
+
+  &lt;!-- ===== INTEGRATION SERVER ===== --&gt;
+  &lt;IntegrationServer
+    QueueName="STERLING.IN.INVENTORY"
+    ServiceName="manageInventory"
+    MaxListenerThreads="5"
+    TransactionType="LOCAL"
+  /&gt;
+
+  &lt;IntegrationServer
+    QueueName="STERLING.IN.ORDERS"
+    ServiceName="createOrder"
+    MaxListenerThreads="8"
+    TransactionType="XA"
+  /&gt;
+
+&lt;/agent-cfg&gt;</code></pre>
+
+        <h3>AgentCriteriaGroup — Multi-Enterprise Isolation</h3>
+        <p>In a GCC multi-enterprise Sterling deployment (e.g., multiple brands running on one Sterling instance), <code>AgentCriteriaGroup</code> lets you assign specific agents to specific organizations. This prevents Brand A's low-priority batch work from affecting Brand B's order fulfillment latency.</p>
+
+        <h3>v10.x: ConfigMap + Environment Variables</h3>
+        <pre><code># Kubernetes deployment snippet for om-agent
+env:
+  - name: AGENT_MAX_THREADS_SCHEDULE_ORDER
+    value: "10"
+  - name: AGENT_POLL_INTERVAL_MS
+    value: "2000"
+  - name: JMS_PROVIDER_URL
+    valueFrom:
+      secretKeyRef:
+        name: sterling-mq-secret
+        key: provider-url
+  - name: DB_MAX_POOL_SIZE
+    value: "30"  # Must be >= sum of all agent thread pools</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 7: Common Agents Reference -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Common OMS Agents — Quick Reference</h2>
+      </div>
+      <div class="content">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Agent</th><th>Type</th><th>Transaction/API</th><th>Business Role</th><th>Failure Impact</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Schedule Order Agent</strong></td>
+                <td><span class="badge badge-blue">Task Q</span></td>
+                <td><code>scheduleOrder</code></td>
+                <td>Promises inventory, assigns sourcing node. Triggered post order creation.</td>
+                <td class="danger">Orders stuck unscheduled; never reach fulfillment</td>
+              </tr>
+              <tr>
+                <td><strong>Release Order Agent</strong></td>
+                <td><span class="badge badge-blue">Task Q</span></td>
+                <td><code>releaseOrder</code></td>
+                <td>Releases scheduled orders to WMS/node after holds cleared.</td>
+                <td class="danger">Fulfillment never starts; SLA breach</td>
+              </tr>
+              <tr>
+                <td><strong>Payment Collection Agent</strong></td>
+                <td><span class="badge badge-blue">Task Q</span> / <span class="badge badge-green">Time</span></td>
+                <td><code>collectPayment</code></td>
+                <td>Captures authorized payments at fulfillment trigger points.</td>
+                <td class="danger">Revenue leakage; goods shipped without payment</td>
+              </tr>
+              <tr>
+                <td><strong>Invoice Order Agent</strong></td>
+                <td><span class="badge badge-blue">Task Q</span></td>
+                <td><code>invoiceOrder</code></td>
+                <td>Creates invoice after shipment confirm. Posts charges.</td>
+                <td class="warn">Revenue recognition delayed; accounting reconciliation issues</td>
+              </tr>
+              <tr>
+                <td><strong>Availability Agent</strong></td>
+                <td><span class="badge badge-green">Time</span></td>
+                <td><code>manageItemAvailability</code></td>
+                <td>Recomputes ATP/ATC. Publishes availability changes to channels.</td>
+                <td class="danger">Stale inventory → oversell; customer dissatisfaction</td>
+              </tr>
+              <tr>
+                <td><strong>Monitor Agent</strong></td>
+                <td><span class="badge badge-green">Time</span></td>
+                <td><code>monitorTransactions</code></td>
+                <td>Checks orders against SLA conditions; fires alerts/escalations.</td>
+                <td class="warn">SLA breaches go undetected; no escalation</td>
+              </tr>
+              <tr>
+                <td><strong>Purge Agents (10+)</strong></td>
+                <td><span class="badge badge-green">Time</span></td>
+                <td><code>purge*</code></td>
+                <td>Archives/deletes aged order data, audit logs, task queue rows.</td>
+                <td class="danger">Table bloat → degraded query performance over months</td>
+              </tr>
+              <tr>
+                <td><strong>Inbound Order IS</strong></td>
+                <td><span class="badge badge-yellow">Integ Server</span></td>
+                <td><code>createOrder</code></td>
+                <td>Consumes orders from eComm / B2B / EDI queues.</td>
+                <td class="danger">Order ingest halts; queue backlog accumulates</td>
+              </tr>
+              <tr>
+                <td><strong>Inventory Sync IS</strong></td>
+                <td><span class="badge badge-yellow">Integ Server</span></td>
+                <td><code>manageInventory</code></td>
+                <td>Receives inventory feeds from ERP/WMS via MQ.</td>
+                <td class="danger">Inventory positions diverge from reality</td>
+              </tr>
+              <tr>
+                <td><strong>Shipment Confirm IS</strong></td>
+                <td><span class="badge badge-yellow">Integ Server</span></td>
+                <td><code>confirmShipment</code></td>
+                <td>Receives ASN/shipment confirmation from 3PL via MQ.</td>
+                <td class="danger">Orders never advance to shipped; customer updates blocked</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: Non-Task Q Agents -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Non-Task Q Based Agents</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-info">
+          <div class="callout-title">Core Concept</div>
+          A Non-Task Q agent is a <strong>custom batch agent</strong> that does <em>not</em> rely on the <code>YFS_TASK_Q</code> table. Instead, it implements two Java methods — <code>getJobs()</code> and <code>executeJob()</code> — by extending Sterling's <code>YCPBaseAgent</code> class. You define what records to fetch and how to process each one. This pattern is ideal for processing records that have no relationship to orders or shipments, such as custom table purges or external data synchronization.
+        </div>
+
+        <p>According to the IBM Sterling Agent Architecture document (Sandeep Khare, IBM India, Oct 2011), the underlying mechanism for <em>all</em> Sterling time-triggered agents — including Non-Task Q custom agents — is the same JMS-backed getJobs/executeJob pipeline. The key distinction is that <strong>Task Q agents use a fixed OOB implementation of getJobs</strong> (querying <code>YFS_TASK_Q</code>), whereas Non-Task Q agents let you supply your own <code>getJobs</code> implementation to query any table or data source.</p>
+
+        <h3>How the getJobs / executeJob Pipeline Works</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — Non-Task Q Agent: getJobs / executeJob Flow (per IBM Sterling Agent Architecture)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    participant TRIGGER as triggeragent.sh<br/>or Auto-Schedule
+    participant JMS as Internal JMS Queue<br/>(per agent config)
+    participant GJ as getJobs() method<br/>(single-threaded)
+    participant EJ as executeJob() methods<br/>(multi-threaded, N threads)
+    participant DB as Custom Table /<br/>OMS Database
+    participant LOCK as YFS_OBJECT_LOCK
+
+    TRIGGER->>JMS: Post Trigger Message (T)
+    JMS->>GJ: Pick up Trigger Message
+    GJ->>LOCK: Acquire lock for AgentCriteriaId
+    alt Lock not available (another JVM has it)
+        GJ-->>JMS: Exit — do nothing
+    else Lock acquired
+        GJ->>DB: SELECT records WHERE criteria<br/>LIMIT NumRecordsToBuffer (default 5000)
+        GJ->>JMS: Post E1..EN execute messages + G1 (next getJobs msg with LastKey)
+        LOCK-->>GJ: Release lock
+        par N threads of executeJob
+            EJ->>JMS: Pick execute message E1
+            EJ->>DB: Process record (call API / custom logic)
+            EJ->>JMS: Pick execute message E2
+            EJ->>DB: Process record
+        end
+        JMS->>GJ: G1 — pick up next getJobs message
+        GJ->>LOCK: Acquire lock again
+        GJ->>DB: SELECT next batch from LastKey
+        Note over GJ,DB: Repeat until no more records
+    end
+          </div>
+        </div>
+
+        <h3>The Two Key Methods</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4 style="color:#bc8cff;font-size:14px;margin-bottom:10px;"><code>getJobs(YFSEnvironment env, Document criteria, Document lastMessageCreated)</code></h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li><strong>Always single-threaded</strong> — enforced via <code>YFS_OBJECT_LOCK</code> table lock per AgentCriteriaId</li>
+              <li>Receives agent criteria parameters as XML input (org code, date range, etc.)</li>
+              <li>Queries the data source and returns a <code>List&lt;Document&gt;</code> — one Document per record to process</li>
+              <li><code>lastMessageCreated</code> is null on first invocation; subsequent calls carry the last processed key for cursor-style pagination</li>
+              <li>Each Document in the returned list is posted as an execute message to the internal JMS queue</li>
+              <li>You control batch size via <code>NumRecordsToBuffer</code> (default: 5000)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="color:#bc8cff;font-size:14px;margin-bottom:10px;"><code>executeJob(Document job)</code></h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li><strong>Multi-threaded</strong> — runs concurrently with N threads (configurable)</li>
+              <li>Called once per Document returned by getJobs</li>
+              <li>Contains the business logic: call a Sterling API, delete a record, call an external service</li>
+              <li>Each thread picks one execute message from the JMS queue independently</li>
+              <li>Multiple JVM instances can run executeJob in parallel — getJobs locking ensures no duplicate fetches</li>
+              <li>Failures per record should be handled inside this method (try/catch + log)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Java Implementation Pattern</h3>
+        <pre><code>package com.example.sterling.agents;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.w3c.dom.Document;
+import com.yantra.ycp.japi.util.YCPBaseAgent;   // Extend this base class
+import com.yantra.yfs.japi.YFSEnvironment;
+import com.yantra.interop.japi.YIFApi;
+import com.yantra.interop.japi.YIFClientFactory;
+
+public class CustomTablePurgeAgent extends YCPBaseAgent {
+
+    private static YIFApi api;
+
+    static {
+        try {
+            api = YIFClientFactory.getInstance().getApi();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init YIFApi", e);
+        }
+    }
+
+    /**
+     * SINGLE-THREADED: Fetch records to process.
+     * @param env         YFS environment (contains org context)
+     * @param criteria    Agent criteria parameters XML (from agent config)
+     * @param lastMsg     Last processed record key — null on first call, set for pagination
+     * @return            List of Documents; each becomes one executeJob() call
+     */
+    @Override
+    public List&lt;Document&gt; getJobs(YFSEnvironment env, Document criteria,
+                                   Document lastMsg) throws Exception {
+
+        List&lt;Document&gt; jobs = new ArrayList&lt;&gt;();
+
+        // Extract criteria params (e.g. retentionDays, org code)
+        // Build SQL or use Sterling API to fetch records beyond retention window
+        // Use lastMsg to implement cursor pagination (avoid re-fetching processed records)
+        // Add each record as a Document to the jobs list
+
+        return jobs;   // Framework posts each entry as an execute message to JMS queue
+    }
+
+    /**
+     * MULTI-THREADED: Process one record.
+     * @param job   Single Document from getJobs list
+     */
+    @Override
+    public void executeJob(Document job) throws Exception {
+        // Extract record key from Document
+        // Call Sterling API or execute DELETE/UPDATE directly
+        // Log success/failure; throw exception to trigger retry if needed
+    }
+}</code></pre>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">⚠️ Important: getJobs Is Always Single-Threaded</div>
+          Even in multi-JVM deployments, only one JVM's <code>getJobs()</code> runs at a time — controlled by a lock on <code>YFS_OBJECT_LOCK</code> for the agent's CriteriaId. If a second JVM's <code>getJobs()</code> cannot acquire the lock, it exits silently. This prevents the same batch of records being fetched twice. <strong>executeJob() is where parallelism lives.</strong>
+        </div>
+
+        <h3>JMS Queue State During Agent Execution</h3>
+        <p>The IBM Sterling Agent Architecture document describes the JMS queue state through each phase (with <code>NumRecordsToBuffer=10</code> as an example):</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>JMS Queue Contents</th><th>What's Happening</th></tr></thead>
+            <tbody>
+              <tr><td>Before agent starts</td><td>empty</td><td>Idle</td></tr>
+              <tr><td>Agent triggered</td><td><code>T</code></td><td>Trigger message posted by triggeragent.sh or auto-schedule</td></tr>
+              <tr><td>getJobs picks up T, fetches batch 1</td><td><code>E1..E10, G1</code></td><td>10 execute messages + 1 next-getJobs message with LastKey</td></tr>
+              <tr><td>executeJob threads drain E1..E10</td><td><code>G1</code></td><td>All records in batch 1 processed; only getJobs message remains</td></tr>
+              <tr><td>getJobs picks up G1, fetches batch 2</td><td><code>E11..E20, G2</code></td><td>Next 10 records fetched starting from LastKey</td></tr>
+              <tr><td>All records processed</td><td>empty</td><td>Agent waits for next trigger signal</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Agent Triggering Options</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>How</th><th>Use Case</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Manual</strong></td>
+                <td>Run <code>$INSTALL_DIR/bin/triggeragent.sh</code> with agent name and criteria</td>
+                <td>On-demand runs, testing, ops incident response</td>
+              </tr>
+              <tr>
+                <td><strong>Automatic (Schedule)</strong></td>
+                <td>Check "Schedule Trigger Message" in agent config, set interval</td>
+                <td>Recurring batch jobs — purge, sync, availability refresh</td>
+              </tr>
+              <tr>
+                <td><strong>Pending trigger (agent down)</strong></td>
+                <td>Trigger message stays in JMS queue; fires when agent server restarts</td>
+                <td>Ensures no trigger is lost during planned maintenance windows</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">💡 Agent Will Not Re-trigger While Processing</div>
+          Per IBM documentation, an agent will not accept a new trigger (manual or automatic) while it is actively processing records. A manual trigger issued during processing is silently ignored. Auto-trigger will not fire until the current batch cycle is fully complete.
+        </div>
+
+        <h3>Multi-Threading and Multi-JVM Scaling</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Single Thread / Single JVM</th><th>Multi-Thread / Multi-JVM</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>getJobs behaviour</td>
+                <td>Sequential — getJobs waits for all executeJob calls to finish before fetching next batch</td>
+                <td>Same — getJobs is always single-threaded; lock on YFS_OBJECT_LOCK ensures one JVM runs it at a time</td>
+              </tr>
+              <tr>
+                <td>executeJob behaviour</td>
+                <td>One record at a time</td>
+                <td>N threads per JVM, M JVMs → N×M concurrent executeJob calls processing the JMS queue in parallel</td>
+              </tr>
+              <tr>
+                <td>Throughput ceiling</td>
+                <td>~100K jobs/hr (per IBM scalability guidance)</td>
+                <td>300K+ jobs/hr achievable with tuning (buffer size, JMS session pooling, bulk loader)</td>
+              </tr>
+              <tr>
+                <td>Configuration</td>
+                <td><code>NumberOfThreads=1</code></td>
+                <td><code>NumberOfThreads=5</code> per JVM, run same agent on 2+ JVMs</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Custom Table Requirements</h3>
+        <p>When building a Non-Task Q agent for a custom table, the table must support the agent framework's pagination contract:</p>
+        <ul>
+          <li>A <strong>unique primary key column</strong> (UUID or sequence) that can serve as the <code>lastMessageCreated</code> cursor</li>
+          <li>Index on the columns used in the <code>getJobs()</code> SELECT criteria (e.g. <code>CREATE_TS</code> for purge, <code>STATUS</code> for processing queues)</li>
+          <li>Ensure the query used in <code>getJobs()</code> is <strong>deterministically ordered</strong> — typically <code>ORDER BY PRIMARY_KEY ASC</code> — so cursor pagination is correct across batches</li>
+        </ul>
+
+        <h3>Performance Tuning Levers (from IBM Scalability Guidance)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Lever</th><th>Default</th><th>Recommendation</th></tr></thead>
+            <tbody>
+              <tr><td>NumRecordsToBuffer</td><td>5000</td><td>Increase to 10000+ at high volumes; test to find optimal — too high risks memory pressure</td></tr>
+              <tr><td>JMS Session Pooling</td><td>Off</td><td>Enable via <code>yfs.yfs.jms.session.disable.pooling=N</code> in customer_overrides.properties; reduces per-message MQ session overhead</td></tr>
+              <tr><td>Bulk loader (HF48+)</td><td>Off</td><td>Enable via <code>yfs.agent.bulk.sender.enabled=Y</code> and set <code>yfs.agent.bulk.sender.batch.size=50000</code>; dramatically reduces MQ write latency per message</td></tr>
+              <tr><td>Queue persistence</td><td>Persistent</td><td>Set to non-persistent for high-throughput agents (e.g. RTAM) — non-persistent writes are 3–4x faster; accept the risk of message loss on MQ restart</td></tr>
+              <tr><td>getJobs query</td><td>OOB query</td><td>Ensure correct DB index is used; monitor with EXPLAIN PLAN; keep custom table size under control (purge regularly)</td></tr>
+              <tr><td>MQ colocation</td><td>Variable</td><td>Run agent JVMs in the same datacenter as MQ server to minimize network latency on message writes</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Non-Task Q vs Task Q — When to Use Which</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Criteria</th><th>Use Task Q Agent</th><th>Use Non-Task Q Agent</th></tr></thead>
+            <tbody>
+              <tr><td>Data source</td><td>Records linked to orders/shipments in YFS_TASK_Q</td><td>Custom tables, external data, or any non-order entity</td></tr>
+              <tr><td>Trigger</td><td>Event-driven (order state change)</td><td>Time/schedule-driven or manual trigger</td></tr>
+              <tr><td>Implementation effort</td><td>Low — configure event subscription, no custom code</td><td>Medium — must implement getJobs() and executeJob()</td></tr>
+              <tr><td>Examples (OOB)</td><td>scheduleOrder, releaseOrder, invoiceOrder</td><td>RTAM (Real Time Availability Monitor), custom purge agents</td></tr>
+              <tr><td>Multi-JVM scale-out</td><td>Via om-agent pod HPA in v10.x</td><td>Run same agent on multiple JVMs; getJobs lock prevents duplication</td></tr>
+              <tr><td>Error handling</td><td>FAILED rows visible in YFS_TASK_Q for re-triage</td><td>Custom — you must handle retries and failure logging in executeJob()</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 9: Failure Modes -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>Failure Modes & Operational Troubleshooting</h2>
+      </div>
+      <div class="content">
+        <h3>Top Failure Patterns and Diagnoses</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Symptom</th><th>Root Cause</th><th>Diagnostic Query / Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Orders stuck, not progressing</td>
+                <td>Task Q rows in INPROCESS, agent JVM crashed</td>
+                <td><code>SELECT * FROM YFS_TASK_Q WHERE STATUS='INPROCESS' AND MODIFY_TS &lt; SYSDATE - 1/24</code> → restart Hung Task Recovery Agent</td>
+              </tr>
+              <tr>
+                <td>High YFS_TASK_Q row count</td>
+                <td>Agent thread pool undersized; downstream API slow</td>
+                <td>Check agent thread utilization via JMX. Increase MaxThreads. Profile downstream API latency.</td>
+              </tr>
+              <tr>
+                <td>Integration Server queue depth growing</td>
+                <td>IS listener threads blocked on slow Sterling API; DB bottleneck</td>
+                <td>Monitor MQ queue depth (alert &gt;1000). Check IS listener thread count. Profile <code>createOrder</code> API latency.</td>
+              </tr>
+              <tr>
+                <td>Duplicate order processing</td>
+                <td>Task Q retry processed twice (non-idempotent handler); XA transaction not configured</td>
+                <td>Ensure IS uses XA transactions for order creation. Add idempotency key check in custom handler.</td>
+              </tr>
+              <tr>
+                <td>Inventory overcommit during peak</td>
+                <td>Availability Agent running too infrequently</td>
+                <td>Reduce FrequencyInMillis to 30s. Consider triggering availability refresh as Task Q agent on reserve events.</td>
+              </tr>
+              <tr>
+                <td>DB performance degrading over time</td>
+                <td>Purge agents not configured or not running</td>
+                <td>Check purge agent logs for last run. Monitor table row counts: YFS_TASK_Q, YFS_AUDIT, YFS_ORDER_HEADER.</td>
+              </tr>
+              <tr>
+                <td>Messages in DLQ</td>
+                <td>Malformed XML; Sterling API throwing exception; schema mismatch</td>
+                <td>Browse DLQ payload → parse error message → fix source system feed or XSL transform → replay.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Key Monitoring Metrics</h3>
+        <div class="two-col">
+          <div class="card">
+            <h4 style="color:var(--accent);font-size:14px;margin-bottom:10px;">Database Metrics</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li><code>YFS_TASK_Q</code> row count by STATUS — alert on FAILED &gt; 0</li>
+              <li><code>YFS_TASK_Q</code> INPROCESS age — alert on &gt;15 min</li>
+              <li>DB connection pool utilization — alert on &gt;80%</li>
+              <li>Top slow queries — index <code>YFS_TASK_Q.STATUS + NEXT_ATTEMPT_TIME</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="color:var(--accent2);font-size:14px;margin-bottom:10px;">Agent / MQ Metrics</h4>
+            <ul style="padding-left:18px;font-size:13px;color:#cdd9e5;">
+              <li>Agent thread pool utilization (JMX)</li>
+              <li>MQ queue depth per queue (alert &gt;100)</li>
+              <li>DLQ depth — alert on any non-zero</li>
+              <li>Agent processing rate (tasks/min)</li>
+              <li>IS message processing latency (p50/p99)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 10: Containerized Deployment -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Containerized Deployment — v10.x on Kubernetes</h2>
+      </div>
+      <div class="content">
+        <p>In Sterling v10.x, the monolithic agent JVM becomes the <code>om-agent</code> container, deployed on OpenShift/Kubernetes. This changes how you scale and operate agents significantly.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — v10.x Agent Deployment on Kubernetes</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    subgraph K8S["Kubernetes Cluster (OpenShift)"]
+        subgraph NS_OMS["Namespace: sterling-oms"]
+            subgraph DEP_AGENT["Deployment: om-agent"]
+                POD1["om-agent pod 1\nTask Q + Time Agents"]
+                POD2["om-agent pod 2\nTask Q + Time Agents"]
+                POD3["om-agent pod 3\nTask Q + Time Agents"]
+            end
+            subgraph DEP_IS["Deployment: om-integration-server"]
+                IS1["om-agent pod (IS mode)\nJMS Listeners only"]
+                IS2["om-agent pod (IS mode)\nJMS Listeners only"]
+            end
+            subgraph CRON["CronJobs: Housekeeping"]
+                CJ1["CronJob: purge-agent\nRuns 02:00 daily"]
+                CJ2["CronJob: monitor-agent\nRuns every 15min"]
+            end
+            subgraph DEP_APP["Deployment: om-app"]
+                APP1["om-app pod 1\nAPI Server"]
+                APP2["om-app pod 2\nAPI Server"]
+            end
+        end
+        HPA["HPA\nScales om-agent\nbased on YFS_TASK_Q depth"]
+    end
+    DB[("RDS / DB2\nOMS Database")]
+    MQ["IBM MQ\non VM / Container"]
+
+    POD1 & POD2 & POD3 --> DB
+    IS1 & IS2 --> MQ
+    IS1 & IS2 --> DB
+    APP1 & APP2 --> DB
+    HPA --> DEP_AGENT
+          </div>
+        </div>
+
+        <h3>Key Design Decisions for v10.x Agent Deployment</h3>
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Separate IS from Task Q agents into distinct Deployments</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>In v9.x, all agent types share one JVM. In v10.x we have the opportunity to separate concerns at the pod level.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Run Integration Server listeners in a dedicated <code>om-integration-server</code> Deployment. Run Task Q + time-triggered agents in <code>om-agent</code> Deployment. Run purge/housekeeping as Kubernetes CronJobs.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ IS can scale independently based on MQ queue depth. ✅ Purge jobs don't compete for threads with live order processing. ✅ Easier to tune resource requests/limits per workload type. ⚠️ More Helm chart complexity; need separate ConfigMaps per deployment.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>Single om-agent Deployment for all — rejected due to thread pool contention and inability to scale IS independently.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — HPA on custom metric: YFS_TASK_Q OPEN row count</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Default CPU-based HPA lags behind actual agent demand. Queue depth is a more direct signal.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Expose YFS_TASK_Q OPEN count as a custom metric via a Prometheus exporter (SQL query → Prometheus gauge). Configure HPA with <code>externalMetrics</code> pointing to this metric. Scale out when queue depth &gt; 200 rows.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ Proactive scaling — pods added before queue depth causes latency. ✅ Scales down during off-peak to save cost. ⚠️ Custom metric exporter adds operational complexity; needs its own monitoring.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>CPU-based HPA — lags 2–3 minutes behind actual load spikes, causing order processing latency during flash sales.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 11: Interview Cheat Sheet -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <h2>Interview Cheat Sheet — Director / Principal Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Key Concepts to Know Cold</h4>
+            <ul>
+              <li><code>YFS_TASK_Q</code> is the central queue table; STATUS flow is OPEN → INPROCESS → COMPLETED / FAILED</li>
+              <li>Task Q = event-driven; Time-Triggered = cron; IS = JMS bridge</li>
+              <li>All three share a JVM thread pool — contention is real and must be managed</li>
+              <li>Hung Task Recovery Agent is critical — without it, JVM crash = stuck orders</li>
+              <li>IS uses XA transactions for exactly-once order ingestion guarantees</li>
+              <li>v10.x: om-agent pod replaces the monolithic agent JVM</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔥 Common Interview Questions</h4>
+            <ul>
+              <li>"Why are orders stuck in Sterling?" → INPROCESS rows, thread pool exhaustion, downstream API failure</li>
+              <li>"How do you tune Sterling for peak load?" → Increase MaxThreads, reduce PollInterval, scale om-agent pods, use HPA on queue depth</li>
+              <li>"How does Sterling integrate with Kafka?" → IS → MQ → Kafka Connect MQ Source Connector bridge</li>
+              <li>"Explain Sterling's event model" → Event subscriptions → Task Q rows → agent polling → API invocation</li>
+              <li>"How do you modernize the agent tier?" → Separate IS, containerize, add Kafka bridge, externalize purge as CronJobs</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚡ "Wow" Moments (Depth Signals)</h4>
+            <ul>
+              <li>Mention <strong>FOR UPDATE SKIP LOCKED</strong> — explains how multiple agent pods process the same queue without double-processing</li>
+              <li>Explain <strong>AgentCriteriaGroup</strong> for multi-enterprise isolation — shows GCC multi-tenant awareness</li>
+              <li>Propose <strong>custom Prometheus metric on YFS_TASK_Q</strong> for HPA — shows cloud-native maturity</li>
+              <li>Distinguish <strong>LOCAL vs XA transactions</strong> in IS — shows you understand exactly-once guarantees</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🛡️ Failure Scenarios to Discuss</h4>
+            <ul>
+              <li><strong>DLQ overflow:</strong> IS message failures → DLQ fills → alert → triage by doc type → root cause in source feed</li>
+              <li><strong>Table bloat:</strong> Purge agents not running → YFS_TASK_Q / YFS_AUDIT grow → query slowdown → enable purge in maintenance window</li>
+              <li><strong>Peak sale order lag:</strong> Thread pool saturation → orders queuing → scale agent pods via HPA → validate DB connection pool can sustain increased concurrency</li>
+              <li><strong>Duplicate orders:</strong> IS retry on non-idempotent handler → add idempotency key check or switch to XA</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>📐 DB Sizing Rule of Thumb</h4>
+            <ul>
+              <li>DB connection pool = sum of all agent thread pools + 20% headroom</li>
+              <li>If MaxThreads = 10 per agent, 3 agents = min 30 connections needed</li>
+              <li>Each IS listener thread also needs a DB connection</li>
+              <li>Always test connection pool exhaustion scenario in load testing</li>
+              <li>Index: <code>YFS_TASK_Q (STATUS, NEXT_ATTEMPT_TIME, ORGANIZATION_CODE)</code></li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔄 Modernization Sequence</h4>
+            <ul>
+              <li><strong>Phase 1:</strong> Containerize agent as om-agent pod, no logic change</li>
+              <li><strong>Phase 2:</strong> Separate IS into dedicated deployment, add DLQ monitoring</li>
+              <li><strong>Phase 3:</strong> Add Kafka Connect MQ bridge for outbound events</li>
+              <li><strong>Phase 4:</strong> Move purge agents to Kubernetes CronJobs</li>
+              <li><strong>Phase 5:</strong> Add custom HPA on YFS_TASK_Q depth metric</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success" style="margin-top:24px;">
+          <div class="callout-title">💬 One-Line Summary for Any Interview</div>
+          <p style="margin:0;font-size:14px;">"Sterling OMS uses four agent types: <strong>Task Q agents</strong> that react to order events via a database queue table, <strong>time-triggered agents</strong> that run on a cron schedule for batch operations, the <strong>Integration Server</strong> that bridges JMS queues to Sterling APIs, and <strong>Non-Task Q agents</strong> that implement custom <code>getJobs()</code>/<code>executeJob()</code> logic via <code>YCPBaseAgent</code> for processing records outside the order domain. Understanding how these interact — and how to tune, monitor, and containerize them — is the foundation of operating Sterling at scale in a GCC context."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 12: Custom Framework Design -->
+    <section class="section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <h2>Custom Agent Framework — Architecture Design</h2>
+      </div>
+      <div class="content">
+
+        <div class="callout callout-info">
+          <div class="callout-title">Design Challenge</div>
+          If you were to rebuild Sterling's four agent types outside of Sterling — in a cloud-native, language-agnostic custom framework — what would the architecture look like? This is a <strong>principal-level system design question</strong>. The goal is to preserve the behavioral contracts of each agent type while gaining observability, horizontal scalability, and cloud-native operability that Sterling's legacy JVM model lacks.
+        </div>
+
+        <h3>Design Principles</h3>
+        <ul>
+          <li><strong>Behavioral parity:</strong> Each agent type must retain its core contract — event-driven, cron, message-bridge, or custom batch.</li>
+          <li><strong>Separation of concerns:</strong> Trigger, fetch, dispatch, and execute are distinct lifecycle stages — each independently scalable.</li>
+          <li><strong>Idempotency by default:</strong> Every agent must be safe to re-run on the same record without side effects.</li>
+          <li><strong>Observability first:</strong> Queue depth, processing latency, error rate, and retry counts are first-class metrics — not afterthoughts.</li>
+          <li><strong>Cloud-native deployment:</strong> Stateless workers, Kubernetes-native autoscaling, and configuration via environment variables / ConfigMaps.</li>
+        </ul>
+
+        <h3>High-Level Architecture</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — Custom Agent Framework: High-Level Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor':'#58a6ff'}}}%%
+flowchart TD
+    subgraph TRIGGERS["Trigger Layer"]
+        EV["Domain Events\n(order.created, payment.captured)\nKafka Topic"]
+        CRON["Cron Scheduler\n(Kubernetes CronJob\nor Temporal Scheduler)"]
+        MQ_IN["Inbound Message Queue\n(Kafka / RabbitMQ)\nExternal system feeds"]
+        API_TRIG["Manual Trigger API\nREST endpoint"]
+    end
+
+    subgraph DISPATCH["Dispatch Layer — per agent type"]
+        TQW["Task Q Worker\nKafka Consumer Group\nEvent → Work Item"]
+        TTWF["Time-Trigger Worker\nCronJob Pod\nDB scan → Work Items"]
+        ISW["Integration Server Worker\nKafka/MQ Consumer\nRoute → Service call"]
+        NTQW["Non-Task Q Worker\nScheduled Job Pod\ngetJobs() → Work Items"]
+    end
+
+    subgraph QUEUE["Work Queue (Durable)"]
+        WQ["Kafka Work Topic\nor Redis Streams\nor DB-backed Queue\nper agent type"]
+    end
+
+    subgraph EXEC["Execution Layer (Stateless Workers)"]
+        W1["Worker Pod 1"]
+        W2["Worker Pod 2"]
+        WN["Worker Pod N"]
+    end
+
+    subgraph INFRA["Infrastructure"]
+        DB[("Order DB\nPostgres / MySQL")]
+        CACHE["Redis\nIdempotency Keys\nDistributed Locks"]
+        OBS["Observability\nPrometheus + Grafana\nOpenTelemetry traces"]
+    end
+
+    EV --> TQW
+    CRON --> TTWF
+    MQ_IN --> ISW
+    API_TRIG --> NTQW
+    CRON --> NTQW
+
+    TQW & TTWF & ISW & NTQW --> WQ
+
+    WQ --> W1 & W2 & WN
+    W1 & W2 & WN --> DB
+    W1 & W2 & WN --> CACHE
+    W1 & W2 & WN --> OBS
+          </div>
+        </div>
+
+        <h3>Agent Type → Technology Mapping</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sterling Agent Type</th><th>Custom Framework Equivalent</th><th>Trigger Mechanism</th><th>Worker Model</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Task Q Agent</strong></td>
+                <td>Kafka Consumer Worker</td>
+                <td>Domain event on Kafka topic (e.g. <code>order.created</code>)</td>
+                <td>Consumer group — each partition processed by one worker; scale by adding partitions + consumers</td>
+              </tr>
+              <tr>
+                <td><strong>Time-Triggered Agent</strong></td>
+                <td>Kubernetes CronJob / Temporal Scheduled Workflow</td>
+                <td>Cron expression in K8s CronJob spec or Temporal schedule</td>
+                <td>Pod runs DB scan, fans out work items to queue, terminates</td>
+              </tr>
+              <tr>
+                <td><strong>Integration Server</strong></td>
+                <td>Kafka Connect + Router Service</td>
+                <td>Messages arrive on Kafka inbound topic (Kafka Connect MQ Source)</td>
+                <td>Stateless router pods consume, transform, call domain APIs</td>
+              </tr>
+              <tr>
+                <td><strong>Non-Task Q Agent</strong></td>
+                <td>Temporal Workflow (getJobs as Activity) + Worker Pool</td>
+                <td>Temporal Schedule or manual trigger via API</td>
+                <td>Temporal Activity = getJobs(); child workflows / parallel activities = executeJob()</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Component Design — Per Agent Type</h3>
+
+        <h4>① Task Q Agent → Kafka Consumer Worker</h4>
+        <p>The Sterling Task Q pattern maps cleanly to a <strong>Kafka consumer group</strong>. The event that previously wrote a row to <code>YFS_TASK_Q</code> instead publishes a domain event to a Kafka topic. Stateless worker pods consume from the topic, one message per order, with at-least-once delivery and idempotency enforced at the handler level.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8 — Task Q Equivalent: Kafka Consumer Worker</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+sequenceDiagram
+    participant API as Order API
+    participant KAFKA as Kafka Topic<br/>order.state.events
+    participant CG as Consumer Group<br/>(schedule-order-workers)
+    participant IDEM as Redis<br/>Idempotency Store
+    participant SVC as Domain Service<br/>(scheduleOrder)
+    participant DB as Order DB
+
+    API->>KAFKA: Publish {eventType: ORDER_CREATED, orderId, payload}
+    CG->>KAFKA: Poll — receive event (at-least-once)
+    CG->>IDEM: GET idempotency-key = hash(eventId)
+    alt Already processed
+        IDEM-->>CG: HIT → skip, commit offset
+    else Not seen
+        IDEM->>IDEM: SET key (TTL 24h)
+        CG->>SVC: scheduleOrder(orderId)
+        SVC->>DB: UPDATE order state
+        DB-->>SVC: OK
+        CG->>KAFKA: Commit offset
+    end
+    alt Failure (SVC throws)
+        CG->>KAFKA: Do NOT commit → retry from Kafka
+        Note over CG,KAFKA: After max retries → publish to DLT<br/>(Dead Letter Topic)
+    end
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Design Decision</th></tr></thead>
+            <tbody>
+              <tr><td>Message ordering</td><td>Partition by <code>orderId</code> — all events for one order go to the same partition, preserving sequence</td></tr>
+              <tr><td>Idempotency</td><td>Redis key = <code>hash(topic + partition + offset)</code> or <code>eventId</code> if present. TTL = 24h.</td></tr>
+              <tr><td>Retry strategy</td><td>Exponential backoff via retry topic (<code>order.events.retry-1</code>, <code>retry-2</code>); after N retries → DLT</td></tr>
+              <tr><td>Scaling</td><td>HPA on consumer lag metric (via Kafka Exporter → Prometheus → KEDA)</td></tr>
+              <tr><td>Priority</td><td>Separate Kafka topics per priority tier (<code>order.events.high</code>, <code>order.events.std</code>); dedicated consumer groups</td></tr>
+              <tr><td>Equivalent to Sterling</td><td><code>YFS_TASK_Q</code> rows ≈ Kafka consumer offsets; STATUS=INPROCESS ≈ uncommitted offset; STATUS=FAILED ≈ DLT message</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>② Time-Triggered Agent → Kubernetes CronJob + Temporal</h4>
+        <p>For simple batch jobs (purge, SLA monitor), a <strong>Kubernetes CronJob</strong> is sufficient. For complex multi-step batch workflows with retry, pagination state, and visibility, <strong>Temporal.io Scheduled Workflows</strong> are the production-grade choice.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 9 — Time-Triggered Equivalent: K8s CronJob Pattern</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    KUBE_CRON["K8s CronJob\nschedule: '*/5 * * * *'"]
+    POD["Batch Worker Pod\n(short-lived)"]
+    DB_SCAN["Scan DB\nSELECT records WHERE condition\nLIMIT batch_size\nORDER BY created_at ASC"]
+    WORK_Q["Kafka Work Topic\nor in-process queue"]
+    WORKERS["Worker Pool\n(parallel goroutines/threads)"]
+    DB_WRITE["Apply changes\n(purge / update / notify)"]
+    METRICS["Emit metrics\n(records_processed, errors, duration)"]
+    DONE{"More records?"}
+
+    KUBE_CRON -- "create pod" --> POD
+    POD --> DB_SCAN
+    DB_SCAN --> WORK_Q
+    WORK_Q --> WORKERS
+    WORKERS --> DB_WRITE
+    WORKERS --> DONE
+    DONE -- "yes → next page" --> DB_SCAN
+    DONE -- "no" --> METRICS
+    METRICS --> POD
+    POD -- "exit 0\npod terminates" --> KUBE_CRON
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Scenario</th><th>Use K8s CronJob</th><th>Use Temporal Scheduled Workflow</th></tr></thead>
+            <tbody>
+              <tr><td>Complexity</td><td>Single-step batch: purge, snapshot, sync</td><td>Multi-step: scan → transform → notify → reconcile</td></tr>
+              <tr><td>Pagination state</td><td>Stateless — restart from scratch each run</td><td>Stateful — Temporal persists cursor across activities</td></tr>
+              <tr><td>Retry granularity</td><td>Pod-level restart (all-or-nothing)</td><td>Activity-level retry — failed step retried without re-running prior steps</td></tr>
+              <tr><td>Visibility</td><td>Pod logs only</td><td>Temporal UI — workflow history, activity status, input/output per step</td></tr>
+              <tr><td>Overlap prevention</td><td>Set <code>concurrencyPolicy: Forbid</code> in CronJob spec</td><td>Temporal enforces single workflow instance via unique workflow ID</td></tr>
+              <tr><td>Equivalent to Sterling</td><td>Simple time-triggered agents (Purge, PrintDoc)</td><td>Complex agents (Availability Agent, Payment Collection with reconciliation)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>③ Integration Server → Kafka Connect + Router Service</h4>
+        <p>The Integration Server pattern decomposes into two concerns: <strong>protocol bridging</strong> (getting messages off MQ/HTTP/EDI into Kafka) handled by Kafka Connect, and <strong>routing + transformation</strong> handled by a lightweight stateless Router Service.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 10 — Integration Server Equivalent: Kafka Connect + Router</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart LR
+    subgraph SOURCES["External Sources"]
+        ERP["ERP (SAP)"]
+        WMS["WMS / 3PL"]
+        EDI["EDI Gateway"]
+    end
+
+    subgraph BRIDGE["Protocol Bridge (Kafka Connect)"]
+        MQ_SRC["MQ Source Connector\n(IBM MQ → Kafka)"]
+        HTTP_SRC["HTTP Source Connector\nor Webhook Receiver"]
+    end
+
+    subgraph KAFKA_IN["Kafka — Inbound Topics"]
+        T_INV["inbound.inventory.updates"]
+        T_SHIP["inbound.shipment.confirmations"]
+        T_ORD["inbound.orders.b2b"]
+    end
+
+    subgraph ROUTER["Router Service (Stateless Pods)"]
+        CONSUME["Consume from topic"]
+        VALIDATE["Schema Validation\n(Avro / JSON Schema)"]
+        TRANSFORM["Transform\n(Jolt / custom mapper)"]
+        DISPATCH["Call Domain Service\nor publish to command topic"]
+        DLT_H["DLT Handler\nAlert + store for replay"]
+    end
+
+    subgraph DOMAIN["Domain Services"]
+        INV_SVC["Inventory Service"]
+        ORDER_SVC["Order Service"]
+        FULFILL_SVC["Fulfillment Service"]
+    end
+
+    subgraph OUTBOUND["Kafka — Outbound Topics"]
+        T_OUT["outbound.order.events\noutbound.invoice\noutbound.notifications"]
+    end
+
+    ERP & WMS --> MQ_SRC
+    EDI & WMS --> HTTP_SRC
+    MQ_SRC --> T_INV & T_SHIP
+    HTTP_SRC --> T_ORD
+    T_INV & T_SHIP & T_ORD --> CONSUME
+    CONSUME --> VALIDATE --> TRANSFORM --> DISPATCH
+    VALIDATE -- "invalid" --> DLT_H
+    DISPATCH --> INV_SVC & ORDER_SVC & FULFILL_SVC
+    INV_SVC & ORDER_SVC & FULFILL_SVC --> T_OUT
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sterling IS Component</th><th>Custom Framework Equivalent</th><th>Benefit</th></tr></thead>
+            <tbody>
+              <tr><td>JMS Listener</td><td>Kafka Connect MQ Source Connector</td><td>Managed, scalable, schema-registry aware; no custom listener code</td></tr>
+              <tr><td>XSL Transform</td><td>Jolt transform / custom mapper function</td><td>Testable, version-controlled, schema-validated</td></tr>
+              <tr><td>callMultiApi()</td><td>HTTP call to domain service or command topic publish</td><td>Decoupled; domain service owns its own transaction boundary</td></tr>
+              <tr><td>Dead Letter Queue</td><td>Kafka Dead Letter Topic (DLT) + alerting</td><td>Replayable; consumer group can re-process DLT after fix</td></tr>
+              <tr><td>Outbound event publish</td><td>Domain service publishes to Kafka outbound topic</td><td>Fan-out consumers; no point-to-point MQ wiring needed</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>④ Non-Task Q Agent → Temporal Workflow</h4>
+        <p>The Non-Task Q agent's <code>getJobs()</code> / <code>executeJob()</code> contract maps almost 1:1 to a <strong>Temporal Workflow with Activities</strong>. <code>getJobs()</code> becomes a paginated Activity that fetches a batch and returns work items. Each <code>executeJob()</code> becomes a child Activity executed in parallel across a worker pool, with Temporal providing durability, retry, and visibility for free.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 11 — Non-Task Q Equivalent: Temporal Workflow</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128'}}}%%
+flowchart TD
+    subgraph TEMPORAL["Temporal.io"]
+        SCHED["Temporal Schedule\n(cron expression\nor manual signal)"]
+        WF["Workflow: BatchPurgeWorkflow\n(orchestrator — durable)"]
+
+        subgraph ACTIVITIES["Activities (retryable, distributed)"]
+            GJ_ACT["getJobsActivity(criteria, cursor)\n→ List of WorkItems + nextCursor\nSingle execution per batch"]
+            EJ_ACT["executeJobActivity(workItem)\n→ process one record\nFan-out: N parallel executions"]
+        end
+
+        LOOP{"More pages?"}
+    end
+
+    DB[("Database\nCustom Table")]
+    WORKERS["Temporal Worker Pool\n(K8s Deployment)"]
+
+    SCHED --> WF
+    WF --> GJ_ACT
+    GJ_ACT --> DB
+    DB --"List&lt;WorkItem&gt; + cursor"--> GJ_ACT
+    GJ_ACT --> EJ_ACT
+    EJ_ACT --> WORKERS
+    WORKERS --> DB
+    EJ_ACT --> LOOP
+    LOOP -- "yes → next page" --> GJ_ACT
+    LOOP -- "no → done" --> WF
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sterling Non-Task Q Concept</th><th>Temporal Equivalent</th><th>Advantage</th></tr></thead>
+            <tbody>
+              <tr><td><code>getJobs()</code></td><td>Temporal Activity: <code>GetJobsActivity</code></td><td>Retryable; persisted input/output; visible in Temporal UI</td></tr>
+              <tr><td><code>executeJob(Document)</code></td><td>Temporal Activity: <code>ExecuteJobActivity</code> (parallel)</td><td>Per-record retry without re-running getJobs; timeout configurable per record</td></tr>
+              <tr><td>JMS cursor (lastMessageCreated)</td><td>Workflow state: <code>nextCursor</code> in workflow event history</td><td>Survives worker pod restarts; no JMS queue to manage</td></tr>
+              <tr><td>YFS_OBJECT_LOCK (single getJobs)</td><td>Temporal workflow deduplication: unique workflow ID per schedule</td><td>Framework-level guarantee; no custom locking code</td></tr>
+              <tr><td>NumRecordsToBuffer</td><td>Activity input: <code>batchSize</code> parameter</td><td>Tunable per workflow invocation; visible in Temporal UI</td></tr>
+              <tr><td>Multi-JVM scale-out</td><td>Multiple Temporal worker pods all pulling from same task queue</td><td>Stateless pods; scale with HPA on Temporal worker queue depth</td></tr>
+              <tr><td>triggeragent.sh</td><td>Temporal CLI: <code>temporal workflow start --workflow-type BatchPurgeWorkflow</code></td><td>Observable, auditable, re-triggerable from UI or API</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 13: Custom Framework Implementation -->
+    <section class="section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <h2>Custom Framework — Implementation Patterns</h2>
+      </div>
+      <div class="content">
+
+        <h3>① Task Q Worker — Kafka + KEDA Autoscaling</h3>
+        <pre><code>// TypeScript / Node.js — Kafka Consumer Worker (Task Q equivalent)
+import { Kafka, EachMessagePayload } from 'kafkajs';
+import Redis from 'ioredis';
+
+const kafka = new Kafka({ brokers: ['kafka:9092'] });
+const consumer = kafka.consumer({ groupId: 'schedule-order-workers' });
+const redis = new Redis({ host: 'redis' });
+
+await consumer.connect();
+await consumer.subscribe({ topic: 'order.state.events', fromBeginning: false });
+
+await consumer.run({
+  partitionsConsumedConcurrently: 3,   // matches thread count concept
+  eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+    const event = JSON.parse(message.value!.toString());
+
+    // Idempotency check (equivalent to INPROCESS guard in YFS_TASK_Q)
+    const idempKey = `processed:${topic}:${partition}:${message.offset}`;
+    const alreadyDone = await redis.set(idempKey, '1', 'EX', 86400, 'NX');
+    if (!alreadyDone) return;  // duplicate — skip, offset will be committed
+
+    try {
+      await scheduleOrder(event.orderId, event.payload);
+      // Offset committed automatically on next poll — equivalent to STATUS=COMPLETED
+    } catch (err) {
+      await redis.del(idempKey);  // release so retry can re-acquire
+      throw err;  // triggers KafkaJS retry → eventually DLT
+    }
+  }
+});
+
+// KEDA ScaledObject — autoscale on consumer lag
+// apiVersion: keda.sh/v1alpha1
+// kind: ScaledObject
+// spec:
+//   triggers:
+//   - type: kafka
+//     metadata:
+//       topic: order.state.events
+//       consumerGroup: schedule-order-workers
+//       lagThreshold: "50"    # scale out when lag > 50 messages per partition
+//       activationLagThreshold: "5"</code></pre>
+
+        <h3>② Time-Triggered Agent — Kubernetes CronJob</h3>
+        <pre><code># K8s CronJob (Time-Triggered Agent equivalent)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: order-purge-agent
+  namespace: oms
+spec:
+  schedule: "0 2 * * *"          # 2 AM daily — off-peak like Sterling purge agents
+  concurrencyPolicy: Forbid       # equivalent to Sterling's single-instance guard
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: purge-worker
+            image: oms-agents:latest
+            command: ["node", "agents/purge.js"]
+            env:
+            - name: RETENTION_DAYS
+              value: "90"
+            - name: BATCH_SIZE
+              value: "500"          # equivalent to MaxRecordsToBuffer
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: oms-db-secret
+                  key: url
+            resources:
+              requests: { cpu: "500m", memory: "512Mi" }
+              limits:   { cpu: "2",    memory: "2Gi" }</code></pre>
+
+        <pre><code>// Purge agent implementation (Time-Triggered Agent equivalent)
+async function runPurgeAgent() {
+  const retentionCutoff = subDays(new Date(), parseInt(process.env.RETENTION_DAYS!));
+  const batchSize = parseInt(process.env.BATCH_SIZE!);
+  let cursor: string | null = null;
+  let totalProcessed = 0;
+
+  do {
+    // Equivalent to getJobs() — fetch a page of records
+    const records = await db.query(
+      `SELECT id, order_key FROM order_archive
+       WHERE created_at < $1 AND ($2::text IS NULL OR id > $2)
+       ORDER BY id ASC LIMIT $3`,
+      [retentionCutoff, cursor, batchSize]
+    );
+
+    if (records.length === 0) break;
+
+    // Parallel executeJob equivalent
+    await Promise.allSettled(
+      records.map(r => deleteOrderRecord(r.id).catch(e => {
+        logger.error({ id: r.id, err: e.message }, 'purge record failed');
+        metrics.increment('purge.record.error');
+      }))
+    );
+
+    cursor = records[records.length - 1].id;
+    totalProcessed += records.length;
+    metrics.gauge('purge.records_processed', totalProcessed);
+  } while (true);
+
+  logger.info({ totalProcessed }, 'purge cycle complete');
+}</code></pre>
+
+        <h3>③ Integration Server — Kafka Connect + Router Service</h3>
+        <pre><code>// Router Service — stateless pod consuming from Kafka inbound topics
+// Equivalent to Sterling Integration Server message routing
+
+import { Kafka } from 'kafkajs';
+import Ajv from 'ajv';
+import { inventorySchema, shipmentSchema } from './schemas';
+
+const TOPIC_ROUTING: Record&lt;string, { schema: object; handler: Function }&gt; = {
+  'inbound.inventory.updates':        { schema: inventorySchema,  handler: manageInventory },
+  'inbound.shipment.confirmations':   { schema: shipmentSchema,   handler: confirmShipment },
+};
+
+await consumer.run({
+  eachMessage: async ({ topic, message }) => {
+    const routing = TOPIC_ROUTING[topic];
+    if (!routing) { logger.warn({ topic }, 'No routing config'); return; }
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(message.value!.toString());
+    } catch {
+      await publishToDLT(topic, message, 'PARSE_ERROR');  // equivalent to Sterling DLQ
+      return;
+    }
+
+    // Schema validation (equivalent to XSL validation in Sterling IS)
+    const ajv = new Ajv();
+    if (!ajv.validate(routing.schema, payload)) {
+      await publishToDLT(topic, message, `SCHEMA_INVALID: ${ajv.errorsText()}`);
+      return;
+    }
+
+    // Dispatch to domain service (equivalent to callMultiApi in Sterling IS)
+    try {
+      await routing.handler(payload);
+    } catch (err: any) {
+      // Retry handled by Kafka consumer retry topics
+      throw err;
+    }
+  }
+});</code></pre>
+
+        <h3>④ Non-Task Q Agent — Temporal Workflow</h3>
+        <pre><code>// Temporal Workflow — Non-Task Q Agent equivalent
+// workflow.ts
+import { proxyActivities, sleep, condition } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { getJobsActivity, executeJobActivity } = proxyActivities&lt;typeof activities&gt;({
+  startToCloseTimeout: '10 minutes',
+  retry: { maximumAttempts: 3, initialInterval: '5s', backoffCoefficient: 2 }
+});
+
+export interface BatchWorkflowInput {
+  criteria: Record&lt;string, unknown&gt;;
+  batchSize: number;
+}
+
+// Equivalent to the full getJobs → executeJob cycle
+export async function batchPurgeWorkflow(input: BatchWorkflowInput): Promise&lt;void&gt; {
+  let cursor: string | null = null;
+  let totalProcessed = 0;
+
+  do {
+    // SINGLE execution per page — equivalent to single-threaded getJobs()
+    const { workItems, nextCursor } = await getJobsActivity({
+      criteria: input.criteria,
+      cursor,
+      batchSize: input.batchSize
+    });
+
+    if (workItems.length === 0) break;
+
+    // PARALLEL execution — equivalent to multi-threaded executeJob()
+    // Temporal executes these as concurrent activities on the worker pool
+    await Promise.all(
+      workItems.map(item => executeJobActivity(item))
+    );
+
+    cursor = nextCursor;
+    totalProcessed += workItems.length;
+  } while (cursor !== null);
+}
+
+// activities.ts
+export async function getJobsActivity(params: {
+  criteria: Record&lt;string, unknown&gt;;
+  cursor: string | null;
+  batchSize: number;
+}): Promise&lt;{ workItems: WorkItem[]; nextCursor: string | null }&gt; {
+  // Equivalent to getJobs() — query DB, return page of work items
+  const rows = await db.query(
+    `SELECT * FROM custom_table WHERE ... AND ($1::text IS NULL OR id &gt; $1)
+     ORDER BY id ASC LIMIT $2`,
+    [params.cursor, params.batchSize]
+  );
+  return {
+    workItems: rows.map(toWorkItem),
+    nextCursor: rows.length === params.batchSize ? rows.at(-1)!.id : null
+  };
+}
+
+export async function executeJobActivity(item: WorkItem): Promise&lt;void&gt; {
+  // Equivalent to executeJob(Document) — process one record
+  await deleteRecord(item.id);
+}</code></pre>
+
+        <h3>Idempotency Strategy — Across All Four Agent Types</h3>
+        <p>Every custom agent worker must be idempotent. Sterling handled this partially via <code>YFS_TASK_Q</code> STATUS locking; in a custom framework, you need an explicit strategy per agent type:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Agent Type</th><th>Idempotency Mechanism</th><th>Key Construction</th></tr></thead>
+            <tbody>
+              <tr><td>Task Q Worker</td><td>Redis SET NX with TTL on event offset</td><td><code>processed:{topic}:{partition}:{offset}</code></td></tr>
+              <tr><td>Time-Triggered</td><td>Idempotent SQL (DELETE WHERE + IF EXISTS); K8s <code>concurrencyPolicy: Forbid</code></td><td>Primary key of record being deleted/updated</td></tr>
+              <tr><td>Integration Server</td><td>Deduplication on message correlation ID; schema registry prevents format drift</td><td><code>dedup:{correlationId}</code> in Redis</td></tr>
+              <tr><td>Non-Task Q (Temporal)</td><td>Temporal workflow ID deduplication + activity idempotency token</td><td><code>workflow-id: purge-{date}</code>; activity token = workItem ID</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Observability Stack — Unified Across All Agent Types</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Signal</th><th>Tool</th><th>Key Metrics</th></tr></thead>
+            <tbody>
+              <tr><td>Metrics</td><td>Prometheus + Grafana</td><td>consumer_lag, records_processed/min, error_rate, processing_latency_p99, dlt_message_count</td></tr>
+              <tr><td>Tracing</td><td>OpenTelemetry → Jaeger / Tempo</td><td>Trace per record from event publish → domain service call; identify slow activities</td></tr>
+              <tr><td>Logs</td><td>Structured JSON → ELK / Loki</td><td>orderId, workflowId, batchId, cursorValue, durationMs in every log line</td></tr>
+              <tr><td>Workflow visibility</td><td>Temporal UI</td><td>Workflow history, activity retries, input/output per step — equivalent to querying YFS_TASK_Q</td></tr>
+              <tr><td>Alerting</td><td>Alertmanager → PagerDuty</td><td>Alert: DLT depth &gt; 0, consumer lag &gt; 500, CronJob failed last 2 runs, Temporal workflow failed</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 14: Custom Framework ADRs -->
+    <section class="section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <h2>Custom Framework — Architecture Decision Records</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-CF-001 — Kafka over Database-backed Queue for Task Q Equivalent</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling uses <code>YFS_TASK_Q</code> (a DB table) as its work queue. In a custom framework, we must choose between replicating this pattern (a DB-backed outbox/queue table) or using a dedicated message broker.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Kafka as the work queue for Task Q equivalent agents. Domain services publish events to Kafka topics instead of inserting into a queue table. Consumer group workers process events with consumer offset as the state tracking mechanism.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ Replay capability — reprocess any historical event window without special tooling. ✅ Fan-out — multiple consumer groups can react to the same event independently. ✅ Scales to millions of events/sec. ✅ Consumer lag is a first-class, scrapable metric for autoscaling. ⚠️ Higher operational complexity than a DB table — Kafka cluster requires dedicated ops. ⚠️ Ordering guarantee only within a partition — must partition by orderId carefully.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>DB outbox table (Transactional Outbox pattern):</strong> Simpler operationally and provides exactly-once with the source DB transaction, but does not scale beyond ~10K events/sec and lacks replay/fan-out. Good choice for low-volume deployments or when Kafka is unavailable. <strong>Redis Streams:</strong> Good for simpler fan-out and lower latency than Kafka, but limited retention and weaker durability guarantees for mission-critical order events.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-CF-002 — Temporal.io for Non-Task Q and Complex Time-Triggered Agents</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Non-Task Q agents have complex multi-step execution: fetch batch → parallel process → fetch next batch → repeat. The Sterling implementation uses JMS + YFS_OBJECT_LOCK to manage state. In a custom framework, managing this state reliably across restarts is non-trivial.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Temporal.io for Non-Task Q agents and any time-triggered agent with multi-step logic. Temporal's durable execution model makes <code>getJobsActivity</code> + <code>executeJobActivity</code> resumable across worker pod restarts with zero custom state management code. Use K8s CronJobs only for simple single-step batch jobs.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ Workflow history survives pod restarts — no equivalent to the "stuck INPROCESS" problem in Sterling. ✅ Per-activity retry without re-running prior steps. ✅ Temporal UI provides Sterling-equivalent visibility into batch job state. ✅ Workflow deduplication replaces YFS_OBJECT_LOCK. ⚠️ Temporal cluster adds operational overhead — requires Temporal Server (or Temporal Cloud). ⚠️ Learning curve for team unfamiliar with Temporal's programming model.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Custom state machine in Redis:</strong> Achievable but requires significant custom code for pagination cursor, retry logic, and distributed locking — essentially rebuilding what Temporal provides. <strong>Apache Airflow:</strong> Good for data pipelines but Python-centric and not designed for high-frequency, low-latency operational workflows. <strong>K8s CronJob alone:</strong> Insufficient for multi-step stateful workflows — job restart loses cursor position.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-CF-003 — KEDA for Event-Driven Autoscaling of Consumer Workers</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling scales agents by increasing MaxThreads and adding JVM instances — a manual, reactive process. In a Kubernetes-native framework, we want agents to scale automatically and proactively based on actual queue depth, not CPU/memory lag indicators.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use KEDA (Kubernetes Event-Driven Autoscaling) with Kafka trigger for Task Q workers and Integration Server workers. KEDA natively scrapes Kafka consumer group lag and scales pod count to maintain a target lag-per-replica ratio. For Temporal workers, use KEDA's Temporal scaler targeting task queue depth.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ Scale-to-zero during off-peak — cost savings vs always-on Sterling JVMs. ✅ Proactive scale-out before lag causes latency — reacts within 30s vs Sterling's manual tuning. ✅ Declarative config in K8s YAML — version-controlled, reviewable. ⚠️ KEDA must be installed as a cluster add-on. ⚠️ Scale-down must be tuned carefully — aggressive scale-down with in-flight Kafka messages can cause rebalance latency.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>CPU-based HPA:</strong> Lags 2–3 minutes behind actual queue depth growth — unacceptable for order processing SLA during flash sales. <strong>Custom metric HPA (Prometheus adapter):</strong> Viable but requires more configuration than KEDA's native Kafka scaler. KEDA is the de-facto standard for this use case.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-CF-004 — Redis for Distributed Idempotency Keys Across All Agent Types</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>At-least-once delivery (Kafka, Temporal activities) means the same work item can be processed more than once. Sterling's YFS_TASK_Q STATUS column provided a basic idempotency guard. A custom framework needs an equivalent that works across stateless pods and multiple agent types.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Redis SET NX with TTL as the shared idempotency store for Task Q workers and Integration Server workers. Key = deterministic hash of event identity (topic:partition:offset or correlationId). TTL = 24h. For Temporal, rely on built-in workflow/activity deduplication — no Redis needed.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ Sub-millisecond idempotency check — no DB round trip. ✅ TTL-based auto-expiry — no housekeeping needed. ✅ Works across pods — Redis is shared infrastructure. ⚠️ Redis failure = idempotency checks skipped — mitigate with Redis Sentinel or Cluster. ⚠️ Key eviction under memory pressure could allow re-processing — set <code>maxmemory-policy: noeviction</code> for the idempotency key namespace.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>DB-backed idempotency table:</strong> Correct but adds DB write on every message — at high throughput this becomes a bottleneck. Acceptable for &lt;1K messages/sec. <strong>In-process deduplication (Bloom filter):</strong> Does not survive pod restart and does not work across multiple pods.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-CF-005 — Kafka Connect for External System Integration (replacing Sterling IS bridge)</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling's Integration Server is tightly coupled to JMS/MQ and requires custom Java handlers for every message type. In a modern integration layer, we want managed connectors, schema validation, and no custom Java per integration point.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use Kafka Connect with managed connectors (IBM MQ Source, HTTP Source, CDC Source via Debezium) for protocol bridging. Use Confluent Schema Registry + Avro for schema evolution governance. Custom Router Service pods handle routing and transformation — thin, stateless, independently deployable per integration domain.</p></div>
+            <div class="adr-field"><label>Consequences</label><p>✅ New external system integration = new Kafka Connect connector config — no code change to router. ✅ Schema Registry prevents breaking changes from source systems silently corrupting data. ✅ Router Service is independently deployable — update transform logic without touching connectors. ⚠️ Kafka Connect cluster adds operational overhead. ⚠️ Connector availability depends on Confluent Hub / community — bespoke legacy protocols may need custom connectors.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Apache Camel:</strong> Feature-rich integration framework but heavyweight; adds significant code surface area. Good choice if team already has Camel expertise. <strong>MuleSoft / Boomi:</strong> Managed iPaaS — reduces ops burden but high licensing cost and vendor lock-in; unsuitable for GCC cost center model.</p></div>
+          </div>
+        </div>
+
+        <div class="callout callout-success" style="margin-top:24px;">
+          <div class="callout-title">📐 Custom Framework — Technology Summary</div>
+          <div class="table-wrap" style="margin:8px 0 0;">
+            <table>
+              <thead><tr><th>Sterling Agent Type</th><th>Custom Framework Stack</th><th>Scaling Mechanism</th></tr></thead>
+              <tbody>
+                <tr><td>Task Q Agent</td><td>Kafka Consumer Group + Redis idempotency</td><td>KEDA on consumer lag</td></tr>
+                <tr><td>Time-Triggered Agent</td><td>K8s CronJob (simple) / Temporal Schedule (complex)</td><td>CronJob: fixed pod; Temporal: worker HPA</td></tr>
+                <tr><td>Integration Server</td><td>Kafka Connect + Schema Registry + Router Service</td><td>KEDA on inbound topic lag</td></tr>
+                <tr><td>Non-Task Q Agent</td><td>Temporal Workflow (getJobsActivity + executeJobActivity)</td><td>KEDA Temporal scaler on task queue depth</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function scrollToSec(id, event) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
