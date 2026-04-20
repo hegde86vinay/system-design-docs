@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anti-Corruption Layer — Sterling OMS Modernization Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-hover:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --tag-bg:    #1f6feb33;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; min-width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-logo { padding: 0 20px 16px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .sidebar-logo .logo-tag { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+    .sidebar-logo .logo-title { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 4px; line-height: 1.4; }
+    .sidebar-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); padding: 16px 20px 4px; }
+    .nav-item { display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none; font-size: 12.5px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer; }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 30px; font-weight: 600; line-height: 1.3; margin-bottom: 10px; }
+    .doc-header h1 span { color: var(--accent); }
+    .doc-header p { color: var(--text-muted); font-size: 15px; }
+    .meta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #23863633; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 60px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .card h3 { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 10px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 11px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    td.warn { color: var(--warn); }
+    td.danger { color: var(--danger); }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; gap: 12px; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; flex: 1; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; flex-shrink: 0; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 14px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; color: #cdd9e5; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 13px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .content p  { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .component-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; }
+    .component-box .comp-title { font-weight: 600; font-size: 14px; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .component-box .comp-role { font-size: 13px; color: #cdd9e5; }
+    .pill { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+    .pill-blue { background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb44; }
+    .pill-green { background: #23863622; color: var(--accent2); border: 1px solid #2ea04344; }
+    .pill-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .pill-red { background: #da363322; color: var(--danger); border: 1px solid #da363344; }
+    .step-list { counter-reset: steps; list-style: none; padding: 0; }
+    .step-list li { counter-increment: steps; display: flex; gap: 14px; margin-bottom: 18px; }
+    .step-list li::before { content: counter(steps); font-family: var(--mono); font-size: 12px; font-weight: 600; background: var(--accent); color: #0d1117; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .step-content { flex: 1; }
+    .step-content strong { color: var(--text); font-size: 14px; }
+    .step-content p { color: #cdd9e5; font-size: 13.5px; margin-top: 4px; }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid, .two-col, .three-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-tag">Design Pattern</div>
+      <div class="logo-title">Anti-Corruption Layer<br>Sterling OMS Modernization</div>
+    </div>
+    <div class="sidebar-section">Sections</div>
+    <a class="nav-item active" onclick="scrollToSection('s1')"><span class="num">01</span>Pattern Overview</a>
+    <a class="nav-item" onclick="scrollToSection('s2')"><span class="num">02</span>Why ACL for OMS</a>
+    <a class="nav-item" onclick="scrollToSection('s3')"><span class="num">03</span>Sterling OMS Domain Model</a>
+    <a class="nav-item" onclick="scrollToSection('s4')"><span class="num">04</span>ACL Architecture</a>
+    <a class="nav-item" onclick="scrollToSection('s5')"><span class="num">05</span>ACL Internal Structure</a>
+    <a class="nav-item" onclick="scrollToSection('s6')"><span class="num">06</span>Key Translation Scenarios</a>
+    <a class="nav-item" onclick="scrollToSection('s6b')"><span class="num">06b</span>GraphQL ACL Pattern</a>
+    <a class="nav-item" onclick="scrollToSection('s7')"><span class="num">07</span>Implementation Guide</a>
+    <a class="nav-item" onclick="scrollToSection('s8')"><span class="num">08</span>Migration Phases</a>
+    <a class="nav-item" onclick="scrollToSection('s9')"><span class="num">09</span>ACL Lifecycle & Removal</a>
+    <a class="nav-item" onclick="scrollToSection('s10')"><span class="num">10</span>ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="scrollToSection('s11')"><span class="num">11</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>Anti-Corruption Layer <span>— Sterling OMS Modernization</span></h1>
+      <p>Enterprise Architect's practitioner guide: isolating legacy Sterling semantics while migrating to cloud-native microservices</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">DDD Pattern</span>
+        <span class="badge badge-blue">IBM Sterling OMS</span>
+        <span class="badge badge-green">Retail / Ecommerce GCC</span>
+        <span class="badge badge-yellow">Strangler Fig + ACL</span>
+        <span class="badge badge-red">Domain Model Isolation</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">
+          Generated: <span id="gen-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- S1: Pattern Overview -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>Pattern Overview — What is the Anti-Corruption Layer?</h2>
+      </div>
+      <div class="content">
+        <p>The <strong>Anti-Corruption Layer (ACL)</strong> is a Domain-Driven Design (DDD) pattern introduced by Eric Evans in "Domain-Driven Design: Tackling Complexity in the Heart of Software." It is a <strong>translation and isolation boundary</strong> placed between two systems with fundamentally different domain models, vocabulary, and semantics — preventing one system's concepts from "corrupting" the design of the other.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Core Definition</div>
+          The ACL acts as a <strong>bidirectional translator</strong> — it speaks the language of the legacy system on one side, and the language of your new clean domain model on the other. It is not a proxy, not a facade, and not just an API gateway. It is a <em>semantic translation boundary</em>.
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h3>What ACL IS</h3>
+            <ul>
+              <li>A semantic translator between domain models</li>
+              <li>An isolation shield for your new bounded context</li>
+              <li>A protocol/format converter (XML ↔ JSON, SOAP ↔ REST)</li>
+              <li>A data model transformer (Sterling XML schema → canonical domain objects)</li>
+              <li>A contract adapter that decouples your release cycle from legacy</li>
+              <li>A fault-isolation boundary (legacy failures don't cascade)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>What ACL is NOT</h3>
+            <ul>
+              <li>Not an API Gateway (no routing/auth concern)</li>
+              <li>Not a Facade (Facade wraps, ACL translates)</li>
+              <li>Not just a data mapper / DTO converter</li>
+              <li>Not a permanent architecture component (it should be eliminated as legacy is decommissioned)</li>
+              <li>Not a "fix" for bad legacy design — it is protection from it</li>
+              <li>Not a place for business logic</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>The DDD Context Map Position</h3>
+        <p>In DDD Context Map terms, ACL represents a relationship between a <strong>Downstream (your new microservice)</strong> and an <strong>Upstream (Sterling OMS legacy)</strong> where the downstream team cannot influence the upstream model. The ACL is the downstream's protection mechanism.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — ACL Position in DDD Context Map</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart LR
+    subgraph upstream["UPSTREAM — IBM Sterling OMS (Legacy)"]
+        S1["YantraCommerceOrder\nXML Schema"]
+        S2["OrderLineKey\nExtnOrderLine\nLineQty"]
+        S3["DocumentType=0001\nEnterpriseCode\nSellerOrganizationCode"]
+    end
+
+    subgraph acl["ANTI-CORRUPTION LAYER"]
+        direction TB
+        T1["Translator\n(Model Map)"]
+        T2["Adapter\n(Protocol)"]
+        T3["Facade\n(Stability Shim)"]
+        T1 <--> T2 <--> T3
+    end
+
+    subgraph downstream["DOWNSTREAM — New Order Microservice (Clean Domain)"]
+        N1["Order\n{orderId, customerId}"]
+        N2["OrderLine\n{lineId, sku, quantity}"]
+        N3["OrderStatus\nenumeration"]
+    end
+
+    upstream -->|"Sterling XML\nSOAP API calls\nAgent events"| acl
+    acl -->|"Clean domain events\nREST/gRPC contracts\nCanonical domain objects"| downstream
+
+    style upstream fill:#1c0a0022,stroke:#f85149,color:#e6edf3
+    style acl fill:#1f6feb22,stroke:#58a6ff,color:#e6edf3
+    style downstream fill:#23863622,stroke:#3fb950,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>The Three Core Responsibilities</h3>
+        <div class="three-col">
+          <div class="component-box">
+            <div class="comp-title"><span class="pill pill-blue">TRANSLATE</span></div>
+            <div class="comp-role">Convert Sterling's domain model (YantraCommerceOrder, DocumentType, EnterpriseCode) into your canonical domain model (Order, OrderStatus, Tenant). Map field-by-field with semantic alignment, not just renaming.</div>
+          </div>
+          <div class="component-box">
+            <div class="comp-title"><span class="pill pill-green">ISOLATE</span></div>
+            <div class="comp-role">Ensure your new microservices never import Sterling's Java classes, XML schemas, or domain vocabulary directly. All coupling is confined inside the ACL module. New services speak only your domain language.</div>
+          </div>
+          <div class="component-box">
+            <div class="comp-title"><span class="pill pill-yellow">STABILIZE</span></div>
+            <div class="comp-role">Present a stable interface to downstream consumers even when Sterling changes (version upgrades, schema changes, agent behavior changes). The ACL absorbs upstream volatility so new services don't need to change.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S2: Why ACL for Sterling -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Why ACL is Critical for IBM Sterling OMS Modernization</h2>
+      </div>
+      <div class="content">
+        <p>IBM Sterling OMS carries 20+ years of enterprise retail domain model evolution baked into its XML schema, Java APIs, and database design. Integrating directly with Sterling from new microservices without an ACL is one of the most common and costly architectural mistakes in retail modernization programs.</p>
+
+        <h3>Sterling's "Corrupting" Characteristics</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sterling Artifact</th>
+                <th>Problem for New Microservices</th>
+                <th>ACL Mitigation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>YantraCommerceOrder</code> XML</td>
+                <td>Monolithic 500+ field XML document — you pull the whole payload for one field</td>
+                <td>ACL extracts only needed fields into a lean canonical <code>Order</code> object</td>
+              </tr>
+              <tr>
+                <td><code>DocumentType=0001</code> / <code>0003</code></td>
+                <td>Magic strings as type identifiers — meaningless in your domain</td>
+                <td>ACL maps to typed enums: <code>OrderType.SALES_ORDER</code>, <code>PURCHASE_ORDER</code></td>
+              </tr>
+              <tr>
+                <td><code>EnterpriseCode</code> + <code>SellerOrganizationCode</code></td>
+                <td>Dual-key organization model that conflicts with modern tenant/org models</td>
+                <td>ACL normalizes to <code>tenantId</code> per your data model</td>
+              </tr>
+              <tr>
+                <td>SOAP/HTTP Agent APIs + <code>invokeService()</code></td>
+                <td>RPC-style coupled calls; no events; tight latency coupling</td>
+                <td>ACL wraps in async adapters; emits domain events over Kafka</td>
+              </tr>
+              <tr>
+                <td><code>OrderLineKey</code> as surrogate PK</td>
+                <td>Internal Sterling UUID — meaningless externally, not portable</td>
+                <td>ACL generates your own <code>lineId</code>; maintains Sterling key in private mapping table</td>
+              </tr>
+              <tr>
+                <td><code>ExtnOrderLine.*</code> extension columns</td>
+                <td>Schema extensions with unbounded attribute names — no type safety</td>
+                <td>ACL maps to first-class typed fields in canonical schema</td>
+              </tr>
+              <tr>
+                <td>Order Status as <code>1100.100</code> style codes</td>
+                <td>Numeric status hierarchy hard to parse; status semantics unclear</td>
+                <td>ACL maps to <code>OrderStatus</code> enum: <code>CREATED</code>, <code>RELEASED</code>, <code>SHIPPED</code> etc.</td>
+              </tr>
+              <tr>
+                <td>JMS/MQ-based agent event notifications</td>
+                <td>Message format tied to Sterling's internal object model</td>
+                <td>ACL subscribes to MQ, transforms to clean domain events on Kafka</td>
+              </tr>
+              <tr>
+                <td>Agent-based processing (Task Q / Time-Triggered)</td>
+                <td>Polling-based processing difficult to observe or replace incrementally</td>
+                <td>ACL exposes agent trigger hooks as event sources your new services can consume</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-danger">
+          <div class="callout-title">Real-World Anti-Pattern Without ACL</div>
+          Teams that skip the ACL and integrate directly with Sterling end up with <strong>Sterling XML schema types leaking into new service code</strong>, leading to: new services that can't be tested without a Sterling instance, domain models that look like Sterling's YantraCommerceOrder with a React frontend on top, and migration that becomes impossible because every new service has Sterling coupling embedded.
+        </div>
+
+        <h3>The Strangler Fig + ACL Combination</h3>
+        <p>ACL works as the translation backbone of the <strong>Strangler Fig</strong> migration pattern. As each bounded context is carved out of Sterling into a new microservice, the ACL is the bridge that allows both systems to coexist during the transition window. The ACL is the "fig" that lets the new vine grow while the old tree still stands.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Strangler Fig Migration with ACL as Bridge</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    Client([Retail App / B2B Partner])
+    GW[API Gateway / BFF]
+    FF{Feature Flag\nRouter}
+
+    subgraph new["NEW MICROSERVICES (Growing)"]
+        OMS_NEW[Order Service\nclean domain]
+        INV_NEW[Inventory Service]
+        FUL_NEW[Fulfillment Service]
+    end
+
+    subgraph acl["ANTI-CORRUPTION LAYER"]
+        ACL_O[Order ACL\nTranslator]
+        ACL_I[Inventory ACL\nTranslator]
+        ACL_F[Fulfillment ACL\nTranslator]
+    end
+
+    subgraph legacy["IBM STERLING OMS (Shrinking)"]
+        S_OMS[Sterling Order\nManagement]
+        S_INV[Sterling Inventory\nGIV/ATP]
+        S_FUL[Sterling Fulfillment\nAgents]
+    end
+
+    Client --> GW --> FF
+    FF -->|"new customers\nor feature-flagged"| new
+    FF -->|"legacy traffic\nuntil fully migrated"| acl
+
+    OMS_NEW <-->|"domain events\nKafka"| ACL_O
+    INV_NEW <-->|"domain events\nKafka"| ACL_I
+    FUL_NEW <-->|"domain events\nKafka"| ACL_F
+
+    ACL_O <-->|"SOAP / Sterling XML"| S_OMS
+    ACL_I <-->|"Sterling GIV API"| S_INV
+    ACL_F <-->|"JMS/MQ agent hooks"| S_FUL
+
+    style new fill:#23863611,stroke:#3fb950
+    style acl fill:#1f6feb11,stroke:#58a6ff
+    style legacy fill:#da363311,stroke:#f85149
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: Sterling Domain Model -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Sterling OMS Domain Model vs. Clean Canonical Model</h2>
+      </div>
+      <div class="content">
+        <p>Understanding precisely where the domain models diverge is the foundation of designing a correct ACL. Below is a side-by-side comparison across key order management concepts.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Domain Model Divergence: Sterling vs Canonical</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart LR
+    subgraph sterling["STERLING MODEL (Legacy)"]
+        direction TB
+        SO["SterlingOrder\n─────────────────\nOrderHeaderKey : String\nEnterpriseCode : String\nSellerOrganizationCode : String\nBuyerOrganizationCode : String\nDocumentType : String\nStatus : String\nOrderedQty : Double\nExtn : ExtnOrderHeader"]
+        SOL["SterlingOrderLine\n─────────────────\nOrderLineKey : String\nItemID : String\nUnitOfMeasure : String\nOrderedQty : Double\nLineType : String\nStatus : String\nExtn : ExtnOrderLine"]
+        SO -->|"1 to many"| SOL
+    end
+
+    subgraph canonical["CANONICAL MODEL (New Domain)"]
+        direction TB
+        O["Order\n─────────────────\norderId : UUID\ncustomerId : UUID\ntenantId : UUID\ntype : OrderType\nstatus : OrderStatus\ncreatedAt : Instant\ntotalAmount : Money"]
+        OL["OrderLine\n─────────────────\nlineId : UUID\nsku : String\nquantity : int\nunitPrice : Money\nstatus : LineStatus"]
+        OT["OrderType enum\n─────────────────\nSALES_ORDER\nTRANSFER_ORDER\nRETURN_ORDER"]
+        OS2["OrderStatus enum\n─────────────────\nDRAFT\nSUBMITTED\nRELEASED\nPICKED\nSHIPPED\nDELIVERED\nCANCELLED"]
+        O -->|"1 to many"| OL
+        O --> OT
+        O --> OS2
+    end
+
+    sterling -->|"ACL translates"| canonical
+
+    style sterling fill:#da363311,stroke:#f85149,color:#e6edf3
+    style canonical fill:#23863611,stroke:#3fb950,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>Key Model Translation Map</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Sterling Field</th><th>Type/Format</th><th>Canonical Field</th><th>Type</th><th>Translation Logic</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>OrderHeaderKey</code></td><td>String UUID</td><td><code>orderId</code></td><td>UUID</td><td>Direct; store both in ACL mapping table</td></tr>
+              <tr><td><code>EnterpriseCode</code></td><td>String</td><td><code>tenantId</code></td><td>UUID</td><td>Lookup in tenant registry; 1-to-1 map</td></tr>
+              <tr><td><code>DocumentType=0001</code></td><td>Magic string</td><td><code>type=SALES_ORDER</code></td><td>Enum</td><td>Hard-coded map: 0001→SALES, 0003→TRANSFER</td></tr>
+              <tr><td><code>Status=1100.100</code></td><td>Numeric hierarchy</td><td><code>status=SUBMITTED</code></td><td>Enum</td><td>Status range mapping with floor/ceiling logic</td></tr>
+              <tr><td><code>OrderLineKey</code></td><td>String UUID</td><td><code>lineId</code></td><td>UUID</td><td>New UUID generated; mapping persisted in ACL store</td></tr>
+              <tr><td><code>ItemID + UnitOfMeasure</code></td><td>String pair</td><td><code>sku</code></td><td>String</td><td>Normalize: concat or lookup in catalog</td></tr>
+              <tr><td><code>Extn.ExtnCustomField1</code></td><td>String (untyped)</td><td>First-class typed field</td><td>Typed</td><td>Per-implementation mapping with validation</td></tr>
+              <tr><td><code>SellerOrganizationCode</code></td><td>String</td><td><code>fulfillmentNodeId</code></td><td>UUID</td><td>Lookup in node registry</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: ACL Architecture -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>ACL Architecture — Full System View</h2>
+      </div>
+      <div class="content">
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Anti-Corruption Layer Full Architecture for Sterling OMS</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    subgraph sterling["IBM STERLING OMS"]
+        direction LR
+        SOAP["SOAP/HTTP\nServices"]
+        MQ["IBM MQ\nJMS Topics"]
+        DB["Sterling DB\n(YFS_ORDER_HEADER)"]
+        AGENTS["Sterling Agents\nTask Q / TT Agents"]
+    end
+
+    subgraph aclLayer["ANTI-CORRUPTION LAYER (Spring Boot Service)"]
+        direction TB
+        subgraph inbound["Inbound (Sterling → Canonical)"]
+            SOAP_A["SterlingOrderAdapter\n(SOAP client)"]
+            MQ_A["MQEventAdapter\n(JMS listener)"]
+            DB_A["CDCAdapter\n(Debezium / DB2)"]
+        end
+        subgraph translate["Translation Core"]
+            OM["OrderModelTranslator\nOrderLine / Status maps"]
+            SM["StatusMachine\nMapper"]
+            KM["KeyMapper\n(bi-directional key store)"]
+            VM["Validator\n+ Enricher"]
+        end
+        subgraph outbound["Outbound (Canonical → Sterling)"]
+            CMD_A["CommandAdapter\n(SOAP writer)"]
+            SAGA["Saga Coordinator\n(compensation)"]
+        end
+        inbound --> translate --> outbound
+    end
+
+    subgraph kafka["EVENT BACKBONE (Kafka)"]
+        T1["order.created\norder.updated"]
+        T2["inventory.reserved"]
+        T3["fulfillment.triggered"]
+    end
+
+    subgraph services["NEW MICROSERVICES"]
+        OS["Order Service"]
+        IS["Inventory Service"]
+        FS["Fulfillment Service"]
+        NS["Notification Service"]
+    end
+
+    sterling --> aclLayer
+    aclLayer --> kafka
+    kafka --> services
+    services -->|"write commands"| aclLayer
+    aclLayer -->|"Sterling mutations"| sterling
+
+    style sterling fill:#da363311,stroke:#f85149
+    style aclLayer fill:#1f6feb11,stroke:#58a6ff
+    style kafka fill:#9e670011,stroke:#d29922
+    style services fill:#23863611,stroke:#3fb950
+          </div>
+        </div>
+
+        <h3>ACL as a Dedicated Microservice</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">Deployment Decision</div>
+          The ACL should be deployed as a <strong>dedicated, independently deployable microservice</strong> — not as a library embedded in each new service, and not bundled inside Sterling itself. This isolates the translation concern, allows independent versioning, and makes the ACL easy to remove once Sterling is decommissioned.
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h3>ACL as a Service — Pros</h3>
+            <ul>
+              <li>Single place for all Sterling translation logic</li>
+              <li>Independent deployable — can be updated without touching new services</li>
+              <li>Can be horizontally scaled if Sterling call volume is high</li>
+              <li>Clear decommission target when Sterling goes away</li>
+              <li>Can own the key-mapping database independently</li>
+              <li>Allows different teams to own ACL vs new domain services</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>ACL as a Service — Cons / Mitigations</h3>
+            <ul>
+              <li><strong>Additional network hop</strong> → mitigate with async/event-driven patterns, not synchronous chains</li>
+              <li><strong>Single point of failure</strong> → mitigate with HA deployment, circuit breakers, fallback to cache</li>
+              <li><strong>Team ownership confusion</strong> → assign explicit ownership; treat it as part of platform team's portfolio</li>
+              <li><strong>Performance bottleneck</strong> → async Kafka-based translation for non-latency-critical flows</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5: Internal Structure -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>ACL Internal Structure — Components in Detail</h2>
+      </div>
+      <div class="content">
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-blue">ADAPTER</span> Protocol / Transport Adapter</div>
+          <div class="comp-role">Handles the protocol mismatch. Knows how to talk to Sterling — SOAP calls via <code>invokeService()</code>, JMS/MQ message consumption, DB2 CDC events via Debezium. Converts raw Sterling wire format (XML, MQ bytes) into an internal ACL representation. <strong>Does NOT translate domain semantics — that's the Translator's job.</strong></div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-green">TRANSLATOR</span> Domain Model Translator</div>
+          <div class="comp-role">The heart of the ACL. Converts Sterling's domain model artifacts (YantraCommerceOrder, DocumentType codes, status strings) into your canonical domain model objects (Order, OrderStatus enum, etc). Contains all field mapping logic. Should be stateless, pure functions: <code>Order translate(SterlingOrderDTO sterlingOrder)</code>.</div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-yellow">KEY MAPPER</span> Bidirectional Key Store</div>
+          <div class="comp-role">Maintains a persistent mapping between Sterling's internal keys (<code>OrderHeaderKey</code>, <code>OrderLineKey</code>) and your canonical UUIDs (<code>orderId</code>, <code>lineId</code>). Critical for write-back flows: when your new service updates an order, the ACL must resolve back to Sterling's key. Backed by Redis (fast lookups) + PostgreSQL (durability).</div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-red">FACADE</span> Stability Shim / Versioned Contract</div>
+          <div class="comp-role">Exposes a stable, versioned contract to downstream new services — REST or gRPC. Acts as a buffer: when Sterling upgrades its schema or Sterling 9.3 → 10.x migration happens, only the ACL's internal adapter changes. New services continue calling the same stable ACL API. Equivalent to an "Open Host Service" contract for your new bounded context.</div>
+        </div>
+
+        <h3>Key Mapper — Implementation Detail</h3>
+        <pre><code>
+// ACL Key Mapping Table (PostgreSQL)
+CREATE TABLE acl_order_key_map (
+    canonical_order_id   UUID PRIMARY KEY,
+    sterling_order_key   VARCHAR(100) NOT NULL UNIQUE,
+    sterling_enterprise  VARCHAR(50),
+    created_at           TIMESTAMPTZ DEFAULT NOW(),
+    last_synced_at       TIMESTAMPTZ
+);
+
+-- Lookup in both directions
+SELECT canonical_order_id FROM acl_order_key_map
+WHERE sterling_order_key = :sterlingKey;
+
+SELECT sterling_order_key FROM acl_order_key_map
+WHERE canonical_order_id = :canonicalId;
+        </code></pre>
+
+        <h3>Sequence — Inbound: Sterling Event → New Service Domain Event</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — Inbound Translation Sequence</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant S as Sterling OMS
+    participant MA as MQ Adapter (ACL)
+    participant T as Translator (ACL)
+    participant KM as Key Mapper (ACL)
+    participant KP as Kafka Producer (ACL)
+    participant OS as Order Microservice
+
+    S->>MA: JMS Message: OrderStatus=1300.100\n{OrderHeaderKey, EnterpriseCode}
+    MA->>MA: Parse XML → SterlingOrderStatusDTO
+    MA->>T: translate(SterlingOrderStatusDTO)
+    T->>KM: lookupCanonicalId(sterlingOrderKey)
+    KM-->>T: orderId = "uuid-abc-123"
+    T->>T: map status 1300.100 → OrderStatus.SHIPPED
+    T-->>MA: OrderStatusUpdatedEvent{orderId, status=SHIPPED}
+    MA->>KP: publish(order.status.updated, event)
+    KP->>OS: consume → update order state
+          </div>
+        </div>
+
+        <h3>Sequence — Outbound: New Service Command → Sterling API Call</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — Outbound Write-Back Sequence</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant OS as Order Microservice
+    participant AC as ACL (Command Handler)
+    participant KM as Key Mapper
+    participant SA as Sterling Adapter
+    participant S as Sterling OMS
+
+    OS->>AC: POST /acl/orders/{orderId}/cancel\n{reason: "customer_request"}
+    AC->>KM: lookupSterlingKey(orderId)
+    KM-->>AC: sterlingOrderKey="YFC-20240101-XXXX"
+    AC->>AC: build Sterling XML:\nchangeOrder {OrderHeaderKey, Status=CANCELLED}
+    AC->>SA: invokeService("changeOrder", xml)
+    SA->>S: SOAP call
+    S-->>SA: response XML
+    SA->>AC: parse response → success/failure
+    AC-->>OS: 200 OK {canonicalOrderId, status=CANCELLED}
+    AC->>AC: emit order.cancelled domain event → Kafka
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: Key Translation Scenarios -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Key Translation Scenarios in Sterling OMS Context</h2>
+      </div>
+      <div class="content">
+
+        <!-- Scenario 1 -->
+        <h3>Scenario 1: Order Status Machine Translation</h3>
+        <p>Sterling's order status is a numeric hierarchy (e.g., <code>1100.100</code> = Created, <code>3700.100</code> = Shipped). Your canonical model uses a clean, named state machine. The ACL owns the entire status vocabulary — new services never see a numeric Sterling status code.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sterling Status Code</th><th>Sterling Label</th><th>Canonical Status</th><th>Transition Event Emitted</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><code>1100.100</code></td><td>Created</td><td><code>SUBMITTED</code></td><td><code>order.created</code></td><td>Entry state after order placement</td></tr>
+              <tr><td><code>1300.100</code></td><td>Released</td><td><code>RELEASED</code></td><td><code>order.released</code></td><td>Released to fulfillment by ReleaseOrderAgent</td></tr>
+              <tr><td><code>3200.100</code></td><td>Pick Confirmed</td><td><code>PICKED</code></td><td><code>order.picked</code></td><td>WMS pick-confirmation flows back via agent</td></tr>
+              <tr><td><code>3700.100</code></td><td>Shipped</td><td><code>SHIPPED</code></td><td><code>order.shipped</code></td><td>Carrier scan event triggers</td></tr>
+              <tr><td><code>3800.100</code></td><td>Delivered</td><td><code>DELIVERED</code></td><td><code>order.delivered</code></td><td>POD confirmation</td></tr>
+              <tr><td><code>9000.100</code></td><td>Cancelled</td><td><code>CANCELLED</code></td><td><code>order.cancelled</code></td><td>Full or partial cancellation</td></tr>
+              <tr><td><code>9000.200</code></td><td>Partially Cancelled</td><td><code>PARTIALLY_CANCELLED</code></td><td><code>order.partially_cancelled</code></td><td>Line-level cancellation — Sterling emits per line</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — Order Status Machine: Sterling Codes mapped to Canonical States</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart LR
+    subgraph sterling["STERLING STATUS CODES"]
+        A["1100.100\nCreated"]
+        B["1300.100\nReleased"]
+        C["3200.100\nPick Confirmed"]
+        D["3700.100\nShipped"]
+        E["3800.100\nDelivered"]
+        F["9000.100\nCancelled"]
+        G["9000.200\nPartially Cancelled"]
+        A --> B --> C --> D --> E
+        A --> F
+        B --> F
+        B --> G
+    end
+
+    subgraph canonical["CANONICAL STATUS ENUM"]
+        S1["SUBMITTED"]
+        S2["RELEASED"]
+        S3["PICKED"]
+        S4["SHIPPED"]
+        S5["DELIVERED"]
+        S6["CANCELLED"]
+        S7["PARTIALLY_CANCELLED"]
+    end
+
+    A -->|"ACL maps"| S1
+    B -->|"ACL maps"| S2
+    C -->|"ACL maps"| S3
+    D -->|"ACL maps"| S4
+    E -->|"ACL maps"| S5
+    F -->|"ACL maps"| S6
+    G -->|"ACL maps"| S7
+
+    style sterling fill:#da363311,stroke:#f85149,color:#e6edf3
+    style canonical fill:#23863611,stroke:#3fb950,color:#e6edf3
+          </div>
+        </div>
+
+        <!-- Scenario 2 -->
+        <h3>Scenario 2: GIV/ATP Inventory Response Translation</h3>
+        <p>Sterling's Global Inventory Visibility (GIV) returns availability as a complex XML with <code>OnhandQty</code>, <code>ReservedQty</code>, <code>OnOrderQty</code> per <code>ShipNode</code>. Your canonical Inventory Service works with a clean <code>InventoryLevel</code> object per <code>locationId</code>. The ACL performs the arithmetic and vocabulary translation.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — GIV/ATP Translation Sequence</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant IS as Inventory Service
+    participant ACL as ACL (Inventory Translator)
+    participant GA as GIV SOAP Adapter
+    participant ST as Sterling GIV API
+
+    IS->>ACL: GET /acl/inventory?sku=SKU-XYZ&locationId=dc-blr-01
+    ACL->>ACL: resolve locationId to ShipNode via registry
+    ACL->>GA: invokeService(getInventoryAvailability, ShipNode=DC-BLR-01)
+    GA->>ST: SOAP request XML
+    ST-->>GA: XML response with OnhandQty=500 ReservedQty=120 UnavailableQty=30
+    GA-->>ACL: SterlingInventoryDTO parsed
+    ACL->>ACL: availableQty = 500 - 120 - 30 = 350
+    ACL->>ACL: map ShipNode to locationId
+    ACL-->>IS: InventoryLevel {sku, locationId, availableQty=350, softReserved=120}
+          </div>
+        </div>
+
+        <pre><code>
+// Sterling GIV Response (XML parsed by ACL)
+&lt;Availability ShipNode="DC-BLR-01" ItemID="SKU-XYZ"&gt;
+  &lt;OnhandQty&gt;500&lt;/OnhandQty&gt;
+  &lt;ReservedQty&gt;120&lt;/ReservedQty&gt;
+  &lt;OnOrderQty&gt;200&lt;/OnOrderQty&gt;
+  &lt;UnavailableQty&gt;30&lt;/UnavailableQty&gt;
+&lt;/Availability&gt;
+
+// ACL Translator output — canonical InventoryLevel
+{
+  "sku": "SKU-XYZ",
+  "locationId": "dc-blr-01",        // ShipNode registry lookup
+  "availableQty": 350,               // OnhandQty - ReservedQty - UnavailableQty
+  "softReservedQty": 120,
+  "inTransitQty": 200,
+  "asOfTimestamp": "2024-01-15T10:30:00Z"
+}
+        </code></pre>
+
+        <!-- Scenario 3 -->
+        <h3>Scenario 3: Sterling Agent Events to Canonical Domain Events</h3>
+        <p>Sterling's Time-Triggered Agents (e.g., <code>ReleaseOrderAgent</code>, <code>PrintDocumentAgent</code>) publish JMS messages to IBM MQ queues. The ACL subscribes, translates, and re-publishes as canonical Kafka events using the Transactional Outbox pattern so no events are lost on ACL crash.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — Agent Event Translation: IBM MQ to Kafka via Transactional Outbox</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant AG as Sterling Agent
+    participant MQ as IBM MQ
+    participant MA as ACL MQ Adapter
+    participant TR as ACL Translator
+    participant OB as Outbox Table (Postgres)
+    participant DB as Debezium CDC Relay
+    participant KA as Kafka
+    participant SV as New Microservice
+
+    AG->>MQ: JMS publish OrderStatus=1300.100
+    MA->>MQ: consume message (no ACK yet)
+    MA->>TR: translate(SterlingStatusEvent)
+    TR->>TR: map 1300.100 to RELEASED
+    TR-->>MA: OrderReleasedEvent{orderId, status=RELEASED}
+    MA->>OB: INSERT into outbox (in same DB transaction as key map update)
+    MA->>MQ: ACK message (only after outbox write)
+    DB->>OB: CDC poll detects new row
+    DB->>KA: publish order.released event
+    KA->>SV: consume OrderReleasedEvent
+    Note over MA,OB: Outbox guarantees at-least-once even if ACL crashes after MQ ACK
+          </div>
+        </div>
+
+        <!-- Scenario 4: Order Cancellation -->
+        <h3>Scenario 4: Post-Purchase — Order Cancellation</h3>
+        <p>Customer initiates cancellation from self-service portal. The new Order Service validates eligibility (pre-ship only), then issues a cancel command to the ACL. The ACL translates to Sterling's <code>changeOrder</code> with <code>Action=CANCEL</code>, handles the synchronous response, and emits a canonical event.</p>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Sterling Cancellation Eligibility Window</div>
+          Sterling enforces cancellation only before the order is in <code>Pick Confirmed</code> state (<code>3200.100</code>). The ACL must check the cached order status before calling Sterling — if status is already PICKED or beyond, it returns a <code>409 Conflict</code> to the new service without calling Sterling at all.
+        </div>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8 — Post-Purchase Order Cancellation via ACL</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant C as Customer App
+    participant OS as Order Service
+    participant ACL as ACL (Cancel Adapter)
+    participant IK as Idempotency Store (Redis)
+    participant KM as Key Mapper
+    participant SA as Sterling SOAP Adapter
+    participant ST as Sterling OMS
+    participant KA as Kafka
+
+    C->>OS: POST /orders/{orderId}/cancel {reason}
+    OS->>OS: validate order eligibility (status must be before PICKED)
+    OS->>ACL: POST /acl/commands/cancel {orderId, reason, idempotencyKey}
+    ACL->>IK: check idempotencyKey in Redis
+    IK-->>ACL: not found (first attempt)
+    ACL->>KM: resolve sterlingOrderKey for orderId
+    KM-->>ACL: OrderHeaderKey = YFC-20240101-XXXX
+    ACL->>ACL: build Sterling XML changeOrder Action=CANCEL
+    ACL->>SA: invokeService(changeOrder, xml)
+    SA->>ST: SOAP call
+    ST-->>SA: success XML {Status=9000.100}
+    SA-->>ACL: SterlingCancelResponseDTO
+    ACL->>IK: store result against idempotencyKey (TTL 24h)
+    ACL->>KA: publish order.cancelled {orderId, reason, timestamp}
+    ACL-->>OS: 200 OK {orderId, status=CANCELLED}
+    OS-->>C: Order cancelled confirmation
+    Note over ACL,IK: On retry with same idempotencyKey, ACL returns cached result without re-calling Sterling
+          </div>
+        </div>
+
+        <pre><code>
+// ACL Cancel Command Handler
+public CancelOrderResult cancelOrder(CancelOrderCommand cmd) {
+    // 1. Idempotency check
+    Optional&lt;CancelOrderResult&gt; cached = idempotencyStore.get(cmd.getIdempotencyKey());
+    if (cached.isPresent()) return cached.get();
+
+    // 2. Resolve Sterling key
+    String sterlingKey = keyMapper.toSterlingKey(cmd.getOrderId());
+
+    // 3. Build and invoke Sterling changeOrder
+    String xml = sterlingXmlBuilder.buildCancelXml(sterlingKey, cmd.getReason());
+    SterlingResponse resp = soapAdapter.invokeService("changeOrder", xml);
+
+    // 4. Translate response
+    CancelOrderResult result = translator.translateCancelResponse(resp, cmd.getOrderId());
+
+    // 5. Store idempotency + publish event (in same outbox transaction)
+    outboxService.publishAndStore(cmd.getIdempotencyKey(), result,
+        new OrderCancelledEvent(cmd.getOrderId(), cmd.getReason()));
+
+    return result;
+}
+        </code></pre>
+
+        <!-- Scenario 4b: Without ACL Anti-Pattern -->
+        <h3>Scenario 4 — What Happens Without the ACL?</h3>
+        <p>To understand exactly why the ACL is indispensable for the cancellation scenario, examine what the architecture looks like when the new Order Service integrates <strong>directly</strong> with Sterling OMS without any translation layer. This is the anti-pattern that corrupts the new domain model and makes future decommission of Sterling nearly impossible.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8b — WITHOUT ACL: Order Service Directly Coupled to Sterling (Anti-Pattern)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant C as Customer App
+    participant OS as Order Service
+    participant ST as Sterling OMS (SOAP)
+    participant MQ as IBM MQ
+    participant KA as Kafka
+
+    C->>OS: POST /orders/{orderId}/cancel {reason}
+    Note over OS: Order Service must now know Sterling internals
+    OS->>OS: look up YFC OrderHeaderKey from its own DB
+    OS->>OS: build Sterling changeOrder XML manually
+    OS->>ST: SOAP invokeService(changeOrder) with Sterling XML
+    ST-->>OS: Sterling XML response {Status=9000.100, OrderHeaderKey...}
+    OS->>OS: parse Sterling status code 9000.100
+    OS->>OS: manually map 9000.100 to CANCELLED string
+    OS->>KA: publish event with mixed vocabulary
+    Note over KA: event payload contains both orderId AND OrderHeaderKey
+    MQ->>OS: async Sterling agent fires OrderStatus=9000.100 JMS msg
+    OS->>OS: ALSO handle duplicate status update from MQ
+    OS->>OS: de-duplicate against the SOAP response already processed
+    C-->>OS: eventually consistent response (race condition risk)
+
+    Note over OS,ST: Problems visible here
+    Note over OS: 1 Order Service imports Sterling WSDL and JAR types
+    Note over OS: 2 Sterling XML schema leaks into Order domain model
+    Note over OS: 3 Status code 9000.100 hardcoded in Order Service logic
+    Note over OS: 4 OrderHeaderKey stored in Order Service database
+    Note over OS: 5 Retry logic must handle Sterling SOAP faults directly
+    Note over OS: 6 Duplicate MQ + SOAP events must be de-duped here
+    Note over OS: 7 Cannot test Order Service without a Sterling instance
+          </div>
+        </div>
+
+        <h3>Side-by-Side: With ACL vs Without ACL</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Concern</th><th class="danger">Without ACL (Direct Coupling)</th><th class="rec">With ACL (Isolated)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Order Service knows about</strong></td>
+                <td class="danger">OrderHeaderKey, DocumentType, changeOrder SOAP, status 9000.100, WSDL imports</td>
+                <td class="rec">Only its own orderId and clean REST/GraphQL ACL contract</td>
+              </tr>
+              <tr>
+                <td><strong>Domain model contamination</strong></td>
+                <td class="danger">Sterling XML types appear in Order entity; DB stores OrderHeaderKey as FK</td>
+                <td class="rec">Order entity is pure canonical domain — UUID orderId only</td>
+              </tr>
+              <tr>
+                <td><strong>Testing without Sterling</strong></td>
+                <td class="danger">Impossible — unit tests require Sterling SOAP stubs or full instance</td>
+                <td class="rec">ACL is mocked; Order Service fully unit-testable in isolation</td>
+              </tr>
+              <tr>
+                <td><strong>Sterling upgrade impact</strong></td>
+                <td class="danger">Every service that calls Sterling must be updated when Sterling API changes</td>
+                <td class="rec">Only ACL changes; all new services unaffected</td>
+              </tr>
+              <tr>
+                <td><strong>Duplicate event handling</strong></td>
+                <td class="danger">Order Service must de-duplicate SOAP response AND MQ agent event for same state change</td>
+                <td class="rec">ACL deduplicates at the boundary; Order Service sees one canonical Kafka event</td>
+              </tr>
+              <tr>
+                <td><strong>Idempotency of cancel</strong></td>
+                <td class="danger">Order Service must implement idempotency for Sterling SOAP directly</td>
+                <td class="rec">ACL owns idempotency store; Order Service passes idempotencyKey header</td>
+              </tr>
+              <tr>
+                <td><strong>Decommissioning Sterling later</strong></td>
+                <td class="danger">Must surgically remove Sterling coupling from every service — extremely high risk</td>
+                <td class="rec">Remove one service (ACL); all other services already speak clean domain</td>
+              </tr>
+              <tr>
+                <td><strong>New team onboarding</strong></td>
+                <td class="danger">Every developer must understand Sterling XML schema to work on any service</td>
+                <td class="rec">Only ACL team needs Sterling knowledge; domain teams work in clean model</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-danger">
+          <div class="callout-title">The Corruption Cascade Without ACL</div>
+          <p style="margin-bottom:8px;">When the Order Service integrates directly with Sterling, the corruption cascades outward. The Notification Service needs to display order status — so it reads from the Order Service DB, which now stores <code>9000.100</code> status strings. The Analytics Service queries order events, which contain <code>OrderHeaderKey</code> alongside <code>orderId</code>. The Returns Service needs to cancel — so it also imports Sterling SOAP. Within 12 months, <strong>every service in the platform speaks Sterling</strong>. Decommissioning Sterling becomes equivalent to rebuilding the entire platform.</p>
+        </div>
+
+        <!-- Scenario 4c: Full Sterling Exit Migration -->
+        <h3>Scenario 4 — Full Migration Exit: Moving Away from Sterling Completely</h3>
+        <p>This is the endgame of the modernization program. The ACL made it possible to build new services without Sterling coupling during the migration. Now the goal is to eliminate Sterling as the system of record for cancellations, move the cancel logic fully into the new Order Service, and retire the ACL's cancel adapter. This happens in four distinct stages.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8c — Four Stages: From Sterling-Owned Cancel to Fully Native Cancel</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    subgraph stage1["STAGE 1 — Current State: Sterling is System of Record"]
+        direction LR
+        OS1["Order Service"] -->|"cancel command"| ACL1["ACL"] -->|"changeOrder SOAP"| ST1["Sterling OMS"]
+        ST1 -->|"9000.100 MQ event"| ACL1 -->|"order.cancelled Kafka"| OS1
+    end
+
+    subgraph stage2["STAGE 2 — Dual Write: New Service + Sterling in Parallel"]
+        direction LR
+        OS2["Order Service"] -->|"cancel command"| ACL2["ACL"]
+        ACL2 -->|"changeOrder SOAP"| ST2["Sterling OMS"]
+        ACL2 -->|"ALSO write to new Order DB"| NDB["New Order DB\n(Postgres)"]
+        REC["Reconciliation Job\ncompares both nightly"]
+        ST2 -.->|"verify"| REC
+        NDB -.->|"verify"| REC
+    end
+
+    subgraph stage3["STAGE 3 — New Service Leads, Sterling Follows (Shadow Write)"]
+        direction LR
+        OS3["Order Service"] -->|"cancel command"| ODB3["New Order DB\n(Postgres)"]
+        OS3 -->|"async shadow write via ACL"| ACL3["ACL"] -->|"changeOrder SOAP async"| ST3["Sterling OMS"]
+        KA3["Kafka: order.cancelled"] 
+        OS3 --> KA3
+        Note3["Sterling write is fire-and-forget\nNew DB is authoritative"]
+    end
+
+    subgraph stage4["STAGE 4 — Sterling Decommissioned: ACL Cancel Adapter Retired"]
+        direction LR
+        OS4["Order Service"] -->|"cancel command"| ODB4["New Order DB\n(Postgres)"]
+        KA4["Kafka: order.cancelled"]
+        OS4 --> KA4
+        DEAD["Sterling OMS\nSHUT DOWN"]
+        DEADACL["ACL Cancel Adapter\nRETIRED"]
+        style DEAD fill:#da363333,stroke:#f85149
+        style DEADACL fill:#da363333,stroke:#f85149
+    end
+
+    stage1 -->|"6-8 weeks\nreconciliation green"| stage2
+    stage2 -->|"4-6 weeks\ndivergence less than 0.01pct"| stage3
+    stage3 -->|"4 weeks\nSterling write volume confirmed zero-impact"| stage4
+
+    style stage1 fill:#da363308,stroke:#f85149,color:#e6edf3
+    style stage2 fill:#9e670008,stroke:#d29922,color:#e6edf3
+    style stage3 fill:#1f6feb08,stroke:#58a6ff,color:#e6edf3
+    style stage4 fill:#23863608,stroke:#3fb950,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>Stage-by-Stage Exit Playbook — Cancellation Scenario</h3>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-red">STAGE 1</span> &nbsp;Current State — Sterling is System of Record</div>
+          <div class="comp-role">
+            <strong>Who owns cancel:</strong> Sterling OMS via ACL.<br>
+            <strong>Order Service role:</strong> Sends cancel commands to ACL; receives translated Kafka events back.<br>
+            <strong>Exit criteria to Stage 2:</strong> New Order Service has its own <code>orders</code> table with full order state; cancel eligibility logic implemented natively; all cancellations dual-write tested in staging.
+          </div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-yellow">STAGE 2</span> &nbsp;Dual Write — New DB and Sterling Written Simultaneously</div>
+          <div class="comp-role">
+            <strong>Who owns cancel:</strong> Both — ACL writes to Sterling AND the new Order DB in the same request.<br>
+            <strong>ACL role:</strong> After calling Sterling successfully, ACL <em>also</em> writes a canonical cancel record to the new Order DB. Two writes, one ACL request.<br>
+            <strong>Reconciliation job:</strong> Nightly batch compares Sterling's cancelled order list against the new Order DB. Any divergence page-alerts the platform team.<br>
+            <strong>Exit criteria to Stage 3:</strong> Reconciliation runs for 2+ weeks with divergence rate below 0.01%. New Order DB is confirmed the richer, more accurate source.
+          </div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-blue">STAGE 3</span> &nbsp;New Service Leads — Sterling Becomes Shadow Write</div>
+          <div class="comp-role">
+            <strong>Who owns cancel:</strong> New Order Service. Sterling write is async fire-and-forget via ACL.<br>
+            <strong>Order Service role:</strong> Writes cancel directly to its own DB; publishes <code>order.cancelled</code> Kafka event immediately. Also sends an async cancel command to ACL which propagates to Sterling in the background (no customer-facing latency impact).<br>
+            <strong>Feature flag:</strong> Toggle that cuts the Sterling shadow write off without a deployment. Used to measure Sterling write failure rate with zero customer impact.<br>
+            <strong>Exit criteria to Stage 4:</strong> Sterling shadow write failure rate is negligible (Sterling can no longer block or slow the cancel flow). All downstream systems confirmed reading from Kafka / new Order DB — not from Sterling MQ.
+          </div>
+        </div>
+
+        <div class="component-box">
+          <div class="comp-title"><span class="pill pill-green">STAGE 4</span> &nbsp;Full Exit — Sterling Retired, ACL Cancel Adapter Shut Down</div>
+          <div class="comp-role">
+            <strong>Who owns cancel:</strong> New Order Service entirely. Sterling does not exist in this flow.<br>
+            <strong>Steps to retire:</strong>
+            <ol style="margin-top:8px; padding-left:20px; color:#cdd9e5; font-size:13.5px;">
+              <li>Turn off feature flag for Sterling shadow write — observe zero impact for 72 hours.</li>
+              <li>Shut down ACL's <code>SterlingCancelAdapter</code> — remove from Kubernetes deployment.</li>
+              <li>Archive key-mapping table rows for cancelled orders (audit/compliance retention).</li>
+              <li>Confirm zero consumers reading from Sterling's <code>OMS.ORDER.CANCEL</code> MQ queue.</li>
+              <li>Decommission Sterling's <code>YFS_ORDER_CANCEL</code> related DB tables from read path.</li>
+              <li>Remove ACL cancel endpoint from OpenAPI spec; notify downstream teams.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8d — Stage 4 Final State: Cancellation Fully Native, No Sterling, No ACL</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant C as Customer App
+    participant OS as Order Service
+    participant DB as Order DB (Postgres)
+    participant KA as Kafka
+    participant NS as Notification Service
+    participant RS as Returns Service
+    participant AN as Analytics Service
+
+    C->>OS: POST /orders/{orderId}/cancel {reason, idempotencyKey}
+    OS->>OS: validate eligibility (status check from own DB)
+    OS->>DB: UPDATE orders SET status=CANCELLED WHERE id=orderId
+    OS->>DB: INSERT INTO order_events (type=CANCELLED, orderId, reason)
+    OS->>KA: publish order.cancelled {orderId, reason, cancelledAt}
+    OS-->>C: 200 OK {orderId, status=CANCELLED}
+    KA->>NS: send cancellation email
+    KA->>RS: open return window if applicable
+    KA->>AN: increment cancellation metrics
+
+    Note over OS,DB: Sterling OMS is gone
+    Note over OS,DB: ACL is gone
+    Note over OS,DB: No SOAP, no XML, no IBM MQ
+    Note over OS,DB: Order Service owns cancel end-to-end
+    Note over OS,DB: Idempotency handled natively in Order DB
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">What the ACL Made Possible</div>
+          <p>The ACL was never meant to be permanent. It was the scaffolding that let the new Order Service grow without touching Sterling's internals. By the time Stage 4 is reached, the new Order Service has a clean cancellation model, idempotency, event publishing, and eligibility logic — all built and battle-tested during the 18+ months the ACL was live. The ACL is removed not because it failed, but because it succeeded: it protected the new domain model long enough for it to stand on its own. <strong>The ACL is the chrysalis that makes Sterling decommission possible.</strong></p>
+        </div>
+
+        <!-- Scenario 5: Change Fulfillment Node -->
+        <h3>Scenario 5: Post-Purchase — Change Fulfillment Node (Ship-From-Store Re-route)</h3>
+        <p>Customer or CS agent requests a fulfillment node change — e.g., re-route from a DC to a closer store. In Sterling, this requires: (1) backordering the existing shipment, (2) re-releasing to a new <code>ShipNode</code>. The ACL orchestrates this two-step Sterling operation as a single atomic command to the new Fulfillment Service.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 9 — Change Fulfillment Node: Two-Step Sterling Orchestration via ACL</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant FS as Fulfillment Service
+    participant ACL as ACL (Fulfillment Adapter)
+    participant KM as Key Mapper
+    participant SA as Sterling SOAP Adapter
+    participant ST as Sterling OMS
+    participant KA as Kafka
+
+    FS->>ACL: POST /acl/commands/reroute\n{orderId, newLocationId, reason}
+    ACL->>KM: resolve sterlingOrderKey + current ShipNode
+    KM-->>ACL: OrderHeaderKey + ShipNode=DC-BLR-01
+    ACL->>ACL: resolve newLocationId to newShipNode=STORE-MG-42 via node registry
+    Note over ACL,ST: Step 1 - Backorder existing shipment from DC
+    ACL->>SA: invokeService(changeOrder, backorderXml{ShipNode=DC-BLR-01})
+    SA->>ST: SOAP call - backorder
+    ST-->>SA: success
+    Note over ACL,ST: Step 2 - Re-release to new ShipNode
+    ACL->>SA: invokeService(releaseOrder, releaseXml{ShipNode=STORE-MG-42})
+    SA->>ST: SOAP call - release to store
+    ST-->>SA: success {newShipmentKey}
+    ACL->>KM: update shipmentKey mapping for orderId
+    ACL->>KA: publish fulfillment.node.changed\n{orderId, from=dc-blr-01, to=store-mg-42}
+    ACL-->>FS: 200 OK {orderId, newFulfillmentNode=store-mg-42}
+          </div>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Saga Compensation on Partial Failure</div>
+          If Step 1 (backorder) succeeds but Step 2 (re-release) fails, the ACL must execute a compensating transaction — re-release to the original ShipNode. The ACL owns this saga coordination. The Fulfillment Service sees it as an atomic operation: either fully re-routed or not at all. Never expose Sterling's two-step internals to the new service.
+        </div>
+
+        <!-- Scenario 6: Change Level of Service -->
+        <h3>Scenario 6: Post-Purchase — Change Level of Service (Shipping Upgrade/Downgrade)</h3>
+        <p>Customer upgrades from Standard to Express shipping after order placement but before shipment. In Sterling, Level of Service (LOS) is a <code>LevelOfService</code> attribute on the shipment XML. The ACL must translate the canonical <code>shippingTier</code> enum into Sterling's carrier service codes and update the shipment record.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 10 — Change Level of Service: Shipping Tier Translation via ACL</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant CS as Customer / CS Portal
+    participant OS as Order Service
+    participant ACL as ACL (Shipment Adapter)
+    participant SM as Shipping Tier Mapper
+    participant KM as Key Mapper
+    participant SA as Sterling SOAP Adapter
+    participant ST as Sterling OMS
+    participant KA as Kafka
+
+    CS->>OS: PATCH /orders/{orderId}/shipping-tier\n{tier: EXPRESS_2DAY}
+    OS->>OS: validate: status must be RELEASED or earlier
+    OS->>ACL: POST /acl/commands/change-los\n{orderId, shippingTier=EXPRESS_2DAY}
+    ACL->>SM: map EXPRESS_2DAY to Sterling LevelOfService
+    SM-->>ACL: LevelOfService=2D, CarrierServiceCode=FEDEX_2DAY
+    ACL->>KM: resolve sterlingShipmentKey for orderId
+    KM-->>ACL: ShipmentKey=SHP-20240101-XXXX
+    ACL->>SA: invokeService(changeShipment,\n{ShipmentKey, LevelOfService=2D, CarrierServiceCode=FEDEX_2DAY})
+    SA->>ST: SOAP call
+    ST-->>SA: success {revisedShipmentXml}
+    SA-->>ACL: SterlingShipmentDTO
+    ACL->>ACL: translate revised cost delta if present
+    ACL->>KA: publish order.shipping_tier.changed\n{orderId, from=STANDARD, to=EXPRESS_2DAY, costDelta}
+    ACL-->>OS: 200 OK {orderId, shippingTier=EXPRESS_2DAY, estimatedDelivery}
+    OS-->>CS: Shipping upgrade confirmed
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Canonical shippingTier</th><th>Sterling LevelOfService</th><th>Sterling CarrierServiceCode</th><th>Eligibility Window</th></tr></thead>
+            <tbody>
+              <tr><td><code>ECONOMY</code></td><td><code>GRD</code></td><td><code>UPS_GROUND</code></td><td>Before RELEASED</td></tr>
+              <tr><td><code>STANDARD</code></td><td><code>STD</code></td><td><code>FEDEX_HOME</code></td><td>Before RELEASED</td></tr>
+              <tr><td><code>EXPRESS_2DAY</code></td><td><code>2D</code></td><td><code>FEDEX_2DAY</code></td><td>Before PICKED</td></tr>
+              <tr><td><code>OVERNIGHT</code></td><td><code>1D</code></td><td><code>FEDEX_PRIORITY</code></td><td>Before PICKED</td></tr>
+              <tr><td><code>SAME_DAY</code></td><td><code>SD</code></td><td><code>INTERNAL_COURIER</code></td><td>Not upgradeable post-placement</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Scenario 7: Address Change -->
+        <h3>Scenario 7: Post-Purchase — Delivery Address Change</h3>
+        <p>Customer corrects a delivery address after order placement. Sterling requires a <code>changeOrder</code> on the <code>PersonInfoShipTo</code> element. The ACL must validate the address is not in a locked shipment (already manifested with carrier) before proceeding.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 11 — Delivery Address Change: Eligibility Check and Write-Back</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    participant C as Customer App
+    participant OS as Order Service
+    participant ACL as ACL (Address Adapter)
+    participant AV as Address Validator
+    participant KM as Key Mapper
+    participant SA as Sterling SOAP Adapter
+    participant ST as Sterling OMS
+    participant KA as Kafka
+
+    C->>OS: PATCH /orders/{orderId}/delivery-address {newAddress}
+    OS->>ACL: POST /acl/commands/change-address {orderId, newAddress, idempotencyKey}
+    ACL->>SA: getOrderDetails(sterlingOrderKey) to check current status
+    SA->>ST: SOAP getOrderDetails
+    ST-->>SA: XML {Status=1300.100, ShipmentStatus=not-manifested}
+    ACL->>ACL: eligibility check: status is RELEASED and not yet manifested
+    ACL->>AV: validate newAddress (USPS/India Post verification)
+    AV-->>ACL: address validated {standardizedAddress}
+    ACL->>ACL: build changeOrder XML with PersonInfoShipTo
+    ACL->>SA: invokeService(changeOrder, addressXml)
+    SA->>ST: SOAP call
+    ST-->>SA: success
+    ACL->>KA: publish order.address.changed {orderId, newAddress}
+    ACL-->>OS: 200 OK {orderId, updatedAddress}
+    OS-->>C: Address update confirmed
+    Note over ACL,ST: If status is SHIPPED or manifested, ACL returns 409 - address locked
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S6b: GraphQL ACL Pattern -->
+    <section class="section" id="s6b">
+      <div class="section-header">
+        <span class="section-num">06b</span>
+        <h2>GraphQL ACL Pattern — Beyond REST</h2>
+      </div>
+      <div class="content">
+        <p>The ACL pattern is protocol-agnostic. While REST is natural for synchronous command APIs, <strong>GraphQL is increasingly the right choice for the ACL's query surface</strong> — especially when multiple new microservices need to compose Sterling-derived data differently (mobile app, CS portal, analytics dashboard). GraphQL lets each consumer fetch exactly what it needs without the ACL maintaining dozens of REST endpoint variants.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">When to Use GraphQL vs REST in the ACL</div>
+          Use <strong>GraphQL</strong> for the ACL's <em>query/read surface</em> — rich order detail composition, multi-entity lookups, consumer-specific projections. Use <strong>REST</strong> for the ACL's <em>command/write surface</em> — cancel, reroute, change-address, change-LOS. Commands have deterministic payloads; queries benefit from GraphQL's field-selection flexibility.
+        </div>
+
+        <h3>ACL GraphQL Architecture Overview</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 12 — GraphQL ACL Layer: Multiple Consumers, One Sterling Integration</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    subgraph consumers["CONSUMERS"]
+        MA["Mobile App\n(minimal fields)"]
+        CS["CS Portal\n(full order + fulfillment)"]
+        AN["Analytics Service\n(aggregate queries)"]
+        BF["BFF / Next.js\n(composite views)"]
+    end
+
+    subgraph aclgql["ACL — GraphQL Layer (Spring GraphQL / Netflix DGS)"]
+        GW2["GraphQL Gateway\n/acl/graphql"]
+        OR["OrderResolver"]
+        IR["InventoryResolver"]
+        FR["FulfillmentResolver"]
+        DL["DataLoader\n(batch + dedupe)"]
+        OR --> DL
+        IR --> DL
+        FR --> DL
+    end
+
+    subgraph trans["ACL Translation Core"]
+        OT2["Order Translator"]
+        IT2["Inventory Translator"]
+        FT2["Fulfillment Translator"]
+    end
+
+    subgraph sterling2["IBM STERLING OMS"]
+        SOAP2["SOAP APIs"]
+        MQ2["IBM MQ"]
+    end
+
+    consumers --> GW2
+    GW2 --> OR & IR & FR
+    DL --> trans
+    trans --> sterling2
+
+    style consumers fill:#1f6feb11,stroke:#58a6ff
+    style aclgql fill:#9e670011,stroke:#d29922
+    style trans fill:#23863611,stroke:#3fb950
+    style sterling2 fill:#da363311,stroke:#f85149
+          </div>
+        </div>
+
+        <h3>GraphQL Schema — Canonical Order Types (ACL-owned)</h3>
+        <pre><code>
+# ACL GraphQL Schema — canonical domain types
+# Sterling's XML schema NEVER leaks into this SDL
+
+type Order {
+  orderId: ID!
+  customerId: ID!
+  tenantId: ID!
+  type: OrderType!
+  status: OrderStatus!
+  createdAt: DateTime!
+  lines: [OrderLine!]!
+  shippingAddress: Address!
+  shippingTier: ShippingTier!
+  fulfillmentNode: FulfillmentNode
+  totalAmount: Money!
+}
+
+type OrderLine {
+  lineId: ID!
+  sku: String!
+  quantity: Int!
+  unitPrice: Money!
+  status: LineStatus!
+  estimatedShipDate: Date
+}
+
+enum OrderStatus {
+  SUBMITTED
+  RELEASED
+  PICKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  PARTIALLY_CANCELLED
+}
+
+enum ShippingTier {
+  ECONOMY
+  STANDARD
+  EXPRESS_2DAY
+  OVERNIGHT
+  SAME_DAY
+}
+
+type Query {
+  order(orderId: ID!): Order
+  ordersByCustomer(customerId: ID!, status: OrderStatus): [Order!]!
+  orderFulfillmentStatus(orderId: ID!): FulfillmentStatus
+}
+
+# Commands remain REST (not GraphQL mutations) — see ADR-005
+        </code></pre>
+
+        <h3>GraphQL Resolver with Sterling Translation</h3>
+        <pre><code>
+// Spring GraphQL Resolver in ACL service
+@QueryMapping
+public Order order(@Argument String orderId) {
+    // 1. Resolve Sterling key
+    String sterlingKey = keyMapper.toSterlingKey(UUID.fromString(orderId));
+
+    // 2. Fetch from Sterling SOAP (or read-cache if available)
+    SterlingOrderDTO sterlingOrder = soapAdapter
+        .invokeService("getOrderDetails", sterlingKey);
+
+    // 3. Translate — Sterling XML → canonical Order domain object
+    return orderTranslator.translate(sterlingOrder);
+    // Returns Order with clean enum statuses, UUID keys, Money types
+    // Zero Sterling field names visible to the GraphQL consumer
+}
+
+// DataLoader for batch line fetching (prevents N+1 on OrderLine queries)
+@BatchMapping
+public Map&lt;Order, List&lt;OrderLine&gt;&gt; lines(List&lt;Order&gt; orders) {
+    List&lt;String&gt; sterlingKeys = orders.stream()
+        .map(o -&gt; keyMapper.toSterlingKey(o.getOrderId()))
+        .collect(toList());
+
+    // Batch SOAP call to Sterling getOrderLineList
+    Map&lt;String, List&lt;SterlingOrderLine&gt;&gt; sterlingLines =
+        soapAdapter.batchGetOrderLines(sterlingKeys);
+
+    return orders.stream().collect(toMap(
+        o -&gt; o,
+        o -&gt; lineTranslator.translate(
+            sterlingLines.get(keyMapper.toSterlingKey(o.getOrderId())))
+    ));
+}
+        </code></pre>
+
+        <h3>Consumer Query Examples — GraphQL Field Selection in Action</h3>
+        <div class="two-col">
+          <div class="card">
+            <h3>Mobile App — Minimal Projection</h3>
+            <pre style="font-size:12px;"><code>
+query MobileOrderStatus {
+  order(orderId: "uuid-abc") {
+    status
+    shippingTier
+    lines {
+      sku
+      quantity
+      status
+    }
+  }
+}
+# Sterling XML has 500+ fields.
+# Mobile receives exactly 5.
+# ACL translates only what's asked.
+            </code></pre>
+          </div>
+          <div class="card">
+            <h3>CS Portal — Rich Composition</h3>
+            <pre style="font-size:12px;"><code>
+query CSPortalOrderDetail {
+  order(orderId: "uuid-abc") {
+    orderId
+    status
+    type
+    createdAt
+    shippingAddress { street, city, pincode }
+    shippingTier
+    fulfillmentNode { nodeId, name, type }
+    lines {
+      lineId, sku, quantity
+      unitPrice { amount, currency }
+      status, estimatedShipDate
+    }
+    totalAmount { amount, currency }
+  }
+}
+# CS Portal gets the full canonical model.
+# Still no Sterling fields visible.
+            </code></pre>
+          </div>
+        </div>
+
+        <h3>REST vs GraphQL in ACL — Decision Matrix</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>REST ACL Endpoint</th><th>GraphQL ACL Endpoint</th><th>Recommendation</th></tr></thead>
+            <tbody>
+              <tr><td>Best for</td><td>Commands (cancel, reroute, change-LOS)</td><td>Queries (order detail, fulfillment status, order history)</td><td class="rec">Use both — REST for writes, GraphQL for reads</td></tr>
+              <tr><td>Over-fetching from Sterling</td><td>Fixed payload — may over-fetch from Sterling</td><td>DataLoader can batch and project — fetch only fields needed</td><td class="rec">GraphQL reduces Sterling SOAP call overhead on reads</td></tr>
+              <tr><td>Consumer flexibility</td><td>One endpoint per use case; multiple consumers need multiple endpoints</td><td>One schema; consumers choose their projection</td><td class="rec">GraphQL wins for multi-consumer environments</td></tr>
+              <tr><td>Caching</td><td>HTTP GET cacheable at CDN/gateway level</td><td>POST by default; requires persisted queries or CDN config for caching</td><td class="warn">REST easier to cache; GraphQL needs extra setup</td></tr>
+              <tr><td>Mutations / commands</td><td>Clear HTTP semantics (POST, PATCH, DELETE)</td><td>GraphQL mutations possible but lose HTTP status code clarity</td><td class="rec">REST preferred for write commands with error semantics</td></tr>
+              <tr><td>Type safety</td><td>OpenAPI schema; codegen available</td><td>SDL schema; strong typing; codegen excellent</td><td class="rec">Both are good; GraphQL SDL maps cleanly to canonical domain types</td></tr>
+              <tr><td>N+1 problem</td><td>Custom batching needed</td><td>DataLoader pattern built in</td><td class="rec">GraphQL DataLoader prevents N+1 SOAP calls to Sterling</td></tr>
+              <tr><td>Operational complexity</td><td>Lower — standard HTTP tooling</td><td>Higher — needs GraphQL runtime, DataLoader, persisted queries</td><td class="warn">REST simpler to operate; GraphQL needs investment</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>GraphQL ACL — Key Design Rules</h3>
+        <div class="two-col">
+          <div class="card">
+            <h3>Do</h3>
+            <ul>
+              <li>Use <strong>DataLoader</strong> for all Sterling SOAP calls to prevent N+1 — batch by <code>OrderHeaderKey[]</code></li>
+              <li>Cache translated responses in Redis with TTL keyed to <code>orderId</code> — Sterling reads are expensive</li>
+              <li>Version the GraphQL schema (<code>@deprecated</code> directives) independently of Sterling upgrades</li>
+              <li>Define all types in canonical domain vocabulary — no Sterling field names in the SDL</li>
+              <li>Use persisted queries for production to enable CDN caching and prevent query injection</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Do NOT</h3>
+            <ul>
+              <li>Use GraphQL mutations for post-purchase write commands — REST gives clearer idempotency and error semantics</li>
+              <li>Expose Sterling's raw XML as a GraphQL scalar type (even as a fallback) — this breaks ACL isolation</li>
+              <li>Allow unbounded depth queries against Sterling — set <code>maxDepth</code> and <code>maxComplexity</code> limits</li>
+              <li>Skip DataLoader — without it, a 10-line order query triggers 10 individual Sterling SOAP calls</li>
+              <li>Use GraphQL subscriptions directly over Sterling MQ — use Kafka as the event backbone; subscribe to Kafka, not MQ</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-005 — GraphQL for ACL Read Surface, REST for Write Commands</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>The ACL serves multiple downstream consumers (mobile app, CS portal, BFF, analytics). Each needs different field projections from Sterling order data. Using REST, the team was proliferating narrow endpoints. Mutations (cancel, reroute) need clear HTTP status semantics and idempotency key support.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Expose a GraphQL endpoint (<code>/acl/graphql</code>) for all read/query operations over Sterling-derived data. Continue using REST endpoints (<code>/acl/commands/*</code>) for all write-back commands (cancel, reroute, change-LOS, change-address). The ACL owns one schema for each.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Consumers self-select fields — mobile stays lightweight; CS portal gets full detail. DataLoader prevents N+1 Sterling SOAP calls. Single SDL schema evolves independently of Sterling. <strong>Cons:</strong> GraphQL runtime adds operational surface; CDN caching requires persisted queries; team must learn DataLoader patterns.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>GraphQL mutations for commands:</strong> Rejected — Sterling write-back failures need HTTP 409/422 status codes, Retry-After headers, and idempotency-key request headers. GraphQL mutations don't support these HTTP-level semantics cleanly. <strong>REST-only:</strong> Rejected — would require maintaining 12+ narrow query endpoints across three consumer types, all doing similar Sterling translation with different field subsets.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S7: Implementation Guide -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Implementation Guide — Building the ACL</h2>
+      </div>
+      <div class="content">
+        <h3>Technology Stack Recommendation</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Recommended</th><th>Why</th><th>Alternative</th></tr></thead>
+            <tbody>
+              <tr><td>ACL Service Runtime</td><td class="rec">Spring Boot 3.x</td><td>Best-in-class XML/SOAP handling; teams know it in Sterling shops</td><td>Quarkus (GraalVM native)</td></tr>
+              <tr><td>GraphQL Runtime</td><td class="rec">Spring for GraphQL (Netflix DGS)</td><td>Annotation-driven resolvers; DataLoader built-in; SDL-first schema definition</td><td>graphql-java standalone</td></tr>
+              <tr><td>REST Command API</td><td class="rec">Spring MVC (OpenAPI 3)</td><td>Clear HTTP semantics for write commands; idempotency-key header support</td><td>JAX-RS</td></tr>
+              <tr><td>SOAP Client to Sterling</td><td class="rec">Apache CXF</td><td>Proven Sterling SOAP integration; WSDL → Java codegen</td><td>Spring-WS</td></tr>
+              <tr><td>MQ Client</td><td class="rec">IBM MQ Spring Boot Starter</td><td>Official IBM library; handles MQ-specific acknowledgment modes</td><td>JMS generic</td></tr>
+              <tr><td>Key Mapper Store</td><td class="rec">Redis + PostgreSQL</td><td>Redis for low-latency lookups; Postgres for durable audit</td><td>DynamoDB</td></tr>
+              <tr><td>Event Bus (Outbound)</td><td class="rec">Apache Kafka</td><td>Durable, replayable events; standard for retail event backbone</td><td>AWS EventBridge</td></tr>
+              <tr><td>XML Parsing</td><td class="rec">JAXB / Jackson-dataformat-xml</td><td>Type-safe Sterling XML deserialization</td><td>DOM/SAX (avoid)</td></tr>
+              <tr><td>DB CDC (Optional)</td><td class="rec">Debezium + DB2 connector</td><td>Capture Sterling DB changes without polling; low latency</td><td>Custom polling</td></tr>
+              <tr><td>ACL Container</td><td class="rec">Kubernetes (EKS/OpenShift)</td><td>HA deployment; rolling updates without downtime</td><td>ECS Fargate</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Project Structure (Spring Boot ACL Service)</h3>
+        <pre><code>
+sterling-acl-service/
+├── adapter/
+│   ├── inbound/
+│   │   ├── SterlingMQEventAdapter.java      # JMS → internal DTO
+│   │   ├── SterlingSOAPAdapter.java         # SOAP client
+│   │   └── SterlingCDCAdapter.java          # Debezium CDC consumer
+│   └── outbound/
+│       ├── KafkaDomainEventPublisher.java   # domain events → Kafka
+│       └── SterlingCommandAdapter.java      # canonical commands → SOAP
+├── translator/
+│   ├── OrderTranslator.java                 # YantraCommerceOrder → Order
+│   ├── StatusCodeMapper.java                # Sterling codes → enums
+│   ├── InventoryTranslator.java             # GIV XML → InventoryLevel
+│   └── KeyMapper.java                       # Sterling key ↔ canonical UUID
+├── domain/                                  # ACL's internal canonical model
+│   ├── Order.java
+│   ├── OrderStatus.java (enum)
+│   └── OrderLine.java
+├── port/
+│   ├── graphql/
+│   │   ├── OrderResolver.java               # GraphQL @QueryMapping
+│   │   ├── OrderLineDataLoader.java         # batch Sterling line fetches
+│   │   └── schema.graphqls                  # canonical SDL (no Sterling types)
+│   ├── rest/
+│   │   ├── ACLOrderCommandController.java   # REST commands: cancel, reroute, LOS
+│   │   └── ACLOrderQueryController.java     # REST fallback queries
+├── persistence/
+│   ├── KeyMappingRepository.java
+│   └── IdempotencyStore.java
+└── config/
+    ├── SterlingConnectionConfig.java
+    ├── KafkaConfig.java
+    └── MQConfig.java
+        </code></pre>
+
+        <h3>Non-Negotiable ACL Design Rules</h3>
+        <ol class="step-list">
+          <li>
+            <div class="step-content">
+              <strong>No Business Logic in ACL</strong>
+              <p>The ACL translates — it does not decide. If you find yourself writing if/else business rules inside the ACL, that logic belongs in the new domain service. ACL is a dumb pipe with semantic awareness.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>New Services Must Never Import Sterling Classes</strong>
+              <p>Your Order Service must have zero compile-time dependency on Sterling's JAR files or XML schemas. If a Sterling class appears in any new service's import, the ACL boundary is broken.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>ACL Must Be Testable Without Sterling</strong>
+              <p>All translation logic should be unit-tested with stubbed Sterling responses. The SOAP/MQ adapter can be mocked. This is your canary — if you can't test translation without Sterling, you have a coupling problem.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Idempotency on Both Read and Write Paths</strong>
+              <p>Sterling calls can fail and be retried. Every write-back to Sterling via the ACL must carry an idempotency key. Every event translation must be deduplicated (event ID store in Redis with TTL).</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Observability: Trace Across the ACL Boundary</strong>
+              <p>Propagate <code>traceId</code> across the ACL. When a Sterling event enters the ACL and a Kafka event exits, the same <code>traceId</code> must be visible in both. This is essential for debugging post-purchase modification failures that span Sterling + new services.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- S8: Migration Phases -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Migration Phases — ACL Lifecycle in Sterling Modernization</h2>
+      </div>
+      <div class="content">
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — Sterling OMS Modernization Phases with ACL</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark'}}%%
+gantt
+    title Sterling OMS Modernization - ACL-Enabled Migration
+    dateFormat  YYYY-MM
+    axisFormat  %b %Y
+
+    section Phase 0 - Discovery
+    Sterling API Audit and Model Map      :p0a, 2024-01, 6w
+    ACL Service Scaffold + Key Map Store  :p0b, 2024-02, 4w
+    Observability Stack Setup             :p0c, 2024-02, 3w
+
+    section Phase 1 - ACL Live and Read Shadow
+    ACL inbound adapters MQ and SOAP      :p1a, 2024-03, 6w
+    Translator unit test coverage 90pct   :p1b, 2024-03, 5w
+    Shadow mode - ACL mirrors events      :p1c, 2024-04, 6w
+
+    section Phase 2 - New Services Read Path
+    Inventory Service reads from ACL      :p2a, 2024-05, 8w
+    Order Query Service CQRS read         :p2b, 2024-05, 8w
+    Feature flag 10pct to 50pct to 100pct :p2c, 2024-07, 4w
+
+    section Phase 3 - New Services Write Path
+    Order Modification via ACL write-back :p3a, 2024-08, 8w
+    Post-purchase flows validated         :p3b, 2024-09, 6w
+    Dual-write validation reconciliation  :p3c, 2024-10, 4w
+
+    section Phase 4 - Decommission ACL
+    New services own full order lifecycle :p4a, 2024-11, 8w
+    Sterling MQ adapters shut down        :p4b, 2025-01, 4w
+    ACL service retired                   :p4c, 2025-02, 3w
+          </div>
+        </div>
+
+        <h3>Phase-by-Phase ACL Strategy</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phase</th><th>ACL Role</th><th>Traffic Pattern</th><th>Risk</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Phase 0</strong><br>Discovery</td>
+                <td>Document Sterling APIs, build key mapping schema, scaffold ACL service</td>
+                <td>No production traffic yet</td>
+                <td class="rec">Low</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 1</strong><br>Shadow Mode</td>
+                <td>ACL consumes Sterling events but new services only read (no writes). Validate translations in prod shadow.</td>
+                <td>Sterling handles 100%; ACL passively mirrors</td>
+                <td class="rec">Low</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 2</strong><br>Read Migration</td>
+                <td>New services consume read events via ACL. Sterling still owns writes. Feature flag-gated traffic.</td>
+                <td>Reads: new services via ACL<br>Writes: still Sterling</td>
+                <td class="warn">Medium</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 3</strong><br>Write Migration</td>
+                <td>ACL handles write-back commands from new services to Sterling. Dual-write with reconciliation.</td>
+                <td>Dual-write: new service + Sterling reconciled</td>
+                <td class="danger">High — needs reconciliation</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 4</strong><br>Decommission</td>
+                <td>ACL adapters shut down one by one as bounded contexts fully migrate. ACL service retired last.</td>
+                <td>New services own 100%</td>
+                <td class="warn">Medium — careful cutover</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S9: ACL Lifecycle & Removal -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>ACL Lifecycle — The Most Important Rule: Plan Its Removal</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-danger">
+          <div class="callout-title">Architectural Anti-Pattern: Permanent ACL</div>
+          The most dangerous ACL failure mode in enterprise modernization is when the ACL becomes <strong>permanent infrastructure</strong> because legacy was never decommissioned. You end up maintaining three systems: Sterling, ACL, and new services — all indefinitely. The ACL must have a <strong>defined sunset date from Day 1</strong>.
+        </div>
+
+        <h3>ACL Removal Checklist</h3>
+        <ol class="step-list">
+          <li>
+            <div class="step-content">
+              <strong>Every Sterling-originated event has a canonical replacement</strong>
+              <p>New services must own and emit their own domain events. When the last event that was originally sourced from Sterling is now sourced from a new service, that ACL adapter can be turned off.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Zero remaining Sterling write-back commands</strong>
+              <p>All post-purchase modifications, cancellations, and fulfillment triggers must originate from new services directly — not through ACL → Sterling. Sterling must be fully decommissioned as the system of record before ACL can be removed.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Key mapping store migrated</strong>
+              <p>All historical Sterling key → canonical UUID mappings must be migrated to a permanent read-only archive in the new data platform for audit/compliance. The ACL's Redis/Postgres key store should not be deleted — archived.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Consumer lag = 0 on all ACL-published Kafka topics</strong>
+              <p>Ensure no consumers are still depending on ACL-published events before shutting down ACL Kafka publishers. Use consumer group monitoring dashboards.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Traffic reconciliation report signed off</strong>
+              <p>Compare order volume and status transitions in new services vs. what Sterling processed in the equivalent period. No unexplained discrepancies before cutting over.</p>
+            </div>
+          </li>
+        </ol>
+
+        <h3>ACL Debt Metrics — Track These Weekly</h3>
+        <div class="two-col">
+          <div class="card">
+            <h3>Translation Coverage</h3>
+            <ul>
+              <li>% of Sterling event types with ACL translators</li>
+              <li>% of Sterling API operations wrapped in ACL adapters</li>
+              <li>Translation error rate (failed parses / total events)</li>
+              <li>Untranslated field count per event type</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Migration Progress</h3>
+            <ul>
+              <li>% of order volume flowing through new services vs Sterling</li>
+              <li>Active ACL adapters still running (reduce to 0)</li>
+              <li>Sterling API call volume (reduce to 0)</li>
+              <li>ACL write-back command volume (reduce to 0)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S10: ADRs -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Architecture Decision Records</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — ACL as Dedicated Microservice vs. Library per New Service</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>New microservices need to interact with Sterling during the migration period. The ACL translation logic must live somewhere — either as a shared library in each service or as a centralized service.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Deploy ACL as a dedicated, independently deployable microservice with its own Kubernetes deployment, database, and Kafka topics. New services never import Sterling libraries.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Single decommission target; independent deployable; clear ownership; no Sterling class leakage into new services. <strong>Cons:</strong> Additional network hop for synchronous calls; another service to operate.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Library embedded per service:</strong> Rejected — Sterling schema changes would require updating and redeploying every service. Sterling classes leak into domain code. <strong>ACL inside Sterling itself:</strong> Rejected — requires Sterling customization deployment for every change; violates isolation principle.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — Async Event-Driven ACL vs. Synchronous ACL Proxy</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>The ACL can operate synchronously (new service calls ACL, ACL calls Sterling, returns response) or asynchronously (ACL translates Sterling events and publishes to Kafka, new services consume from Kafka).</p></div>
+            <div class="adr-field"><label>Decision</label><p>Default to async event-driven for all read/event flows (MQ → ACL → Kafka → new services). Use synchronous ACL only for write-back commands where the caller needs an immediate acknowledgment (e.g., order cancellation confirmation).</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> New services are decoupled from Sterling's availability; Kafka provides event replay for bootstrap; async is naturally more resilient. <strong>Cons:</strong> Eventual consistency for read operations; need to handle out-of-order events.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Fully synchronous proxy:</strong> Creates a latency chain Sterling → ACL → new service. Sterling downtime immediately impacts new services. Eliminates resilience benefits of microservices architecture.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — Key Mapping Store: Redis + PostgreSQL vs. Single Store</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>ACL needs to maintain bidirectional key mappings between Sterling's internal keys and canonical UUIDs. This store must be fast (order of milliseconds for lookup on hot paths) and durable (cannot lose mappings).</p></div>
+            <div class="adr-field"><label>Decision</label><p>Dual-store: Redis for sub-millisecond lookups on hot translation paths; PostgreSQL as durable source of truth with full audit history. Redis is populated from Postgres on startup and kept warm during operation.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Fast lookups without Postgres round-trip on every event; durable audit trail; Redis can be rebuilt from Postgres if evicted. <strong>Cons:</strong> Two stores to operate; need cache invalidation logic.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Redis only:</strong> Risk of key loss on Redis failure/eviction with no recovery path. <strong>Postgres only:</strong> Acceptable for low-volume but adds 5-10ms per translation — unacceptable for high-throughput event flows.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-004 — Transactional Outbox in ACL for MQ → Kafka Reliability</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>When the ACL receives a Sterling MQ event and needs to publish a canonical domain event to Kafka, there is a dual-write problem: MQ acknowledgment and Kafka publish can diverge if the ACL crashes mid-operation.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Implement the Transactional Outbox pattern: write the translated canonical event to a PostgreSQL outbox table in the same transaction as key mapping updates. A separate outbox relay process (Debezium CDC) reads the outbox and publishes to Kafka. MQ message is acknowledged only after outbox write succeeds.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> At-least-once delivery guarantee; no lost events even on ACL crash; exactly-once effectively achieved with downstream idempotency. <strong>Cons:</strong> Additional Postgres table; Debezium relay process to operate.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p><strong>Dual-write without outbox:</strong> ACL publishes to Kafka then ACKs MQ. If Kafka publish succeeds but ACL crashes before MQ ACK, Sterling re-delivers causing duplicate events. Without outbox, reliability is non-deterministic.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- S11: Interview Cheat Sheet -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <h2>Interview Cheat Sheet — Principal / Director Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top Clarifying Questions</h4>
+            <ul>
+              <li>Is Sterling the system of record for orders during migration, or are we running dual-write?</li>
+              <li>What is the target decommission date for Sterling? (ACL is temporary — what's the sunset?)</li>
+              <li>Are there real-time SLA requirements on the Sterling integration, or can we accept eventual consistency?</li>
+              <li>Which Sterling APIs are in-scope: are we integrating with 9.3, 10.x, or both?</li>
+              <li>What existing IBM MQ topology exists — are agents publishing to known queues already?</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>⚖️ Key Trade-offs to Verbalize</h4>
+            <ul>
+              <li><strong>ACL adds latency</strong> → mitigate with async-first design; sync only for write-backs</li>
+              <li><strong>ACL can become permanent if Sterling isn't decommissioned</strong> → need hard migration milestones</li>
+              <li><strong>Async ACL creates eventual consistency</strong> → explicit consistency contracts with downstream consumers</li>
+              <li><strong>Key mapper is a single point of failure</strong> → HA Redis + Postgres backup, pre-warm on startup</li>
+              <li><strong>Translation errors silently drop events</strong> → DLQ + alerts on every translator</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🔍 Failure Modes Interviewers Probe</h4>
+            <ul>
+              <li>"What happens if Sterling is down — can your new services still serve orders?"</li>
+              <li>"What happens if the ACL crashes mid-translation — do you lose events?"</li>
+              <li>"What if a new order ID in your system has no matching Sterling key yet?"</li>
+              <li>"How do you handle Sterling schema changes in a future Sterling upgrade?"</li>
+              <li>"Your ACL has been running for 2 years — how do you prevent it becoming permanent?"</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>✨ "Wow" Depth Signals</h4>
+            <ul>
+              <li>Distinguish ACL from Facade: ACL translates domain semantics, Facade only wraps API surface</li>
+              <li>Call out Sterling's status hierarchy (1100.100 etc.) and the semantic mapping challenge — most candidates don't know this</li>
+              <li>Propose Transactional Outbox pattern for MQ → Kafka reliability — shows event architecture maturity</li>
+              <li>Name the ACL's own sunset as a first-class architectural concern; show a decommission checklist</li>
+              <li>Mention that ACL should emit Kafka events with the same traceId as the originating Sterling request — for end-to-end distributed tracing across the legacy boundary</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>🚫 Common Mistakes to Avoid</h4>
+            <ul>
+              <li>Putting business logic in the ACL (validation, rules, calculations)</li>
+              <li>Treating ACL as an API gateway (they solve different problems)</li>
+              <li>Not planning for the ACL's own removal — making it permanent infrastructure</li>
+              <li>Synchronous ACL chain for all calls — creates a latency bottleneck and Sterling-as-SPOF</li>
+              <li>Letting Sterling classes leak into new service codebases via shared libraries</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h4>❓ Follow-up Questions to Ask Interviewer</h4>
+            <ul>
+              <li>"What's the organization's tolerance for eventual consistency on post-purchase flows — is real-time modification confirmation required by the customer-facing app?"</li>
+              <li>"Is there an existing Kafka / event backbone in the GCC, or would this be greenfield?"</li>
+              <li>"Has the team considered using Temporal.io as a replacement for Sterling's Task Queue agents — and would the ACL need to bridge Sterling agents to Temporal workflows?"</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success" style="margin-top: 24px;">
+          <div class="callout-title">One-Line Definition to Open With in Any Interview</div>
+          <p style="font-size:15px; color:var(--text);">"The Anti-Corruption Layer is a bidirectional semantic translation boundary that speaks Sterling's language on one side and our clean domain language on the other — it prevents Sterling's 20-year-old domain model from leaking into and corrupting our new microservices architecture, and it has a planned sunset date tied to Sterling's decommission."</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+
+  function scrollToSection(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

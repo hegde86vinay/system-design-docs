@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backpressure Mechanisms — System Design Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --bg-card:   #161b22;
+      --bg-hover:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --tag-bg:    #1f6feb33;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; min-width: 260px; background: var(--bg-card);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted);
+      padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .nav-item {
+      display: block; padding: 7px 20px; color: var(--text-muted); text-decoration: none;
+      font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+    .nav-item .num { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-right: 6px; }
+    .main { flex: 1; max-width: 980px; padding: 40px 48px; margin: 0 auto; }
+    .doc-header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 40px; }
+    .doc-header h1 { font-size: 28px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; }
+    .doc-header h1 span { color: var(--accent); }
+    .meta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.03em; }
+    .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+    .badge-green  { background: #238636aa; color: var(--accent2); border: 1px solid #2ea04366; }
+    .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .section-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+    .section-header h2 { font-size: 20px; font-weight: 600; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .callout { padding: 14px 18px; border-radius: 6px; border-left: 3px solid; margin: 16px 0; font-size: 14px; }
+    .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+    .callout-warn   { background: #9e670011; border-color: var(--warn); }
+    .callout-danger { background: #da363311; border-color: var(--danger); }
+    .callout-success { background: #23863611; border-color: var(--accent2); }
+    .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .diagram-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+    .diagram-label { font-size: 12px; font-family: var(--mono); color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { background: var(--bg-hover); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    td.rec { color: var(--accent2); font-weight: 500; }
+    .adr { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+    .adr-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .adr-header:hover { background: var(--bg-hover); }
+    .adr-title { font-weight: 600; font-size: 14px; }
+    .adr-toggle { font-family: var(--mono); color: var(--text-muted); font-size: 18px; }
+    .adr-body { padding: 0 20px 20px; display: none; }
+    .adr-body.open { display: block; }
+    .adr-field { margin-top: 12px; }
+    .adr-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+    .adr-field p { font-size: 14px; }
+    pre, code { font-family: var(--mono); font-size: 13px; }
+    pre { background: #010409; border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+    code { color: #79c0ff; }
+    pre code { color: var(--text); }
+    .content h3 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; color: var(--accent); }
+    .content h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .content p { margin-bottom: 12px; color: #cdd9e5; }
+    .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+    .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cheat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .cheat-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+    .cheat-card ul { padding-left: 18px; }
+    .cheat-card li { font-size: 13px; color: #cdd9e5; margin-bottom: 6px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .highlight-box { background: linear-gradient(135deg, #1f6feb22, #3fb95011); border: 1px solid #58a6ff44; border-radius: 8px; padding: 20px 24px; margin: 16px 0; }
+    .highlight-box h3 { color: var(--accent2); margin-top: 0; }
+    .tag { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 4px; margin: 2px; }
+    .tag-blue { background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb44; }
+    .tag-green { background: #23863622; color: var(--accent2); border: 1px solid #2ea04344; }
+    .tag-red { background: #da363322; color: var(--danger); border: 1px solid #da363344; }
+    .tag-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+    @media print { .sidebar { display: none; } .main { padding: 20px; max-width: 100%; } .adr-body { display: block !important; } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 24px 20px; } .cheat-grid { grid-template-columns: 1fr; } .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Backpressure — Design Guide</div>
+    <a class="nav-item active" onclick="navScrollTo(event, 's1')"><span class="num">01</span>Executive Summary</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's2')"><span class="num">02</span>Core Concepts</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's3')"><span class="num">03</span>Distributed Architecture</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's4')"><span class="num">04</span>Kafka & Backpressure</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's5')"><span class="num">05</span>IBM Sterling OMS + MQ</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's6')"><span class="num">06</span>Frontend Backpressure</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's7')"><span class="num">07</span>Patterns Comparison</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's8')"><span class="num">08</span>Retail/OMS Playbook</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's9')"><span class="num">09</span>ADRs & Trade-offs</a>
+    <a class="nav-item" onclick="navScrollTo(event, 's10')"><span class="num">10</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+    <header class="doc-header">
+      <h1>Backpressure Mechanisms <span>— System Design Reference</span></h1>
+      <p style="color:var(--text-muted);font-size:14px;">Practitioner-level guide: How backpressure works, Kafka's role, IBM Sterling OMS + MQ, and frontend patterns</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Distributed Systems</span>
+        <span class="badge badge-green">Retail / OMS</span>
+        <span class="badge badge-yellow">Kafka · IBM MQ · Sterling</span>
+        <span class="badge badge-blue">GCC Architecture</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">
+          Generated: <span id="gen-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- S1: Executive Summary -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2>Executive Summary</h2>
+      </div>
+      <div class="content">
+        <div class="highlight-box">
+          <h3>What is Backpressure?</h3>
+          <p>Backpressure is a <strong>flow-control signal</strong> that travels <em>upstream</em> from an overwhelmed consumer to a faster producer, telling it to slow down, buffer, or shed load. Without it, a fast producer floods a slow consumer — queues fill to infinity, memory is exhausted, latency spikes, and the system collapses. Backpressure is the mechanism that keeps distributed systems <strong>stable under load</strong>.</p>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mental Model</div>
+          Think of a garden hose connected to a fire hydrant with no pressure regulator. Without backpressure, the hose bursts. With backpressure: the consumer (hose nozzle) signals its capacity; the producer (hydrant) adapts the flow. Distributed systems work the same way across networks, message brokers, and service boundaries.
+        </div>
+
+        <h3>Why it Matters at Scale</h3>
+        <p>In Retail/Ecommerce GCCs operating at 10K–500K RPS peak (Diwali, Big Billion Day), every downstream service — OMS, inventory, payments — has a fixed capacity ceiling. Flash sale events generate 50x burst traffic in seconds. <strong>Without explicit backpressure, the entire order pipeline fails cascade-style</strong>: API gateway → OMS → MQ → Sterling agents.</p>
+
+        <div class="two-col">
+          <div class="card">
+            <strong style="color:var(--danger)">Without Backpressure</strong>
+            <ul style="margin-top:10px;">
+              <li>Producer runs at full speed</li>
+              <li>Consumer queues grow unbounded</li>
+              <li>OOM / GC storms crash services</li>
+              <li>Cascading failures across the system</li>
+              <li>Data loss or duplicate processing</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent2)">With Backpressure</strong>
+            <ul style="margin-top:10px;">
+              <li>Producer throttles to consumer capacity</li>
+              <li>Queues stay bounded and healthy</li>
+              <li>Graceful degradation, not crashes</li>
+              <li>SLOs preserved under burst traffic</li>
+              <li>Predictable end-to-end latency</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S2: Core Concepts -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2>Core Concepts & Mechanisms</h2>
+      </div>
+      <div class="content">
+        <h3>The Backpressure Signal Taxonomy</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mechanism</th><th>Signal Type</th><th>Where Applied</th><th>Latency Impact</th><th>Complexity</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Rate Limiting</strong></td><td>Token Bucket / Leaky Bucket</td><td>API Gateway, Load Balancer</td><td>Adds jitter/delay</td><td>Low</td></tr>
+              <tr><td><strong>Circuit Breaker</strong></td><td>Binary open/closed signal</td><td>Service mesh, HTTP clients</td><td>Fast-fail, no latency</td><td>Medium</td></tr>
+              <tr><td><strong>Queue Depth Monitoring</strong></td><td>Consumer lag metric</td><td>Kafka, MQ, SQS</td><td>Passive — no direct signal</td><td>Low</td></tr>
+              <tr><td><strong>Pull-based Fetch</strong></td><td>Consumer controls poll rate</td><td>Kafka consumers</td><td>Consumer-driven, stable</td><td>Low</td></tr>
+              <tr><td><strong>Reactive Streams</strong></td><td>Demand-driven subscription</td><td>gRPC streaming, RxJava, Project Reactor</td><td>Near-zero overhead</td><td>High</td></tr>
+              <tr><td><strong>TCP Flow Control</strong></td><td>Receive Window advertisement</td><td>OS / network layer</td><td>Transparent</td><td>Built-in</td></tr>
+              <tr><td><strong>Semaphore / Bulkhead</strong></td><td>Concurrency limit</td><td>Thread pools, connection pools</td><td>Queue or reject</td><td>Medium</td></tr>
+              <tr><td><strong>Load Shedding</strong></td><td>HTTP 429 / 503 response</td><td>API Gateway, service</td><td>Immediate rejection</td><td>Low</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Reactive Streams Specification (the Formal Standard)</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 1 — Reactive Streams Protocol (Publisher → Subscriber)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+sequenceDiagram
+    participant P as Publisher<br/>(Producer)
+    participant S as Subscriber<br/>(Consumer)
+    
+    S->>P: subscribe(this)
+    P->>S: onSubscribe(Subscription)
+    
+    Note over S: Consumer decides demand
+    S->>P: request(N=100)
+    
+    loop emit up to N items
+      P->>S: onNext(item)
+    end
+    
+    Note over S: Consumer processed batch, ready for more
+    S->>P: request(N=50)
+    
+    loop emit up to 50 items
+      P->>S: onNext(item)
+    end
+    
+    Note over S,P: Backpressure: Consumer never gets<br/>more items than it requested
+    P->>S: onComplete()
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Key Insight — Pull vs Push</div>
+          Traditional messaging is <strong>push-based</strong>: the broker pushes messages to consumers as fast as possible. Reactive Streams / pull-based systems invert this: the <strong>consumer pulls</strong> exactly what it can handle. Kafka's architecture is inherently pull-based, making it naturally backpressure-friendly. IBM MQ is push-based by default, requiring explicit configuration to achieve backpressure.
+        </div>
+
+        <h3>The Backpressure Stack — Layer by Layer</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 2 — Backpressure Occurs at Every Layer of the Stack</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    FE["🖥️ Frontend Layer\nDebounce · Virtual Scroll · RTK Query · SWR\nOptimistic UI · Request Deduplication"]
+    AG["🔀 API Gateway / Load Balancer\nRate Limiting · Token Bucket\nCircuit Breaker · Queue Depth Cap"]
+    SVC["⚙️ Microservices Layer\nBulkhead / Semaphore\nReactive Streams (Project Reactor, RxJava)\nThread Pool Isolation"]
+    BROKER["📨 Message Broker Layer\nKafka: Pull-based fetch, Consumer Lag\nIBM MQ: Max Depth, Flow Control\nSQS: Visibility Timeout, DLQ"]
+    DB["🗄️ Data / Storage Layer\nConnection Pool Limits\nRead Replica Routing\nDynamo Adaptive Capacity"]
+    TCP["🌐 Network / OS Layer\nTCP Receive Window\nNagle Algorithm\nSocket Buffer Tuning"]
+
+    FE --> AG --> SVC --> BROKER --> DB
+    SVC --> TCP
+    BROKER --> DB
+
+    style FE fill:#1f6feb33,stroke:#58a6ff,color:#e6edf3
+    style AG fill:#23863633,stroke:#3fb950,color:#e6edf3
+    style SVC fill:#9e670022,stroke:#d29922,color:#e6edf3
+    style BROKER fill:#da363333,stroke:#f85149,color:#e6edf3
+    style DB fill:#1f6feb33,stroke:#58a6ff,color:#e6edf3
+    style TCP fill:#30363d,stroke:#8b949e,color:#8b949e
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: Distributed Architecture -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2>Backpressure in Distributed Architectures</h2>
+      </div>
+      <div class="content">
+        <h3>The Problem: Heterogeneous Consumer Speeds</h3>
+        <p>In a distributed system, different services process at vastly different rates. An order submission API can accept 50K RPS, but Sterling OMS agents may process only 500 orders/second. Without backpressure, the gap between producer and consumer rates manifests as unbounded queue growth, OOM crashes, and eventually total system failure.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 3 — Retail Order Pipeline Backpressure Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    U["👤 Users\n50K concurrent flash sale"]
+    CDN["Akamai CDN\nStatic assets"]
+    WAF["AWS WAF + Shield\nDDoS Protection"]
+    APIGW["API Gateway Kong\nRate Limit: 10K RPS\nToken Bucket per tenant"]
+    BFF["GraphQL BFF\nNext.js / Node.js"]
+
+    APIGW -- "HTTP 429 → Client" --> U
+
+    subgraph "Order Submission Path"
+      OS["Order Service\nBulkhead: 200 concurrent\nCB: Resilience4j"]
+      KAFKA["Kafka Cluster\norder-submitted topic\n12 partitions\nRetention: 7 days"]
+    end
+
+    subgraph "Order Processing — Consumer Side"
+      OC["Order Consumer\nKafka Consumer Group\nmax.poll.records=50\nConsumer Lag Monitoring"]
+      OMS["IBM Sterling OMS\nTask Queue Agents\nmax 500 TPS"]
+      MQ["IBM MQ\norder-processing queue\nMax Depth: 50K\nFlow Control enabled"]
+    end
+
+    subgraph "Fulfillment Path"
+      FULF["Fulfillment Service\nReactor Flux\nrequest(N) pattern"]
+      WH["Warehouse System\n200 TPS ceiling"]
+    end
+
+    U --> CDN --> WAF --> APIGW --> BFF --> OS
+    OS -- "produce event" --> KAFKA
+    KAFKA -- "consumer pulls\nmax.poll.records=50" --> OC
+    OC -- "REST call throttled" --> OMS
+    OMS -- "put message" --> MQ
+    MQ -- "consumer" --> FULF
+    FULF -- "throttled calls" --> WH
+
+    style KAFKA fill:#da363333,stroke:#f85149,color:#e6edf3
+    style OMS fill:#9e670022,stroke:#d29922,color:#e6edf3
+    style MQ fill:#9e670022,stroke:#d29922,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>Pattern 1 — Token Bucket Rate Limiting (API Gateway)</h3>
+        <div class="card">
+          <p>Each client/tenant gets a <strong>bucket of tokens</strong> replenished at a fixed rate. Each request consumes one token. When the bucket is empty, requests are rejected with HTTP 429. This is the first line of backpressure defense.</p>
+          <pre><code># Kong API Gateway — Rate Limiting Plugin
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 600          # 600 req/min per consumer
+      second: 20           # burst ceiling: 20 req/s
+      policy: redis        # shared state across Kong nodes
+      limit_by: consumer
+      error_code: 429
+      error_message: "Rate limit exceeded — retry after {retry_after}s"</code></pre>
+        </div>
+
+        <h3>Pattern 2 — Bulkhead / Semaphore (Service Layer)</h3>
+        <div class="card">
+          <p>Limits concurrent in-flight requests to a service. Excess requests are queued briefly or fast-failed, preventing thread pool exhaustion. Named after ship bulkheads that isolate flooding.</p>
+          <pre><code>// Resilience4j Bulkhead — Order Service
+BulkheadConfig config = BulkheadConfig.custom()
+    .maxConcurrentCalls(200)           // max 200 concurrent Sterling calls
+    .maxWaitDuration(Duration.ofMillis(100))  // queue for 100ms then fail
+    .build();
+
+Bulkhead ordersBulkhead = Bulkhead.of("sterling-oms", config);
+
+// Decorated call — fails fast when bulkhead full
+ordersBulkhead.executeSupplier(() -> sterlingOmsClient.createOrder(order));</code></pre>
+        </div>
+
+        <h3>Pattern 3 — Circuit Breaker (Cascade Failure Prevention)</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 4 — Circuit Breaker State Machine</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN : failure rate > 50%\nin sliding window of 10 calls
+    OPEN --> HALF_OPEN : wait 30 seconds
+    HALF_OPEN --> CLOSED : 3 consecutive successes
+    HALF_OPEN --> OPEN : any failure
+    
+    CLOSED : CLOSED\nNormal operation\nAll requests pass
+    OPEN : OPEN\nFast-fail all requests\nReturn fallback response\nNo calls to downstream
+    HALF_OPEN : HALF-OPEN\nAllow limited probe calls\nTest if service recovered
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: Kafka -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2>Kafka's Role in Backpressure</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-success">
+          <div class="callout-title">Core Insight</div>
+          Kafka does NOT implement backpressure in the Reactive Streams sense — it doesn't send a "slow down" signal upstream to producers. Instead, Kafka implements backpressure <strong>architecturally</strong>: by decoupling producers from consumers with a durable, partitioned log, it allows consumers to <strong>independently control their consumption rate</strong> without the producer ever being aware.
+        </div>
+
+        <h3>Why Kafka is Inherently Backpressure-Friendly</h3>
+        <div class="two-col">
+          <div class="card">
+            <strong style="color:var(--accent)">Pull-Based Consumer Architecture</strong>
+            <p style="margin-top:8px;">Kafka consumers <strong>poll</strong> the broker — they pull messages at their own pace. The broker never pushes. This is the fundamental reason Kafka naturally implements backpressure: the consumer dictates the throughput, not the producer.</p>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent)">Durable Buffer by Design</strong>
+            <p style="margin-top:8px;">Kafka partitions act as a virtually unbounded, ordered buffer. Producers write at full speed. Consumers catch up independently. The <strong>consumer lag</strong> metric is the backpressure signal — it tells you how far behind consumers are.</p>
+          </div>
+        </div>
+
+        <h3>Key Kafka Consumer-Side Backpressure Controls</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 5 — Kafka Consumer Backpressure Configuration</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart LR
+    subgraph "Kafka Broker"
+      P0["Partition 0\noffset: 10,000"]
+      P1["Partition 1\noffset: 9,800"]
+      P2["Partition 2\noffset: 10,200"]
+    end
+
+    subgraph "Consumer Group: order-processors"
+      C0["Consumer 0\nCommitted: 9,950\nLag: 50"]
+      C1["Consumer 1\nCommitted: 9,700\nLag: 100"]
+      C2["Consumer 2\nCommitted: 10,150\nLag: 50"]
+    end
+
+    subgraph "Backpressure Controls"
+      PC["max.poll.records=50\nmax.poll.interval.ms=300000\nfetch.min.bytes=1KB\nfetch.max.wait.ms=500"]
+    end
+
+    subgraph "Downstream"
+      OMS["Sterling OMS\n500 TPS ceiling"]
+    end
+
+    P0 --> C0 --> OMS
+    P1 --> C1 --> OMS
+    P2 --> C2 --> OMS
+    PC -.-> C0
+    PC -.-> C1
+    PC -.-> C2
+
+    style PC fill:#23863622,stroke:#3fb950,color:#e6edf3
+          </div>
+        </div>
+
+        <div class="card">
+          <strong style="color:var(--accent)">Critical Consumer Configuration</strong>
+          <pre><code># Consumer config for Sterling OMS integration
+# Controls how much Kafka pushes per poll
+max.poll.records=50               # Only fetch 50 messages per poll cycle
+                                  # Set based on Sterling OMS TPS capacity
+
+max.poll.interval.ms=300000       # 5min — must process 50 records in this time
+                                  # Else consumer is kicked from group → rebalance
+
+fetch.min.bytes=1024              # Wait for at least 1KB before returning
+fetch.max.wait.ms=500             # Max 500ms wait if min.bytes not met
+
+# Producer config — buffer-side backpressure
+buffer.memory=67108864            # 64MB producer buffer
+max.block.ms=60000                # Block producer for 60s if buffer full
+                                  # This IS producer-side backpressure signal</code></pre>
+        </div>
+
+        <h3>Consumer Lag as the Backpressure Telemetry Signal</h3>
+        <p>Consumer lag is the <strong>key operational metric</strong> for Kafka-based backpressure. It is the difference between the latest offset produced and the consumer's committed offset — i.e., how many unprocessed messages are waiting.</p>
+
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 6 — Consumer Lag Triggered Autoscaling (KEDA Pattern)</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    LAG["Consumer Lag\nMonitored via Prometheus\nKafka Exporter"]
+    PROM["Prometheus\nAlertmanager"]
+    KEDA["KEDA ScaledObject\nKafka Trigger\nlagThreshold: 1000"]
+
+    subgraph "Consumer Deployment"
+      C1["Consumer Pod 1"]
+      C2["Consumer Pod 2"]
+      C3["Consumer Pod 3 (scaled out)"]
+      C4["Consumer Pod 4 (scaled out)"]
+    end
+
+    KAFKA["Kafka Topic\norder-submitted\n12 partitions max"]
+
+    LAG --> PROM --> KEDA
+    KEDA -- "scale out when lag > 1000" --> C3
+    KEDA -- "scale out when lag > 2000" --> C4
+    KAFKA --> C1
+    KAFKA --> C2
+    KAFKA --> C3
+    KAFKA --> C4
+
+    style KEDA fill:#23863622,stroke:#3fb950,color:#e6edf3
+    style KAFKA fill:#da363333,stroke:#f85149,color:#e6edf3
+          </div>
+        </div>
+
+        <pre><code># KEDA ScaledObject — autoscale consumers based on Kafka lag
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: order-consumer-scaler
+spec:
+  scaleTargetRef:
+    name: order-consumer-deployment
+  minReplicaCount: 2
+  maxReplicaCount: 12  # bounded by partition count
+  triggers:
+  - type: kafka
+    metadata:
+      bootstrapServers: kafka-broker:9092
+      consumerGroup: order-processors
+      topic: order-submitted
+      lagThreshold: "1000"     # scale out when lag > 1000 msgs
+      activationLagThreshold: "100"</code></pre>
+
+        <h3>Kafka Producer-Side Backpressure</h3>
+        <div class="callout callout-warn">
+          <div class="callout-title">Important — Kafka Producers CAN Be Backpressured</div>
+          When the producer's internal buffer (<code>buffer.memory</code>) is full because brokers are too slow to accept data, the <code>KafkaProducer.send()</code> call <strong>blocks</strong> for up to <code>max.block.ms</code>. This is Kafka's producer-side backpressure — the producer is forced to slow down when the broker can't keep up. After max.block.ms, it throws <code>TimeoutException</code>, which your upstream service must handle (retry / reject).
+        </div>
+
+        <h3>Kafka Streams — Backpressure in Stream Processing</h3>
+        <div class="card">
+          <p>Kafka Streams applications process event-by-event and inherently throttle to the slowest operation in the topology. The processing loop rate is controlled by <code>max.poll.records</code> on the source consumer. Kafka Streams does NOT implement Reactive Streams — it is thread-based, and the "backpressure" is implicit through poll rate control.</p>
+          <pre><code>// Kafka Streams — Order enrichment topology
+StreamsBuilder builder = new StreamsBuilder();
+KStream&lt;String, OrderEvent&gt; orders = builder.stream("order-submitted");
+
+// Join with inventory (backpressure: both streams must have data)
+KTable&lt;String, InventoryState&gt; inventory = builder.table("inventory-snapshot");
+
+KStream&lt;String, EnrichedOrder&gt; enriched = orders.join(
+    inventory,
+    (order, inv) -> enrich(order, inv),
+    Joined.with(Serdes.String(), orderSerde, inventorySerde)
+);
+
+enriched.to("order-enriched");
+// Processing rate = min(order rate, processing time per record)
+// This IS backpressure — slow enrichment slows the entire pipeline</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5: IBM Sterling OMS + MQ -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2>IBM Sterling OMS + MQ Backpressure</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-warn">
+          <div class="callout-title">Short Answer</div>
+          IBM Sterling OMS does NOT have native, first-class backpressure support in the Reactive Streams sense. Backpressure is achieved through a combination of <strong>IBM MQ flow control</strong>, <strong>Sterling agent thread pool configuration</strong>, and <strong>external orchestration</strong>. This is a design gap that cloud-native migrations (Temporal.io, Kafka) solve.
+        </div>
+
+        <h3>IBM MQ — How Flow Control Works</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 7 — IBM MQ Flow Control & Sterling Agent Architecture</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    PROD["Order Producer\n(REST API / Integration Server)"]
+    
+    subgraph "IBM MQ Queue Manager"
+      Q1["order-processing\nMaxDepth: 50,000\nCurrentDepth: ~45,000"]
+      Q2["order-processing.backout\nBackout Threshold: 3"]
+      Q3["Dead Letter Queue\norder-processing.dlq"]
+      FC["Flow Control\nActive when depth > 80%"]
+    end
+
+    subgraph "Sterling OMS Agent Layer"
+      TA["Task Q Agent\nOrderCreationAgent\nThread Pool: 20 threads\nmax events/cycle: 100"]
+      TTA["Time-Triggered Agent\nScheduleOrderAgent\nPolls every 30s"]
+      IS["Integration Server\nInbound MQ Listener\nJMS MessageDrivenBean"]
+    end
+
+    PROD -- "put message" --> Q1
+    Q1 -- "MaxDepth reached\nFlow Control signal" --> FC
+    FC -- "blocks put() calls\nproducer waits" --> PROD
+    Q1 --> IS
+    IS --> TA
+    Q1 --> TTA
+    Q2 -- "redelivery on failure" --> TA
+    Q2 -- "threshold exceeded" --> Q3
+
+    style Q1 fill:#da363322,stroke:#f85149,color:#e6edf3
+    style FC fill:#9e670022,stroke:#d29922,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>IBM MQ Flow Control — The Mechanism</h3>
+        <div class="card">
+          <p>IBM MQ implements flow control at the <strong>queue depth threshold</strong>. When a queue's depth exceeds a configured percentage of MaxDepth, MQ pauses message producers (put operations block or return a warning). This is the closest MQ gets to native backpressure.</p>
+          <pre><code># MQ Queue Definition — MQSC commands
+DEFINE QLOCAL('ORDER.PROCESSING') +
+  MAXDEPTH(50000) +           # Hard cap: 50K messages
+  BOTHRESH(3) +               # Backout after 3 failed deliveries
+  BOQNAME('ORDER.DLQ') +      # DLQ for poison messages
+  MSGDLVSQ(PRIORITY) +        # Priority-based delivery
+  SHARE                        # Allow multiple consumers
+
+# Flow Control — set via Queue Manager attributes
+ALTER QMGR +
+  MAXMSGL(104857600) +        # 100MB max message size
+  MAXUMSGS(10000)             # Max uncommitted msgs per connection
+  
+# Check queue depth for monitoring
+DIS QSTATS('ORDER.PROCESSING') ALL</code></pre>
+        </div>
+
+        <h3>Sterling Agent Configuration — Thread Pool as Backpressure</h3>
+        <p>Sterling's agents consume from MQ queues via JMS. The agent's <strong>thread pool size</strong> directly limits throughput — this is the primary backpressure lever available to Sterling operators.</p>
+
+        <div class="card">
+          <pre><code>&lt;!-- agentcriteria.xml — OrderCreationAgent thread pool config --&gt;
+&lt;Agent name="OrderCreationAgent"&gt;
+  &lt;!-- Thread pool = max concurrent order processing --&gt;
+  &lt;AgentCriteria
+    AgentName="OrderCreationAgent"
+    NumberOfThreads="20"         &lt;!-- Primary backpressure control --&gt;
+    MaximumRecordsPerPoll="100"  &lt;!-- Batch size per poll cycle --&gt;
+    PollInterval="5"             &lt;!-- Poll every 5 seconds --&gt;
+    HeartBeatInterval="30"
+  /&gt;
+&lt;/Agent&gt;
+
+&lt;!-- Integration Server — MQ Listener config --&gt;
+&lt;IntegrationServer&gt;
+  &lt;Queue name="ORDER.PROCESSING"
+    MaxConcurrentConsumers="10"  &lt;!-- JMS session pool size --&gt;
+    MessageBatchSize="50"        &lt;!-- Process 50 msgs per JMS session --&gt;
+    AcknowledgeMode="CLIENT"     &lt;!-- Manual ack = backpressure safe --&gt;
+  /&gt;
+&lt;/IntegrationServer&gt;</code></pre>
+        </div>
+
+        <h3>The Sterling OMS Backpressure Gap — What's Missing</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Capability</th><th>IBM MQ + Sterling (Classic)</th><th>Kafka + Sterling Modern</th><th>Temporal.io (Cloud-Native)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Consumer-driven pull</strong></td><td class="tag-red">❌ Push-based (MQ delivers)</td><td class="tag-green">✅ Consumer polls at own rate</td><td class="tag-green">✅ Worker polls task queue</td></tr>
+              <tr><td><strong>Consumer lag visibility</strong></td><td class="tag-yellow">⚠️ Manual depth monitoring</td><td class="tag-green">✅ Native consumer lag metric</td><td class="tag-green">✅ Workflow queue depth</td></tr>
+              <tr><td><strong>Dynamic scaling</strong></td><td class="tag-red">❌ Static thread config</td><td class="tag-green">✅ KEDA autoscale on lag</td><td class="tag-green">✅ Worker autoscale</td></tr>
+              <tr><td><strong>Poison message isolation</strong></td><td class="tag-yellow">⚠️ DLQ (manual inspection)</td><td class="tag-green">✅ DLQ + automated retry</td><td class="tag-green">✅ Workflow retry policies</td></tr>
+              <tr><td><strong>Overflow signal</strong></td><td class="tag-yellow">⚠️ MaxDepth blocks producer</td><td class="tag-green">✅ max.block.ms + buffer full</td><td class="tag-green">✅ Rate limiting per namespace</td></tr>
+              <tr><td><strong>Operational visibility</strong></td><td class="tag-red">❌ Requires MQ Explorer / scripts</td><td class="tag-green">✅ Prometheus + Grafana native</td><td class="tag-green">✅ Temporal UI + metrics</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Recommended Pattern — Kafka as Backpressure Buffer in front of Sterling</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 8 — Kafka + MQ Bridge Pattern for Sterling Backpressure</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart LR
+    subgraph "High-Volume Inbound"
+      API["REST API\n50K RPS burst"]
+      KAFKA["Kafka\norder-submitted\nDurable buffer\nConsumer lag telemetry"]
+    end
+
+    subgraph "Throttled Bridge"
+      BRIDGE["Kafka→MQ Bridge\nKafka Connect / Custom\nmax.poll.records=50\nKEDA autoscale on lag"]
+    end
+
+    subgraph "Sterling Processing"
+      MQ["IBM MQ\nMaxDepth: 10K\nFlow Control active"]
+      STERLING["Sterling OMS\nOrderCreationAgent\n20 threads\n~500 TPS"]
+    end
+
+    API --> KAFKA
+    KAFKA -- "pull 50/poll" --> BRIDGE
+    BRIDGE -- "put message" --> MQ
+    MQ -- "JMS deliver" --> STERLING
+
+    KAFKA -.->|"Consumer Lag\n→ KEDA scale"| BRIDGE
+
+    style KAFKA fill:#23863633,stroke:#3fb950,color:#e6edf3
+    style BRIDGE fill:#1f6feb33,stroke:#58a6ff,color:#e6edf3
+    style MQ fill:#9e670022,stroke:#d29922,color:#e6edf3
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Architecture Rationale</div>
+          Kafka absorbs the burst (50K RPS → durable log). The Kafka→MQ bridge consumes at the rate Sterling can handle (~500 TPS = 50 msg/poll × 10 polls/sec). KEDA scales bridge consumers based on lag. Sterling + MQ never see burst traffic — they always see a steady, bounded flow. This is <strong>the canonical pattern</strong> for protecting legacy OMS systems from modern high-throughput frontends.
+        </div>
+
+        <h3>Sterling 10.x Kubernetes — Additional Backpressure Levers</h3>
+        <div class="card">
+          <pre><code># Helm values — om-agent Kubernetes deployment
+om-agent:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+  
+  # HPA for agent pods — scale on CPU or custom MQ depth metric
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  
+  # Agent-level thread config via ConfigMap
+  agentConfig:
+    orderCreationAgent:
+      numberOfThreads: 20
+      maxRecordsPerPoll: 100
+      # Increasing threads without increasing pods = thread contention
+      # Increasing pods = more agents compete for same MQ queue → must partition</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: Frontend Backpressure -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2>Frontend Tech Stack & Backpressure</h2>
+      </div>
+      <div class="content">
+        <div class="callout callout-info">
+          <div class="callout-title">Frontend's Role</div>
+          The frontend is the <strong>first and most impactful place</strong> to implement backpressure — it's the origin of all traffic. Well-designed frontend backpressure can reduce unnecessary API calls by 60–80%, dramatically reducing load on backend systems during peak events. Next.js, React Query, SWR, and modern state management libraries all provide primitives for this.
+        </div>
+
+        <h3>Frontend Backpressure Techniques</h3>
+
+        <h4>1. Debounce & Throttle — Reducing Request Frequency</h4>
+        <div class="card">
+          <p>Debounce delays execution until activity stops. Throttle limits to N calls per time window. Both reduce unnecessary API calls from user input events.</p>
+          <pre><code>// React — Debounced Search (prevents API call on every keystroke)
+import { useDebouncedCallback } from 'use-debounce';
+
+const SearchBar = () => {
+  const [query, setQuery] = useState('');
+  
+  const debouncedSearch = useDebouncedCallback(
+    (value) => { searchAPI(value); },  // only fires after 300ms of idle
+    300
+  );
+  
+  return (
+    &lt;input
+      onChange={(e) => {
+        setQuery(e.target.value);
+        debouncedSearch(e.target.value);  // debounced — not every keystroke
+      }}
+    /&gt;
+  );
+};
+
+// Throttle — max 1 scroll event per 100ms for infinite scroll
+const throttledScroll = useThrottle(handleScroll, 100);</code></pre>
+        </div>
+
+        <h4>2. React Query / SWR — Request Deduplication & Stale-While-Revalidate</h4>
+        <div class="card">
+          <p>React Query and SWR prevent duplicate in-flight requests to the same endpoint. Multiple components requesting the same data result in <strong>one</strong> network call. Stale-while-revalidate returns cached data immediately while fetching fresh — reducing perceived latency without extra backend calls.</p>
+          <pre><code>// React Query — deduplication + backpressure via staleTime
+const { data: orderStatus } = useQuery({
+  queryKey: ['order', orderId],
+  queryFn: () => fetchOrderStatus(orderId),
+  staleTime: 30_000,         // Don't refetch for 30s — serves cache
+  gcTime: 5 * 60_000,        // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false, // Don't hammmer API on tab switch
+  retry: 3,
+  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000), // Exponential backoff
+});
+
+// Multiple components using same query key = 1 network request (dedup)
+// This is frontend-level backpressure: N components → 1 API call</code></pre>
+        </div>
+
+        <h4>3. Optimistic UI — Decouple UX from Backend Latency</h4>
+        <div class="card">
+          <p>Optimistic updates allow the UI to respond instantly while the actual API call happens asynchronously. This decouples user experience from backend processing speed — a core backpressure principle applied to UX.</p>
+          <pre><code>// Optimistic order cancellation — UI doesn't wait for OMS
+const cancelMutation = useMutation({
+  mutationFn: cancelOrder,
+  onMutate: async (orderId) => {
+    // Cancel any in-flight refetches
+    await queryClient.cancelQueries({ queryKey: ['orders'] });
+    
+    // Snapshot previous state for rollback
+    const previous = queryClient.getQueryData(['orders']);
+    
+    // Optimistically update UI immediately
+    queryClient.setQueryData(['orders'], (old) =>
+      old.map(o => o.id === orderId ? {...o, status: 'CANCELLING'} : o)
+    );
+    return { previous };
+  },
+  onError: (err, vars, context) => {
+    // Rollback on failure
+    queryClient.setQueryData(['orders'], context.previous);
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+  }
+});</code></pre>
+        </div>
+
+        <h4>4. Virtual Scrolling — Backpressure for Rendering</h4>
+        <div class="card">
+          <p>Rendering 10,000 DOM nodes simultaneously causes browser main-thread starvation. Virtual scroll (windowing) renders only the visible viewport — typically 20–50 items — regardless of total dataset size. This is backpressure applied to the rendering pipeline.</p>
+          <pre><code>// React Virtual — render only visible rows (backpressure for DOM)
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+const OrderList = ({ orders }) => {  // orders.length = 100,000
+  const parentRef = useRef(null);
+  
+  const virtualizer = useVirtualizer({
+    count: orders.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 60,    // estimated row height
+    overscan: 5,               // render 5 extra rows above/below viewport
+  });
+  
+  return (
+    &lt;div ref={parentRef} style={{height: '600px', overflow: 'auto'}}&gt;
+      &lt;div style={{height: virtualizer.getTotalSize()}}&gt;
+        {virtualizer.getVirtualItems().map(item =&gt; (
+          // Only ~15 items rendered at any time regardless of dataset size
+          &lt;OrderRow key={item.key} order={orders[item.index]} /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+};</code></pre>
+        </div>
+
+        <h4>5. WebSocket / SSE — Server-Sent Events vs Polling</h4>
+        <div class="card">
+          <p>Replacing short-poll loops with SSE / WebSocket eliminates unnecessary repeated API requests. The server pushes updates only when data changes — this is event-driven backpressure: no data = no network traffic.</p>
+          <pre><code>// SSE — Order status updates pushed from server
+// Replaces: setInterval(() => fetchOrderStatus(), 2000)  ← kills backend
+const useOrderStatusSSE = (orderId) => {
+  const [status, setStatus] = useState(null);
+  
+  useEffect(() => {
+    const es = new EventSource(`/api/orders/${orderId}/status-stream`);
+    
+    es.onmessage = (e) => setStatus(JSON.parse(e.data));
+    es.onerror = () => es.close();
+    
+    return () => es.close();  // cleanup
+  }, [orderId]);
+  
+  return status;
+};
+
+// 10,000 users polling every 2s = 5,000 RPS → backend load
+// 10,000 users via SSE = 0 RPS unless order status changes → backpressure!</code></pre>
+        </div>
+
+        <h4>6. Next.js — Server-Side Backpressure Strategies</h4>
+        <div class="card">
+          <pre><code>// Next.js App Router — Streaming with Suspense
+// Backpressure: React streams UI chunks to browser as they're ready
+// Browser renders partial content while rest loads → no all-or-nothing wait
+import { Suspense } from 'react';
+
+export default function OrderPage({ params }) {
+  return (
+    &lt;div&gt;
+      &lt;Suspense fallback={&lt;OrderHeaderSkeleton /&gt;}&gt;
+        &lt;OrderHeader orderId={params.id} /&gt;    {/* Renders first */}
+      &lt;/Suspense&gt;
+      &lt;Suspense fallback={&lt;ItemsSkeleton /&gt;}&gt;
+        &lt;OrderItems orderId={params.id} /&gt;      {/* Streams when ready */}
+      &lt;/Suspense&gt;
+    &lt;/div&gt;
+  );
+}
+
+// ISR — Incremental Static Regeneration as cache-level backpressure
+// Only 1 user triggers revalidation even if 50K users hit same page
+export const revalidate = 60;  // Revalidate at most once per minute</code></pre>
+        </div>
+
+        <h3>Frontend Backpressure Summary</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Technique</th><th>Library / API</th><th>Reduces</th><th>Use When</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Debounce</strong></td><td>use-debounce, lodash</td><td>API calls per keystroke</td><td>Search, filters, autocomplete</td></tr>
+              <tr><td><strong>Request Deduplication</strong></td><td>React Query, SWR</td><td>Duplicate in-flight requests</td><td>Multiple components, same data</td></tr>
+              <tr><td><strong>Stale-While-Revalidate</strong></td><td>React Query, SWR, Next ISR</td><td>Backend revalidation load</td><td>Frequently read, slowly changing data</td></tr>
+              <tr><td><strong>Optimistic UI</strong></td><td>React Query mutations</td><td>Perceived latency, impatient re-clicks</td><td>Create/update/cancel actions</td></tr>
+              <tr><td><strong>Virtual Scroll</strong></td><td>@tanstack/virtual, react-window</td><td>DOM nodes rendered</td><td>Long lists, order history, catalogs</td></tr>
+              <tr><td><strong>SSE / WebSocket</strong></td><td>EventSource, socket.io</td><td>Polling requests</td><td>Order status, live inventory, chat</td></tr>
+              <tr><td><strong>Suspense Streaming</strong></td><td>React Suspense + Next.js</td><td>Time to first byte, blocking waterfalls</td><td>Complex pages with multiple data sources</td></tr>
+              <tr><td><strong>Service Worker Cache</strong></td><td>Workbox</td><td>Network requests for static assets</td><td>PWA, offline-first apps</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S7: Patterns Comparison -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2>Backpressure Patterns — Comparison</h2>
+      </div>
+      <div class="content">
+        <h3>Message Broker Backpressure Comparison</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Kafka</th><th>IBM MQ</th><th>AWS SQS</th><th>RabbitMQ</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Delivery Model</strong></td><td class="tag-green">Pull (consumer polls)</td><td class="tag-red">Push (broker delivers)</td><td class="tag-green">Pull (consumer polls)</td><td class="tag-red">Push (AMQP)</td></tr>
+              <tr><td><strong>Native Backpressure</strong></td><td class="tag-green">Consumer lag + max.poll.records</td><td class="tag-yellow">MaxDepth flow control</td><td class="tag-green">Visibility timeout + DLQ</td><td class="tag-yellow">QoS prefetch count</td></tr>
+              <tr><td><strong>Consumer Control</strong></td><td>Full — consumer decides batch size</td><td>Limited — JMS session config</td><td>Good — receive count</td><td>Good — basic.qos prefetch</td></tr>
+              <tr><td><strong>Overflow Handling</strong></td><td>Infinite retention (disk-bound)</td><td>MaxDepth blocks puts</td><td>14-day retention, 120K msg/s</td><td>Queue length limit + DLX</td></tr>
+              <tr><td><strong>Autoscale Support</strong></td><td>KEDA (native lag trigger)</td><td>Manual / custom</td><td>KEDA SQS trigger</td><td>KEDA RabbitMQ trigger</td></tr>
+              <tr><td><strong>Sterling OMS Integration</strong></td><td>Via Kafka Connect bridge</td><td>Native JMS integration</td><td>Via custom adapter</td><td>Not typical for Sterling</td></tr>
+              <tr><td><strong>Operational Complexity</strong></td><td>High (ZK/KRaft, partition tuning)</td><td>Medium (Queue Manager)</td><td>Low (managed)</td><td>Medium</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Service-Level Backpressure Patterns</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pattern</th><th>Mechanism</th><th>Response to Overload</th><th>Recovery</th><th>Best For</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Rate Limiter</strong></td><td>Token bucket / fixed window</td><td>HTTP 429, retry-after header</td><td>Automatic (tokens replenish)</td><td>API Gateway, per-tenant</td></tr>
+              <tr><td><strong>Circuit Breaker</strong></td><td>Failure rate threshold</td><td>Fast-fail, fallback response</td><td>Probe after timeout</td><td>Service-to-service calls</td></tr>
+              <tr><td><strong>Bulkhead</strong></td><td>Concurrency semaphore</td><td>Queue or reject</td><td>Automatic (slot frees)</td><td>Isolate critical paths</td></tr>
+              <tr><td><strong>Load Shedding</strong></td><td>Queue depth / CPU threshold</td><td>Reject low-priority requests</td><td>Automatic</td><td>Prioritized traffic</td></tr>
+              <tr><td><strong>Reactive Streams</strong></td><td>Demand-driven subscription</td><td>Producer pauses</td><td>Consumer requests more</td><td>Streaming pipelines</td></tr>
+              <tr><td><strong>Retry + Backoff</strong></td><td>Exponential delay + jitter</td><td>Retry with increasing delay</td><td>Service recovers</td><td>Client-side resilience</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- S8: Retail/OMS Playbook -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2>Retail / OMS Backpressure Playbook</h2>
+      </div>
+      <div class="content">
+        <h3>Flash Sale Scenario — 50x Traffic Spike Backpressure Defense</h3>
+        <div class="diagram-wrap">
+          <div class="diagram-label">Fig 9 — End-to-End Backpressure Architecture for Flash Sale Event</div>
+          <div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#1f6feb', 'edgeLabelBackground': '#1c2128', 'lineColor': '#58a6ff'}}}%%
+flowchart TD
+    subgraph "User Traffic — 500K concurrent"
+      U["👤 500K Users\nDiwali Sale Event"]
+      VROOM["Virtual Waiting Room\nQueue-Fair / Cloudflare\nTokenized entry"]
+      CDN["Akamai CDN\nEdge cache 95% hits"]
+    end
+
+    subgraph "API Layer — 50K RPS ceiling"
+      WAF["AWS WAF + Shield\nDDoS / Bot protection"]
+      APIGW["Kong API Gateway\nRate Limit: 50K RPS global\n1K RPS per user IP\nTenant token bucket"]
+    end
+
+    subgraph "Order Service — 10K RPS"
+      OS["Order Service\n10 pods × 2K RPS\nBulkhead: 200 concurrent\nCircuit Breaker: CB4J"]
+      KAFKA["Kafka\norder-submitted\n12 partitions\n7-day retention\nBackpressure buffer"]
+    end
+
+    subgraph "Processing Bridge — Rate-Controlled"
+      BRIDGE["Kafka→MQ Bridge\nmax.poll.records=50\nKEDA: 2→12 pods on lag\nSteady output: ~2K TPS"]
+    end
+
+    subgraph "Sterling OMS — 500 TPS"
+      MQ["IBM MQ\nMaxDepth=50K\nFlow Control active"]
+      STERLING["Sterling OMS\n20 agent threads\n~500 TPS steady"]
+    end
+
+    U --> VROOM --> CDN --> WAF --> APIGW
+    APIGW -- "10K req/s" --> OS
+    OS -- "produce" --> KAFKA
+    KAFKA -- "pull 50/poll" --> BRIDGE
+    BRIDGE --> MQ --> STERLING
+
+    APIGW -- "HTTP 429\n40K excess req/s" --> U
+    KAFKA -.->|"Consumer Lag\n→ KEDA scale"| BRIDGE
+
+    style VROOM fill:#23863633,stroke:#3fb950,color:#e6edf3
+    style KAFKA fill:#1f6feb33,stroke:#58a6ff,color:#e6edf3
+    style BRIDGE fill:#23863633,stroke:#3fb950,color:#e6edf3
+    style STERLING fill:#9e670022,stroke:#d29922,color:#e6edf3
+          </div>
+        </div>
+
+        <h3>Key Metrics to Monitor for Backpressure Health</h3>
+        <div class="two-col">
+          <div class="card">
+            <strong style="color:var(--accent)">Kafka Metrics</strong>
+            <ul style="margin-top:8px;">
+              <li><code>kafka.consumer.lag</code> — primary signal</li>
+              <li><code>kafka.producer.record-send-rate</code></li>
+              <li><code>kafka.producer.buffer-available-bytes</code></li>
+              <li><code>kafka.consumer.records-per-second</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent)">IBM MQ Metrics</strong>
+            <ul style="margin-top:8px;">
+              <li><code>queue.current_depth</code> vs MaxDepth</li>
+              <li><code>queue.input_count</code> (enqueue rate)</li>
+              <li><code>queue.output_count</code> (dequeue rate)</li>
+              <li>Backout count (failed deliveries)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent)">API Gateway Metrics</strong>
+            <ul style="margin-top:8px;">
+              <li>HTTP 429 rate (% rejected requests)</li>
+              <li>Upstream response time P99</li>
+              <li>Circuit breaker open events</li>
+              <li>Active connections per upstream</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong style="color:var(--accent)">Sterling OMS Metrics</strong>
+            <ul style="margin-top:8px;">
+              <li>Agent thread utilization %</li>
+              <li>Orders/minute processed</li>
+              <li>Exception queue depth</li>
+              <li>Average order processing time</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Alerting Thresholds — SLO-Aligned</h3>
+        <div class="card">
+          <pre><code># Prometheus Alert Rules — Backpressure Health
+groups:
+- name: backpressure
+  rules:
+  # Kafka consumer falling behind
+  - alert: KafkaConsumerLagCritical
+    expr: kafka_consumer_group_lag{group="order-processors"} > 10000
+    for: 5m
+    labels: { severity: critical }
+    annotations:
+      summary: "Order consumer lag {{ $value }} — Sterling may be overwhelmed"
+
+  # MQ queue filling up (80% capacity)
+  - alert: MQQueueDepthHigh
+    expr: mq_queue_current_depth / mq_queue_max_depth > 0.8
+    for: 2m
+    labels: { severity: warning }
+    annotations:
+      summary: "MQ order queue at {{ $value | humanizePercentage }} capacity"
+
+  # API Gateway rejecting too many requests
+  - alert: HighRateLimitRejectRate  
+    expr: rate(kong_http_requests_total{status="429"}[5m]) / 
+          rate(kong_http_requests_total[5m]) > 0.1
+    for: 3m
+    labels: { severity: warning }
+    annotations:
+      summary: "10%+ requests rate-limited — consider scaling or shed non-critical traffic"</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- S9: ADRs -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2>Architecture Decision Records</h2>
+      </div>
+      <div class="content">
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-001 — Kafka as Backpressure Buffer in front of Sterling OMS</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Sterling OMS processes ~500 TPS. Flash sales generate 50K+ RPS. IBM MQ alone cannot absorb this burst — MaxDepth of 50K would be hit in seconds, blocking producers and causing cascading API failures.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Place Kafka between the Order Service and IBM MQ. Kafka acts as a durable, unbounded buffer. A KEDA-autoscaled bridge consumes from Kafka and feeds MQ at a rate Sterling can handle.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Orders never lost during burst; Sterling is protected from traffic spikes; consumer lag gives precise visibility into backlog. <strong>Cons:</strong> Additional infrastructure complexity; Kafka→MQ bridge becomes a critical path; increased end-to-end latency (seconds, not milliseconds) for order processing.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>IBM MQ alone: insufficient burst capacity, flow control blocks producers upstream. Direct Sterling REST API calls: even worse — no buffering, Sterling would get 429s or crash. SQS in front of MQ: SQS doesn't provide consumer lag with same fidelity; MQ integration more natural for Sterling.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-002 — KEDA over HPA for Kafka Consumer Autoscaling</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>Standard Kubernetes HPA scales on CPU/memory. Kafka consumer CPU does not correlate with consumer lag — a consumer can be idle (waiting for messages) at 5% CPU while lag is 100K messages. HPA would not scale up consumers when needed.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Use KEDA (Kubernetes Event-Driven Autoscaler) with the Kafka trigger. KEDA scales consumer pods based on consumer lag per partition. maxReplicas is bounded by partition count (12 partitions = max 12 consumer pods for meaningful parallelism).</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Scaling directly correlated with actual backlog; responds to real backpressure signal not proxy metrics; scales to zero during off-peak. <strong>Cons:</strong> KEDA is an additional cluster component; lag threshold tuning requires load testing; rebalance storms if scaling too aggressively.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>HPA on CPU: doesn't reflect actual consumer lag. Custom metrics HPA via Prometheus Adapter: same capability as KEDA but more complex to configure. Manual scaling: not viable for dynamic flash sale traffic.</p></div>
+          </div>
+        </div>
+
+        <div class="adr">
+          <div class="adr-header">
+            <span class="adr-title">ADR-003 — Pull-Based SSE over WebSocket for Order Status Updates</span>
+            <span class="badge badge-green">Accepted</span>
+            <span class="adr-toggle">+</span>
+          </div>
+          <div class="adr-body">
+            <div class="adr-field"><label>Context</label><p>10,000 users polling order status every 2 seconds = 5,000 RPS of status API calls, most returning unchanged data. This creates unnecessary backend load and is a primary source of thundering herd during post-order-placement window.</p></div>
+            <div class="adr-field"><label>Decision</label><p>Replace polling with Server-Sent Events (SSE). Server pushes order status updates only when state changes. SSE uses HTTP/1.1 — simpler than WebSocket, unidirectional, works through standard load balancers and proxies.</p></div>
+            <div class="adr-field"><label>Consequences</label><p><strong>Pros:</strong> Eliminates 95%+ of polling requests; server controls when data is sent (natural backpressure); automatic reconnect built into EventSource API. <strong>Cons:</strong> Long-lived connections consume server memory (connection per user); requires sticky sessions or connection state management at load balancer level.</p></div>
+            <div class="adr-field"><label>Alternatives Rejected</label><p>WebSocket: bidirectional — overkill for server→client order status; more complex proxying. Short polling: original problem — 5K RPS. Long polling: better than short polling but still connection-per-user with request overhead.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S10: Interview Cheat Sheet -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2>Interview Cheat Sheet — Principal / Director Level</h2>
+      </div>
+      <div class="content">
+        <div class="cheat-grid">
+          <div class="cheat-card">
+            <h4>🎯 Top Clarifying Questions</h4>
+            <ul>
+              <li>"What's the peak RPS and burst factor? What's the downstream consumer's max TPS?"</li>
+              <li>"What's acceptable latency for backpressure signals — ms or seconds?"</li>
+              <li>"Is data loss acceptable under extreme overload, or must every message be processed?"</li>
+              <li>"What's the priority order — reject some customers or delay all customers?"</li>
+              <li>"What's the existing broker — MQ, SQS, or Kafka? This determines available primitives."</li>
+            </ul>
+          </div>
+
+          <div class="cheat-card">
+            <h4>⚡ Proactive Trade-offs to Verbalize</h4>
+            <ul>
+              <li>"Backpressure increases latency — it's a throughput-latency trade-off. I'm choosing to protect downstream stability."</li>
+              <li>"Kafka doesn't signal producers to slow down directly — it decouples via durable storage. IBM MQ's flow control is more direct but cruder."</li>
+              <li>"Circuit breakers need careful threshold tuning — too sensitive → false trips; too loose → cascades anyway."</li>
+              <li>"Consumer lag is a lagging indicator — by the time you see 10K lag, the burst already happened. KEDA helps but can't react in milliseconds."</li>
+            </ul>
+          </div>
+
+          <div class="cheat-card">
+            <h4>🔍 Common Failure Modes Interviewers Probe</h4>
+            <ul>
+              <li><strong>Thundering Herd after Circuit Breaker Opens:</strong> All callers retry simultaneously → use exponential backoff + jitter</li>
+              <li><strong>Consumer Rebalance Storm:</strong> Too many KEDA scale events → tune stabilizationWindowSeconds</li>
+              <li><strong>MQ MaxDepth Blocks Entire Pipeline:</strong> DLQ not configured → poison messages fill queue</li>
+              <li><strong>Rate Limiter Shared State:</strong> Redis down → rate limiting disabled → backend flooded</li>
+              <li><strong>Frontend Debounce Race Condition:</strong> User submits before debounce fires → duplicate orders</li>
+            </ul>
+          </div>
+
+          <div class="cheat-card">
+            <h4>✨ Principal-Level "Wow" Signals</h4>
+            <ul>
+              <li>"I'd put a <strong>virtual waiting room</strong> in front of the API during flash sales — tokenized entry decouples user arrival rate from order processing rate entirely."</li>
+              <li>"Kafka's <code>max.block.ms</code> on the producer is often overlooked — it's the only mechanism that creates upstream backpressure in Kafka architectures."</li>
+              <li>"For Sterling, the real bottleneck is often the <strong>database connection pool</strong>, not the agent threads. Increasing threads without tuning DB pool causes connection exhaustion."</li>
+              <li>"Reactive Streams' <code>request(N)</code> pattern is the gold standard — it propagates backpressure through the entire call graph. Project Reactor implements this for Spring-based microservices."</li>
+            </ul>
+          </div>
+
+          <div class="cheat-card">
+            <h4>📊 Key Numbers to Know</h4>
+            <ul>
+              <li>Sterling OMS typical ceiling: <strong>500–2K TPS</strong> (depends on order complexity)</li>
+              <li>IBM MQ MaxDepth practical limit: <strong>50K–500K</strong> messages</li>
+              <li>Kafka partition throughput: <strong>~100MB/s</strong> write, consumer unlimited on read</li>
+              <li>KEDA stabilization window: <strong>300s default</strong> — tune down for aggressive scale-up</li>
+              <li>Debounce sweet spot for search: <strong>200–400ms</strong></li>
+              <li>Virtual scroll: render <strong>~20–50 rows</strong> regardless of list size</li>
+            </ul>
+          </div>
+
+          <div class="cheat-card">
+            <h4>❓ Follow-up Questions to Ask Interviewer</h4>
+            <ul>
+              <li>"What happens to orders in the Kafka lag backlog if Sterling goes down for 2 hours — is 7-day retention acceptable or do we need a different SLA?"</li>
+              <li>"Has the team instrumented consumer lag in production? The most common gap I see is monitoring queue depth in MQ but not Kafka lag."</li>
+              <li>"Is there a priority tier for orders — same-day delivery vs standard? Backpressure design changes significantly if we need priority-based shedding."</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top:24px;">
+          <div class="callout-title">One-Sentence Summary for Any Interviewer</div>
+          "Backpressure is the mechanism by which a slow consumer signals a fast producer to reduce throughput — in distributed systems we achieve this through <strong>pull-based consumption (Kafka), flow control (IBM MQ), rate limiting (API Gateway), reactive demand signaling (Project Reactor), and frontend request reduction (debounce, SSE, React Query)</strong> — the goal is always to keep every system operating within its stable processing range."
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+
+  function navScrollTo(event, id) {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  document.querySelectorAll('.adr-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const body = h.nextElementSibling;
+      const toggle = h.querySelector('.adr-toggle');
+      body.classList.toggle('open');
+      toggle.textContent = body.classList.contains('open') ? '−' : '+';
+    });
+  });
+
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const idx = Array.from(sections).indexOf(e.target);
+        if (navItems[idx]) navItems[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
