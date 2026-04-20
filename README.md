@@ -14,6 +14,8 @@ Practitioner-level system design and architecture modernization guides.
 | DDoS & Inventory Hoarding Defense | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/ddos-inventory-hoarding-detection.html) |
 | IBM Sterling OMS — Agent Architecture Deep Dive | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/sterling-oms-agents.html) |
 | Behavioral & Strategy Q&A — EM/Director Interview Playbook (GCC Edition) | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/em-interview-playbook.html) |
+| Anti-Corruption Layer — Sterling OMS Modernization | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/acl-sterling-oms.html) |
+| Backpressure Mechanisms — System Design Guide | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/backpressure-guide.html) |
 
 ## About
 
