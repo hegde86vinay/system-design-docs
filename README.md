@@ -17,6 +17,7 @@ Practitioner-level system design and architecture modernization guides.
 | Anti-Corruption Layer — Sterling OMS Modernization | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/acl-sterling-oms.html) |
 | Backpressure Mechanisms — System Design Guide | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/backpressure-guide.html) |
 | IPL 2025 Press Conference RAG Bot — System Design | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/ipl-press-conference-rag.html) |
+| Field Monitor — Daily Medium Digest Agent | [Open Guide](https://hegde86vinay.github.io/system-design-docs/docs/field-monitor-agent.html) |
 
 ## About
 
