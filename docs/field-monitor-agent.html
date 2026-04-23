@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Monitor — Daily Medium Digest Agent — System Design</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --purple:    #bc8cff;
+      --teal:      #39d353;
+      --radius:    8px;
+      --sidebar-w: 260px;
+      --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.7; display: flex;
+    }
+
+    nav#sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 24px 0; z-index: 100;
+    }
+    .nav-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+    .nav-logo .badge {
+      font-size: 11px; font-weight: 600; letter-spacing: .05em;
+      background: #1c3a5e; color: var(--accent);
+      padding: 2px 8px; border-radius: 20px;
+      border: 1px solid var(--accent);
+      display: inline-block; margin-bottom: 8px;
+    }
+    .nav-logo h2 { font-size: 14px; color: var(--text); line-height: 1.4; }
+    nav#sidebar a {
+      display: block; padding: 6px 20px;
+      color: var(--muted); text-decoration: none;
+      font-size: 13px; transition: all .15s;
+      border-left: 3px solid transparent;
+    }
+    nav#sidebar a:hover, nav#sidebar a.active {
+      color: var(--accent); background: rgba(88,166,255,.08);
+      border-left-color: var(--accent);
+    }
+    .nav-section {
+      font-size: 11px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 16px 20px 4px;
+    }
+    .nav-sub { padding-left: 32px !important; font-size: 12px !important; }
+
+    main { margin-left: var(--sidebar-w); max-width: 980px; padding: 48px 48px 120px; flex: 1; }
+
+    .hero {
+      background: linear-gradient(135deg, #0d2137 0%, #0d1117 60%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 48px; margin-bottom: 48px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '📰';
+      position: absolute; right: 40px; top: 30px;
+      font-size: 72px; opacity: .12;
+    }
+    .hero .tag-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tag {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; letter-spacing: .04em;
+    }
+    .tag-blue  { background:#1c3a5e; color:var(--accent);  border:1px solid var(--accent); }
+    .tag-green { background:#0d2c1a; color:var(--accent2); border:1px solid var(--accent2); }
+    .tag-purple{ background:#2a1f4e; color:var(--purple);  border:1px solid var(--purple); }
+    .tag-warn  { background:#2d2005; color:var(--warn);    border:1px solid var(--warn); }
+    .hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 10px; line-height: 1.3; }
+    .hero p  { color: var(--muted); max-width: 640px; font-size: 15px; }
+    .hero .meta { margin-top: 24px; display: flex; gap: 24px; flex-wrap: wrap; }
+    .meta-item { font-size: 13px; color: var(--muted); }
+    .meta-item strong { color: var(--text); }
+
+    section { margin-bottom: 56px; }
+    h2 {
+      font-size: 22px; font-weight: 700;
+      padding-bottom: 10px; margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 24px;
+    }
+    h2 .icon { margin-right: 8px; }
+    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--accent); }
+    h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; color: var(--purple); }
+    p  { margin-bottom: 14px; color: var(--text); font-size: 15px; }
+    ul, ol { margin: 0 0 14px 22px; color: var(--text); font-size: 15px; }
+    li { margin-bottom: 6px; }
+
+    .callout {
+      border-radius: var(--radius); padding: 16px 20px; margin: 20px 0;
+      font-size: 14px; border-left: 4px solid;
+    }
+    .callout-blue   { background:#0d1f35; border-color:var(--accent);  color:#cdd9e5; }
+    .callout-green  { background:#0d2215; border-color:var(--accent2); color:#cdd9e5; }
+    .callout-warn   { background:#2b1d00; border-color:var(--warn);    color:#cdd9e5; }
+    .callout-danger { background:#2d0f0f; border-color:var(--danger);  color:#cdd9e5; }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    th { background: var(--surface2); color: var(--muted); text-align: left;
+         padding: 10px 14px; font-weight: 600; font-size: 12px;
+         text-transform: uppercase; letter-spacing: .06em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); vertical-align: top; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    td code { font-size: 12px; }
+    .num-right { text-align: right; font-family: var(--font-mono); }
+
+    code {
+      font-family: var(--font-mono);
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 2px 6px; border-radius: 4px; font-size: 13px;
+      color: #f0883e;
+    }
+    pre {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px;
+      overflow-x: auto; margin: 16px 0;
+    }
+    pre code { background: none; border: none; padding: 0; font-size: 13px; color: var(--text); line-height: 1.6; }
+
+    .diagram-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; margin: 20px 0;
+      overflow-x: auto; text-align: center;
+    }
+    .diagram-caption { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; font-style: italic; }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin: 20px 0; }
+    .card-cmp {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      transition: border-color .15s;
+    }
+    .card-cmp:hover { border-color: var(--accent); }
+    .card-cmp .card-icon { font-size: 26px; margin-bottom: 10px; }
+    .card-cmp h4 { color: var(--text); margin: 0 0 6px; font-size: 14px; }
+    .card-cmp p  { color: var(--muted); font-size: 13px; margin: 0; }
+    .card-cmp code { font-size: 11px; }
+
+    .steps { list-style: none; counter-reset: step; padding-left: 0; margin-left: 0; }
+    .steps li {
+      counter-increment: step;
+      display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(step);
+      min-width: 32px; height: 32px;
+      background: var(--accent); color: #000;
+      border-radius: 50%;
+      font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .steps li .step-content h4 { margin-top: 0; color: var(--text); }
+    .steps li .step-content p  { margin: 0; font-size: 14px; color: var(--muted); }
+
+    .status-ok   { color: var(--accent2); font-weight: 600; }
+    .status-warn { color: var(--warn);    font-weight: 600; }
+    .status-bad  { color: var(--danger);  font-weight: 600; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    footer {
+      margin-left: var(--sidebar-w);
+      padding: 24px 48px;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px;
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+
+    :target { scroll-margin-top: 24px; }
+
+    @media (max-width: 768px) {
+      nav#sidebar { display: none; }
+      main, footer { margin-left: 0; padding: 24px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<nav id="sidebar">
+  <div class="nav-logo">
+    <div class="badge">SYSTEM DESIGN</div>
+    <h2>Field Monitor<br>Daily Medium Digest</h2>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <a href="#overview">Project Summary</a>
+  <a href="#goals">Goals &amp; Constraints</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="#high-level">High-Level Design</a>
+  <a href="#sequence">Daily Run Sequence</a>
+  <a href="#folder">Folder Layout</a>
+
+  <div class="nav-section">Components</div>
+  <a href="#auth"     class="nav-sub">① Auth</a>
+  <a href="#fetcher"  class="nav-sub">② Fetcher</a>
+  <a href="#pipeline" class="nav-sub">③ Pipeline</a>
+  <a href="#render"   class="nav-sub">④ Render</a>
+  <a href="#emailer"  class="nav-sub">⑤ Emailer</a>
+  <a href="#scheduler" class="nav-sub">⑥ Scheduler</a>
+
+  <div class="nav-section">Data &amp; Topics</div>
+  <a href="#topic-map">Topic → Tag Mapping</a>
+  <a href="#dedup-rank">Dedup &amp; Ranking</a>
+
+  <div class="nav-section">Cross-cutting</div>
+  <a href="#secrets">Secrets &amp; Auth State</a>
+  <a href="#failure">Failure Handling</a>
+  <a href="#anti-bot">Anti-Bot &amp; ToS</a>
+
+  <div class="nav-section">Cost</div>
+  <a href="#cost-current">Current Setup ($0)</a>
+  <a href="#cost-llm-upgrade">If You Add Summaries</a>
+
+  <div class="nav-section">Alternative Platforms</div>
+  <a href="#alt-overview">Decision Tree</a>
+  <a href="#alt-bedrock"  class="nav-sub">AWS Bedrock</a>
+  <a href="#alt-lambda"   class="nav-sub">Lambda + EventBridge</a>
+  <a href="#alt-fargate"  class="nav-sub">ECS Fargate</a>
+  <a href="#alt-gcp"      class="nav-sub">GCP Cloud Run Jobs</a>
+  <a href="#alt-azure"    class="nav-sub">Azure Container Apps</a>
+  <a href="#alt-gha"      class="nav-sub">GitHub Actions</a>
+  <a href="#alt-n8n"      class="nav-sub">Self-hosted n8n</a>
+  <a href="#alt-compare">Side-by-Side Comparison</a>
+
+  <div class="nav-section">Operations</div>
+  <a href="#runbook">Run Book</a>
+  <a href="#limitations">Known Limitations</a>
+  <a href="#roadmap">Roadmap</a>
+</nav>
+
+<!-- ═══════════════════ MAIN ═══════════════════════ -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="tag-row">
+      <span class="tag tag-blue">Daily Automation</span>
+      <span class="tag tag-green">Local-first</span>
+      <span class="tag tag-purple">Playwright + Python</span>
+      <span class="tag tag-warn">$0 / month</span>
+    </div>
+    <h1>Field Monitor — Daily<br>Medium Digest Agent</h1>
+    <p>An unattended agent that scrapes Medium for the freshest articles across five
+       Software Architecture topics, then publishes a single self-contained HTML digest
+       to disk and email — every day at 8 PM, with no LLM in the loop.</p>
+    <div class="meta">
+      <div class="meta-item"><strong>Platform</strong> macOS (launchd)</div>
+      <div class="meta-item"><strong>Runtime</strong> Python 3.13 + Playwright</div>
+      <div class="meta-item"><strong>Sources</strong> Medium tag pages (auth'd)</div>
+      <div class="meta-item"><strong>Output</strong> HTML report + Gmail SMTP</div>
+      <div class="meta-item"><strong>Schedule</strong> 20:00 daily</div>
+      <div class="meta-item"><strong>Cost</strong> $0 / month</div>
+    </div>
+  </div>
+
+  <!-- ── OVERVIEW ──────────────────────────────────── -->
+  <section id="overview">
+    <h2><span class="icon">📋</span>Project Summary</h2>
+    <p>Field Monitor is a daily, single-purpose agent that produces a personal news
+       digest of Software Architecture content sourced exclusively from Medium. It runs
+       headless on macOS via <code>launchd</code>, uses a persistent Playwright browser
+       session to read member-only Medium tag pages, deduplicates and ranks the last
+       24 hours of articles, and delivers a single self-contained HTML file.</p>
+    <p>Per-article cards show <em>title, author, read time, claps, and the snippet
+       Medium publishes on the page</em> — no LLM summarization. The report ends with a
+       styled summary table (<code>#&nbsp;|&nbsp;Topic&nbsp;|&nbsp;Article Title&nbsp;|&nbsp;Author&nbsp;|&nbsp;URL</code>)
+       so the reader can scan everything at a glance and click through.</p>
+
+    <div class="card-grid">
+      <div class="card-cmp"><div class="card-icon">🗂️</div><h4>5 fixed topics</h4><p>Distributed Architecture, System Design Interviews, AI Use Cases, Java/Spring Boot, Cloud News (AWS/Azure/GCP)</p></div>
+      <div class="card-cmp"><div class="card-icon">⏰</div><h4>20:00 daily</h4><p>macOS launchd unit; catches up after sleep — cron would skip the day</p></div>
+      <div class="card-cmp"><div class="card-icon">🔐</div><h4>Keychain secrets</h4><p>No plaintext passwords on disk. <code>keyring</code> reads from macOS Keychain at runtime</p></div>
+      <div class="card-cmp"><div class="card-icon">📧</div><h4>HTML to inbox</h4><p>Saved to <code>reports/</code> and emailed via Gmail SMTP — read on phone, archive freely</p></div>
+    </div>
+  </section>
+
+  <!-- ── GOALS ──────────────────────────────────────── -->
+  <section id="goals">
+    <h2><span class="icon">🎯</span>Goals &amp; Constraints</h2>
+
+    <h3>Goals</h3>
+    <ul>
+      <li><strong>Strictly Medium-only.</strong> No cross-source aggregation, no fallback to RSS aggregators or news APIs.</li>
+      <li><strong>Premium-aware.</strong> Authenticate as a Medium member so member-only and personalized topic feeds are visible.</li>
+      <li><strong>Five fixed topics</strong> (no dynamic topic selection or LLM-driven taxonomy).</li>
+      <li><strong>Last 24 hours only.</strong> Top 5 per topic by claps, after global URL dedup across topics.</li>
+      <li><strong>Single self-contained HTML</strong> for the report — no external CSS/JS, no build step, opens in any browser.</li>
+      <li><strong>Final markdown-style table</strong> with <code>#</code>, <code>Topic</code>, <code>Article Title</code>, <code>Author</code>, <code>URL</code>.</li>
+      <li><strong>Truly daily.</strong> Survives Mac sleep — cron-style "skip the day if asleep" is unacceptable.</li>
+      <li><strong>Zero ongoing cost.</strong> No LLM bill, no cloud bill, no SaaS bill.</li>
+    </ul>
+
+    <h3>Non-goals</h3>
+    <ul>
+      <li>Per-article LLM summaries (would add cost; deferred until needed).</li>
+      <li>Publishing back to Medium as a draft post (read-only consumer, not producer).</li>
+      <li>Multi-user — single user, single laptop.</li>
+      <li>"Trending" or social-graph ranking — claps in the last 24h is good enough.</li>
+    </ul>
+
+    <div class="callout callout-blue">
+      <strong>Why no LLM summaries?</strong>
+      The Medium card snippet is usually the lede sentence — already the author's chosen hook.
+      Adding a model in the loop introduces cost, latency, and quality variance for marginal benefit.
+      The architecture supports adding summaries later (see <a href="#cost-llm-upgrade">If You Add Summaries</a>).
+    </div>
+  </section>
+
+  <!-- ── HIGH-LEVEL ARCHITECTURE ────────────────────── -->
+  <section id="high-level">
+    <h2><span class="icon">🏗️</span>High-Level Design</h2>
+    <p>Single-process Python agent on macOS. <code>launchd</code> fires <code>main.py</code>
+       at 20:00 every day. The pipeline opens one Playwright browser session, walks the
+       Medium tag pages for each topic in order, parses article cards into a typed
+       <code>Article</code> list, deduplicates globally across topics, ranks by claps,
+       renders an HTML file, writes it to <code>reports/</code>, and sends it via Gmail SMTP.</p>
+
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+flowchart LR
+  subgraph macOS["macOS (user laptop)"]
+    LD[launchd<br/>20:00 daily]
+    KC[(macOS<br/>Keychain)]
+    FS[(reports/<br/>logs/<br/>.auth/)]
+    subgraph FM["Field Monitor process"]
+      direction TB
+      MAIN[main.py]
+      AUTH[auth.py<br/>persistent context]
+      FETCH[fetcher.py<br/>per-tag scrape]
+      PIPE[pipeline.py<br/>fan-out + dedup]
+      REND[render.py<br/>HTML template]
+      MAIL[emailer.py<br/>SMTP_SSL]
+      MAIN --> PIPE
+      PIPE --> AUTH
+      PIPE --> FETCH
+      MAIN --> REND
+      MAIN --> MAIL
+    end
+  end
+
+  LD --> MAIN
+  AUTH -. cookies .-> FS
+  REND --> FS
+  MAIL --> FS
+  KC -. medium pwd .-> AUTH
+  KC -. app pwd .-> MAIL
+
+  subgraph Web["External"]
+    MED[medium.com<br/>tag pages]
+    GM[Gmail SMTP<br/>smtp.gmail.com:465]
+  end
+
+  AUTH <--> MED
+  FETCH <--> MED
+  MAIL --> GM
+  GM -. delivered .-> INBOX[(Inbox<br/>hegde86vinay@gmail.com)]
+
+  classDef proc fill:#0d2137,stroke:#58a6ff,color:#e6edf3
+  classDef store fill:#161b22,stroke:#30363d,color:#8b949e
+  classDef ext fill:#0d2215,stroke:#3fb950,color:#e6edf3
+  class MAIN,AUTH,FETCH,PIPE,REND,MAIL proc
+  class FS,KC,INBOX store
+  class MED,GM ext
+      </pre>
+      <div class="diagram-caption">Single-process agent on macOS. Only outbound network calls are to Medium and Gmail.</div>
+    </div>
+  </section>
+
+  <!-- ── SEQUENCE ───────────────────────────────────── -->
+  <section id="sequence">
+    <h2><span class="icon">🧭</span>Daily Run Sequence</h2>
+
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant LD as launchd
+  participant M as main.py
+  participant K as Keychain
+  participant P as Playwright<br/>(persistent ctx)
+  participant MED as Medium
+  participant R as render.py
+  participant FS as reports/
+  participant GM as Gmail SMTP
+
+  LD->>M: fork at 20:00 local
+  M->>K: get medium_google_password<br/>(unused — manual MFA)
+  M->>P: launch chromium<br/>(user_data_dir reused)
+  P->>MED: GET /me  (login probe)
+  alt session valid
+    MED-->>P: 200 (member page)
+  else session expired
+    M->>GM: send "[Auth required]" email
+    M-->>LD: exit 1
+  end
+
+  loop for each of 5 topics
+    loop for each tag in topic (2–4 tags)
+      P->>MED: GET /tag/{tag}/recent
+      P->>P: scroll 4×, parse cards
+      Note over P: 3–6 s random pause
+    end
+  end
+
+  M->>M: dedup by URL (global set)<br/>top-5 per topic by claps
+  M->>R: render_html(date, results)
+  R-->>M: HTML string (~30 KB)
+  M->>FS: write YYYY-MM-DD-digest.html
+  M->>K: get gmail_smtp_app_password
+  M->>GM: SMTP_SSL login + send_message
+  GM-->>M: 250 OK
+  M-->>LD: exit 0
+      </pre>
+      <div class="diagram-caption">Auth probe is the first network hop. Only the partial-success policy lets a single tag's failure not kill the run.</div>
+    </div>
+  </section>
+
+  <!-- ── FOLDER ─────────────────────────────────────── -->
+  <section id="folder">
+    <h2><span class="icon">📁</span>Folder Layout</h2>
+<pre><code>field-monitor/
+├── main.py                # CLI entry: --first-login / --dry-run / --no-email / --topic / --headed
+├── auth.py                # Playwright persistent context + login probe
+├── fetcher.py             # Per-tag scrape, card parser, Cloudflare detection, 24 h filter
+├── pipeline.py            # Login → fan-out tags → global dedup → top-N per topic
+├── render.py              # GitHub-dark HTML template (sidebar, cards, summary table)
+├── emailer.py             # smtplib SMTP_SSL with retry
+├── keystore.py            # keyring wrapper (Keychain on macOS)
+├── config.py              # TOPIC_TAG_MAP, paths, TOP_N, WINDOW_HOURS, delays
+├── requirements.txt
+├── .env.example           # Non-secret only (usernames, recipient)
+├── scripts/
+│   ├── com.vinayhegde.field-monitor.plist   # launchd unit
+│   └── store_secrets.py                     # one-time Keychain setup
+├── reports/               # YYYY-MM-DD-digest.html (gitignored)
+├── logs/                  # field-monitor.{log,out,err} (gitignored)
+├── .auth/                 # Playwright user_data_dir + storage_state.json (gitignored)
+└── tasks/
+    ├── todo.md
+    └── lessons.md
+</code></pre>
+  </section>
+
+  <!-- ── COMPONENTS ─────────────────────────────────── -->
+  <section id="auth">
+    <h2><span class="icon">🔑</span>① Auth — Playwright Persistent Context</h2>
+    <p><code>auth.py</code> wraps <code>chromium.launch_persistent_context(user_data_dir=.auth/chromium-profile)</code>.
+       The profile dir holds cookies, localStorage, and IndexedDB across runs, so a single
+       interactive Google OAuth (run once via <code>--first-login --headed</code>) keeps the
+       Medium session warm for weeks.</p>
+    <p>The login flow is intentionally manual: Google's bot defenses make scripted credential
+       entry from Playwright unreliable, and credentialing through MFA / device-trust prompts
+       cannot be automated without a sanctioned API. The agent pauses for a human to complete
+       the flow once, then runs headless thereafter.</p>
+    <p>Each run starts with a cheap probe (<code>GET /me</code>) to confirm the session is
+       still alive. A failed probe sends a short "[Field Monitor] Auth required" email and
+       exits — the next run won't fix itself.</p>
+  </section>
+
+  <section id="fetcher">
+    <h2><span class="icon">🕷️</span>② Fetcher — Per-Tag Scrape</h2>
+    <p><code>fetcher.py</code> visits <code>https://medium.com/tag/{slug}/recent</code>,
+       scrolls four times to trigger lazy-loading (~40 cards), then parses
+       <code>&lt;article&gt;</code> elements with BeautifulSoup. Each card yields:</p>
+    <ul>
+      <li><strong>Title</strong> from the first <code>h2</code>/<code>h3</code></li>
+      <li><strong>URL</strong> from the first non-author anchor (strips query/source params)</li>
+      <li><strong>Author</strong> from <code>a[rel=author]</code> or <code>data-testid="authorName"</code></li>
+      <li><strong>Snippet</strong> from the first <code>p</code> (truncated to 280 chars)</li>
+      <li><strong>Read time</strong> via regex on the card text (<code>"\d+ min read"</code>)</li>
+      <li><strong>Claps</strong> from the clap button's <code>aria-label</code> (parses <code>1.2K</code> / <code>3,420</code>)</li>
+      <li><strong>Published at</strong> from <code>&lt;time datetime=...&gt;</code>, normalized to UTC</li>
+    </ul>
+    <p>Articles older than the 24-hour window are dropped. Between tag fetches the
+       fetcher sleeps <code>random.uniform(3, 6)</code> seconds. Cloudflare interstitials
+       (detected via title <code>"Just a moment..."</code>) trigger one 60-second back-off
+       and retry, then the tag is skipped — never the whole run.</p>
+  </section>
+
+  <section id="pipeline">
+    <h2><span class="icon">🔀</span>③ Pipeline — Fan-out, Dedup, Top-N</h2>
+    <p><code>pipeline.py</code> opens the persistent context once, runs the auth probe, then
+       walks <code>TOPIC_TAG_MAP</code> in order. For each topic it concatenates results
+       across all of that topic's tags into a per-topic list, with a single global
+       <code>seen_urls</code> set that prevents the same article appearing under two
+       topics (an article tagged both <code>aws</code> and <code>cloud-computing</code>
+       lands wherever it's seen first).</p>
+    <p>Within a topic, articles sort by <code>claps DESC</code> and the top
+       <code>TOP_N_PER_TOPIC = 5</code> survive. Empty topics are kept in the result dict
+       (the renderer shows a placeholder card) so the layout never collapses.</p>
+  </section>
+
+  <section id="render">
+    <h2><span class="icon">🎨</span>④ Render — Pure-Python f-string Templating</h2>
+    <p><code>render.py</code> emits a single ~30 KB HTML file. CSS, JavaScript, and content
+       are inlined — the file is portable and survives email forwarding. The template
+       reuses the GitHub-dark CSS variable palette from this docs collection, so the
+       generated digest visually matches the system-design docs you're reading now.</p>
+    <p>Structure:</p>
+    <ul>
+      <li>Fixed-position sidebar with topic anchors + IntersectionObserver-based active highlighting</li>
+      <li>Hero with date, total article count, populated-topic count</li>
+      <li>One <code>&lt;section&gt;</code> per topic, with cards (title, meta, snippet, "Read on Medium →")</li>
+      <li>A final <code>&lt;table class="summary"&gt;</code> styled to look like a markdown grid: <code>#&nbsp;|&nbsp;Topic&nbsp;|&nbsp;Article Title&nbsp;|&nbsp;Author&nbsp;|&nbsp;URL</code></li>
+    </ul>
+    <p>No Jinja2 — the templating volume doesn't justify the dependency, and the existing
+       projects in this repo all use the same plain-string convention.</p>
+  </section>
+
+  <section id="emailer">
+    <h2><span class="icon">📧</span>⑤ Emailer — Gmail SMTP_SSL</h2>
+    <p><code>emailer.py</code> builds a <code>MIMEMultipart("alternative")</code> with the
+       full HTML as <code>text/html</code> and a plain-text summary fallback. The 16-character
+       Gmail App Password is fetched from Keychain at send time. SMTP failures retry twice
+       with 30 s backoff; final failure logs to <code>logs/email-failures.log</code> and
+       exits non-zero so launchd surfaces the error in <code>.err</code>.</p>
+    <p>The HTML is emailed in the body, not as an attachment, so phone clients render it
+       inline. The same file is already on disk in <code>reports/</code> regardless of
+       email outcome.</p>
+  </section>
+
+  <section id="scheduler">
+    <h2><span class="icon">⏰</span>⑥ Scheduler — macOS launchd</h2>
+    <p>Unit file at <code>~/Library/LaunchAgents/com.vinayhegde.field-monitor.plist</code>
+       with <code>StartCalendarInterval</code> set to <code>{Hour: 20, Minute: 0}</code> and
+       <code>RunAtLoad: false</code>. Standard out/err redirect to
+       <code>logs/field-monitor.{out,err}</code>.</p>
+    <p>Why launchd over cron:</p>
+    <table>
+      <thead><tr><th>Behavior</th><th>cron</th><th>launchd</th></tr></thead>
+      <tbody>
+        <tr><td>Mac asleep at 20:00</td><td>Job is silently skipped that day</td><td>Job fires on next wake</td></tr>
+        <tr><td>Per-user vs system</td><td>One global <code>crontab -e</code></td><td>Per-user <code>LaunchAgents</code></td></tr>
+        <tr><td>Keychain access</td><td>Runs in launchctl's session — Keychain often locked</td><td>Runs in user GUI session — Keychain unlocked</td></tr>
+        <tr><td>Reliability on macOS</td><td>Apple stopped recommending it ~2010</td><td>Native, supported</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── TOPIC MAP ──────────────────────────────────── -->
+  <section id="topic-map">
+    <h2><span class="icon">🗺️</span>Topic → Tag Mapping</h2>
+    <p>Each topic queries the union of 2–4 Medium tag slugs. Tags were chosen by manually
+       inspecting Medium's tag pages for hit rate and signal-to-noise.</p>
+    <table>
+      <thead><tr><th>Topic (display name)</th><th>Tag slugs</th></tr></thead>
+      <tbody>
+        <tr><td>Distributed Architecture</td><td><code>distributed-systems</code>, <code>microservices</code>, <code>software-architecture</code></td></tr>
+        <tr><td>System Design Interviews</td><td><code>system-design-interview</code>, <code>system-design</code>, <code>coding-interviews</code></td></tr>
+        <tr><td>AI Use Cases</td><td><code>artificial-intelligence</code>, <code>generative-ai-use-cases</code>, <code>llm</code>, <code>ai-agents</code></td></tr>
+        <tr><td>Java / Spring Boot</td><td><code>spring-boot</code>, <code>java</code>, <code>java-spring-boot</code></td></tr>
+        <tr><td>Cloud News (AWS/Azure/GCP)</td><td><code>aws</code>, <code>azure</code>, <code>google-cloud-platform</code>, <code>cloud-computing</code></td></tr>
+      </tbody>
+    </table>
+    <p>Total tag pages visited per run: <strong>17</strong>.</p>
+  </section>
+
+  <section id="dedup-rank">
+    <h2><span class="icon">🎚️</span>Dedup &amp; Ranking</h2>
+    <ul>
+      <li><strong>Dedup is global, not per-topic.</strong> An article tagged <code>aws</code> and <code>cloud-computing</code> shows up once, in whichever topic was processed first (<code>TOPIC_TAG_MAP</code> insertion order, which is the canonical topic order).</li>
+      <li><strong>Ranking is claps DESC within topic.</strong> Claps are a noisy proxy but cheaper to extract than reading time × engagement, and the 24h window already filters for "happening now".</li>
+      <li><strong>Top-N is 5 per topic.</strong> A digest with ≤25 articles fits one screen on a laptop and one phone screen of scrolling.</li>
+    </ul>
+  </section>
+
+  <!-- ── SECRETS ────────────────────────────────────── -->
+  <section id="secrets">
+    <h2><span class="icon">🔐</span>Secrets &amp; Auth State</h2>
+    <h3>What lives where</h3>
+    <table>
+      <thead><tr><th>Asset</th><th>Storage</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Medium / Google account password</td><td>macOS Keychain<br/>(<code>service: field-monitor</code>)</td><td>Encrypted at rest with login keychain. Read-only access from the user's session.</td></tr>
+        <tr><td>Gmail SMTP App Password (16-char)</td><td>macOS Keychain</td><td>Same. App password is scoped — revocable independently of the Google account.</td></tr>
+        <tr><td>Recipient + sender email addresses</td><td><code>.env</code></td><td>Not secret. Convenient to keep visible.</td></tr>
+        <tr><td>Medium login cookies / localStorage</td><td><code>.auth/chromium-profile/</code></td><td>Playwright's persistent context. <code>chmod 700</code>, gitignored.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-green">
+      <strong>Why Keychain over an encrypted .env (sops/age/GPG)?</strong>
+      LaunchAgents run inside the already-unlocked login session — Keychain is available
+      with no master-password prompt at scheduled run time. No key files to manage, no
+      rotation tooling to write. <code>security find-generic-password -s field-monitor</code>
+      lets you inspect or rotate from the shell.
+    </div>
+  </section>
+
+  <!-- ── FAILURE ────────────────────────────────────── -->
+  <section id="failure">
+    <h2><span class="icon">🚨</span>Failure Handling — Partial-Success Policy</h2>
+    <p>For an unattended daily job, a single broken tag should not kill the digest.
+       The agent's policy: log loudly, render a warning, continue.</p>
+    <table>
+      <thead><tr><th>Failure</th><th>Behavior</th><th>Exit</th></tr></thead>
+      <tbody>
+        <tr><td>Auth probe fails / cookies expired</td><td>Send "[Field Monitor] Auth required" email; do not scrape</td><td><span class="status-bad">1</span></td></tr>
+        <tr><td>Cloudflare interstitial on a tag</td><td>60 s back-off, one retry, then skip the tag</td><td><span class="status-ok">0</span></td></tr>
+        <tr><td>A topic returns 0 fresh articles</td><td>Render "No new articles in last 24 h" placeholder</td><td><span class="status-ok">0</span></td></tr>
+        <tr><td>SMTP send fails</td><td>Retry twice with 30 s backoff. HTML on disk regardless. Append to <code>logs/email-failures.log</code></td><td><span class="status-warn">2</span></td></tr>
+        <tr><td>Keychain entry missing</td><td>Log error and exit. Re-run <code>scripts/store_secrets.py</code></td><td><span class="status-bad">2</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── ANTI-BOT ───────────────────────────────────── -->
+  <section id="anti-bot">
+    <h2><span class="icon">🛡️</span>Anti-Bot &amp; Terms-of-Service Posture</h2>
+    <p>This agent is a single-user, low-volume scraper that visits ~17 public-or-member-visible
+       pages once per day. That's well below normal interactive browsing. The defensive layers:</p>
+    <ul>
+      <li><strong>Persistent context</strong> reuses cookies / localStorage / IndexedDB so traffic looks like the same logged-in user across runs, not a fresh fingerprint.</li>
+      <li><strong>Realistic Chrome user-agent</strong> matching the persistent profile's actual Chromium build.</li>
+      <li><strong>Scroll &amp; pause</strong> — 4 scroll passes with 1.5 s pauses, plus <code>uniform(3, 6) s</code> jitter between tags.</li>
+      <li><strong>Single concurrent connection</strong> — no parallel tag fetches.</li>
+      <li><strong>Cloudflare detection</strong> — back off and skip rather than hammer.</li>
+    </ul>
+    <p><code>playwright-stealth</code> is installed (patches <code>navigator.webdriver</code>
+       and other tells) but is not strictly required at this volume.</p>
+    <div class="callout callout-warn">
+      <strong>Be a good citizen.</strong>
+      Medium's ToS permits personal-use viewing of member content. Do not redistribute
+      scraped article bodies or snippets publicly. The digest is for personal consumption
+      and is sent only to the operator's own email.
+    </div>
+  </section>
+
+  <!-- ═══════════════ COST ═══════════════ -->
+  <section id="cost-current">
+    <h2><span class="icon">💰</span>Cost Analysis — Current Setup</h2>
+    <p>The chosen architecture is intentionally <strong>$0/month above existing sunk costs</strong>.
+       Every component is either free, native to macOS, or a service the user already
+       subscribes to for unrelated reasons.</p>
+
+    <table>
+      <thead><tr><th>Component</th><th>Cost</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Compute (Mac M-series)</td><td class="num-right">$0</td><td>Already running. ~5 min CPU/day, &lt;1¢ of electricity.</td></tr>
+        <tr><td>macOS launchd</td><td class="num-right">$0</td><td>OS-bundled. Free forever.</td></tr>
+        <tr><td>macOS Keychain</td><td class="num-right">$0</td><td>OS-bundled.</td></tr>
+        <tr><td>Python + Playwright + Chromium</td><td class="num-right">$0</td><td>Open source. Chromium is ~300 MB on disk, one-time.</td></tr>
+        <tr><td>Medium tag-page reads</td><td class="num-right">$0</td><td>Public/member endpoints; no API metering.</td></tr>
+        <tr><td>Medium Premium subscription</td><td class="num-right">$5/mo (sunk)</td><td>Already paid. Field Monitor consumes nothing extra.</td></tr>
+        <tr><td>Gmail SMTP</td><td class="num-right">$0</td><td>500 sends/day free. We send 1.</td></tr>
+        <tr><td>Network egress</td><td class="num-right">$0</td><td>~10 MB/day on home internet.</td></tr>
+        <tr><td>LLM inference</td><td class="num-right">$0</td><td>Not used. Snippets come from Medium's RSS/page markup.</td></tr>
+        <tr><td><strong>Incremental monthly cost</strong></td><td class="num-right"><strong>$0.00</strong></td><td><strong>Annualized: $0.00</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>What if Medium Premium weren't already paid?</h3>
+    <p>Premium is <strong>$5/month or $50/year</strong>. Without it, the agent still runs but
+       sees only the public projection of tag pages — which is most of the same titles, just
+       without member-only personalization. Premium is recommended for the operator's reading
+       experience, not for the agent.</p>
+  </section>
+
+  <section id="cost-llm-upgrade">
+    <h2><span class="icon">🤖</span>If You Add LLM Summaries Later</h2>
+    <p>The default design uses Medium's snippet for each card — no model in the loop.
+       If a future change adds a 2-line LLM summary per card, here is the rough monthly
+       inference bill at <strong>~14 articles/day = ~420/month</strong>, with ~1 K input
+       tokens (snippet + a short prompt) and ~100 output tokens per article:</p>
+    <table>
+      <thead>
+        <tr><th>Provider / Model</th><th>$/M input</th><th>$/M output</th><th>Monthly cost (~420 articles)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AWS Bedrock — Nova Lite</td><td class="num-right">$0.06</td><td class="num-right">$0.24</td><td class="num-right">~$0.04</td></tr>
+        <tr><td>OpenAI GPT-4o-mini</td><td class="num-right">$0.15</td><td class="num-right">$0.60</td><td class="num-right">~$0.09</td></tr>
+        <tr><td>AWS Bedrock — Claude Haiku 3.5</td><td class="num-right">$0.80</td><td class="num-right">$4.00</td><td class="num-right">~$0.50</td></tr>
+        <tr><td>Anthropic API direct — Claude Haiku 4.5</td><td class="num-right">$1.00</td><td class="num-right">$5.00</td><td class="num-right">~$0.63</td></tr>
+        <tr><td>Anthropic API direct — Claude Sonnet 4.6 <em>(overkill)</em></td><td class="num-right">$3.00</td><td class="num-right">$15.00</td><td class="num-right">~$1.90</td></tr>
+        <tr><td>Local <code>llama.cpp</code> + Phi-3 / Llama-3.2-3B on Mac</td><td class="num-right">$0</td><td class="num-right">$0</td><td class="num-right">$0 + ~30 s/run CPU</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-blue">
+      <strong>Recommendation if you upgrade.</strong>
+      Start with <strong>Claude Haiku 4.5</strong> (~$0.63/mo) directly via the Anthropic API.
+      Enable <em>prompt caching</em> on the system prompt (the per-card extraction prompt is
+      identical each call) and cost drops to ~$0.20–0.30/mo.
+      Bedrock is the right answer only if your org needs all data inside an AWS account
+      for compliance — for a personal agent, the Anthropic API is simpler.
+    </div>
+  </section>
+
+  <!-- ═══════════════ ALTERNATIVES ═══════════════ -->
+  <section id="alt-overview">
+    <h2><span class="icon">🌐</span>Alternative Platforms — Decision Tree</h2>
+    <p>The current "Mac + launchd" choice optimizes for $0 cost, full control, and zero
+       cloud setup. Other reasonable platforms exist; here is the matrix that would push
+       you to each.</p>
+
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+flowchart TD
+  Q1{Need to run when<br/>laptop is off?}
+  Q1 -- No --> CURRENT[Stay on Mac + launchd<br/>$0/mo]
+  Q1 -- Yes --> Q2{Adding LLM<br/>summaries?}
+  Q2 -- No --> Q3{Comfortable with<br/>cloud setup?}
+  Q3 -- No --> GHA[GitHub Actions<br/>~$0/mo]
+  Q3 -- Yes --> Q4{Need persistent<br/>storage / cookies?}
+  Q4 -- No --> LAMBDA[Lambda + EventBridge<br/>~$0.40/mo]
+  Q4 -- Yes --> FARGATE[ECS Fargate Scheduled Task<br/>+ EFS for cookies<br/>~$0.50/mo]
+  Q2 -- Yes --> Q5{Org policy: data<br/>must stay in AWS?}
+  Q5 -- Yes --> BEDROCK[Lambda/Fargate +<br/>Bedrock Nova Lite<br/>~$0.50/mo]
+  Q5 -- No --> ANTHROPIC[Lambda/Fargate +<br/>Anthropic API direct<br/>~$0.65/mo]
+
+  classDef rec fill:#0d2215,stroke:#3fb950,color:#e6edf3
+  classDef alt fill:#0d2137,stroke:#58a6ff,color:#e6edf3
+  class CURRENT,GHA rec
+  class LAMBDA,FARGATE,BEDROCK,ANTHROPIC alt
+      </pre>
+      <div class="diagram-caption">"Stay on Mac" wins on cost. GitHub Actions is the cheapest cloud option that doesn't depend on your laptop.</div>
+    </div>
+  </section>
+
+  <section id="alt-bedrock">
+    <h2><span class="icon">🟧</span>AWS Bedrock</h2>
+    <p><strong>What Bedrock actually is:</strong> a managed inference API for foundation
+       models (Anthropic Claude, Amazon Nova, Meta Llama, Mistral, Cohere, etc.) accessed
+       via the AWS SDK with IAM-based auth.</p>
+
+    <div class="callout callout-warn">
+      <strong>Bedrock is not a hosting platform.</strong>
+      It will not run your Playwright scraper, render HTML, or send email. You still need
+      Lambda / Fargate / EC2 around it. Bedrock is only relevant if you upgrade Field
+      Monitor to use an LLM (e.g. for per-article summaries or topic re-classification).
+    </div>
+
+    <h3>When Bedrock is the right LLM choice</h3>
+    <ul>
+      <li>You're already on AWS and your org requires that all data stay inside an AWS account / VPC for compliance reasons.</li>
+      <li>You want IAM-managed access keys instead of a separate Anthropic API key.</li>
+      <li>You'll consolidate the bill on AWS.</li>
+    </ul>
+
+    <h3>Reference architecture (Bedrock variant)</h3>
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+flowchart LR
+  EB[EventBridge Scheduler<br/>cron 20:00 IST]
+  L[Lambda<br/>container image<br/>2 GB / 0.5 vCPU<br/>5 min timeout]
+  S[(S3 bucket<br/>reports/)]
+  SM[(Secrets Manager<br/>medium pwd<br/>or session cookie)]
+  EFS[(EFS<br/>auth state)]
+  BR[Bedrock Runtime<br/>Nova Lite]
+  SES[SES<br/>send email]
+  IN[(Inbox)]
+
+  EB --> L
+  L -. read .-> SM
+  L -. read+write .-> EFS
+  L --> MED[medium.com]
+  L -. summarize cards .-> BR
+  L --> S
+  L --> SES
+  SES --> IN
+
+  classDef aws fill:#3a2200,stroke:#d29922,color:#e6edf3
+  class EB,L,S,SM,EFS,BR,SES aws
+      </pre>
+      <div class="diagram-caption">EventBridge fires Lambda; Lambda scrapes, calls Bedrock for summaries, writes to S3, sends via SES.</div>
+    </div>
+
+    <h3>Cost (with Nova Lite summaries)</h3>
+    <table>
+      <thead><tr><th>Component</th><th>Monthly cost</th></tr></thead>
+      <tbody>
+        <tr><td>Lambda (container, 2 GB, 5 min × 30)</td><td class="num-right">~$0.30</td></tr>
+        <tr><td>EventBridge Scheduler</td><td class="num-right">~$0.00 (under free tier)</td></tr>
+        <tr><td>Bedrock Nova Lite (~420 cards)</td><td class="num-right">~$0.04</td></tr>
+        <tr><td>S3 storage (10 MB/mo)</td><td class="num-right">~$0.00</td></tr>
+        <tr><td>EFS (1 GB persistent for cookies)</td><td class="num-right">~$0.30</td></tr>
+        <tr><td>Secrets Manager (2 secrets)</td><td class="num-right">~$0.80</td></tr>
+        <tr><td>SES (30 emails/mo)</td><td class="num-right">~$0.00</td></tr>
+        <tr><td>ECR (1 GB image)</td><td class="num-right">~$0.10</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num-right"><strong>~$1.55/mo</strong></td></tr>
+      </tbody>
+    </table>
+    <p>Drop EFS + Secrets Manager (use S3 + SSM Parameter Store SecureString instead) and
+       you can get this under <strong>$0.50/month</strong>.</p>
+  </section>
+
+  <section id="alt-lambda">
+    <h2><span class="icon">λ</span>AWS Lambda + EventBridge (no Bedrock)</h2>
+    <p>Same architecture as the Bedrock variant <em>without</em> the LLM step — keeps the
+       snippet-only design. Lambda runs as a container image (Playwright + Chromium need
+       ~600 MB of layers, so the container image route is unavoidable; the 250 MB zip
+       limit is too small).</p>
+    <table>
+      <thead><tr><th>Component</th><th>Monthly cost</th></tr></thead>
+      <tbody>
+        <tr><td>Lambda container (2 GB, 5 min × 30 = 18,000 GB-s)</td><td class="num-right">~$0.30</td></tr>
+        <tr><td>EventBridge, S3, SES, SSM SecureString</td><td class="num-right">~$0.05</td></tr>
+        <tr><td>EFS for persistent cookies (or use SSM JSON blob)</td><td class="num-right">~$0.30 (or $0.05)</td></tr>
+        <tr><td>ECR image storage</td><td class="num-right">~$0.10</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num-right"><strong>~$0.50–0.75/mo</strong></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Caveats:</strong></p>
+    <ul>
+      <li>Cold start on a 2 GB container is 6–12 seconds — negligible for a daily job.</li>
+      <li>Chromium in Lambda is fragile across runtime versions; pin a known-good base image (e.g. <code>aws-lambda-python:3.13</code> with <code>@sparticuz/chromium</code> equivalent).</li>
+      <li>Datacenter IPs hit Cloudflare challenges <em>much</em> more often than residential IPs. You may need a residential proxy ($20–50/mo) — at which point the cost story collapses.</li>
+    </ul>
+  </section>
+
+  <section id="alt-fargate">
+    <h2><span class="icon">🐳</span>ECS Fargate Scheduled Task</h2>
+    <p>Heavier than Lambda but no cold start, no 15-min execution cap, and full control over
+       the container. Best when you might extend the agent later (more topics, longer scrapes).</p>
+    <ul>
+      <li>0.25 vCPU, 0.5 GB RAM, 5 min/day → <strong>~$0.05–0.10/mo</strong> for compute</li>
+      <li>For Playwright + Chromium realistically need 0.5 vCPU, 2 GB → <strong>~$0.25/mo</strong></li>
+      <li>Add EFS, SES, EventBridge → total <strong>~$0.50/mo</strong></li>
+    </ul>
+  </section>
+
+  <section id="alt-gcp">
+    <h2><span class="icon">☁️</span>GCP Cloud Run Jobs + Cloud Scheduler</h2>
+    <p>GCP's closest analogue to "scheduled container task". Cloud Run Jobs handles
+       short-lived containers; Cloud Scheduler triggers them via HTTP or Pub/Sub.</p>
+    <ul>
+      <li>1 vCPU × 2 GB × 5 min × 30 = ~<strong>$0.10–0.30/mo</strong> compute</li>
+      <li>Cloud Scheduler: 3 jobs free / month forever</li>
+      <li>Secret Manager: ~$0.06/mo per active secret</li>
+      <li>SendGrid free tier (100 emails/day) for delivery</li>
+      <li><strong>Total: ~$0.30/mo</strong></li>
+    </ul>
+    <p>Notable: GCP Cloud Run recently added persistent volume support, which simplifies
+       the Playwright cookie-persistence problem vs. Lambda.</p>
+  </section>
+
+  <section id="alt-azure">
+    <h2><span class="icon">🟦</span>Azure Container Apps Jobs</h2>
+    <p>Azure's scheduled-job offering. Triggered by Azure Logic Apps or a cron schedule
+       directly inside Container Apps Jobs.</p>
+    <ul>
+      <li>~<strong>$0.20–0.40/mo</strong> for the same Playwright workload</li>
+      <li>Key Vault ($0.03 per 10K operations)</li>
+      <li>Communication Services Email (per-message billing)</li>
+      <li><strong>Total: ~$0.40/mo</strong></li>
+    </ul>
+  </section>
+
+  <section id="alt-gha">
+    <h2><span class="icon">🐙</span>GitHub Actions (cheapest cloud option)</h2>
+    <p>If you're willing to commit the Field Monitor source to a <strong>private GitHub
+       repo</strong>, you can run the daily job on GitHub-hosted runners under the free
+       tier. This is the lowest-friction cloud path.</p>
+    <ul>
+      <li>Free tier: 2,000 min/mo on private repos. Field Monitor uses ~5 min/day = <strong>150 min/mo</strong> — well under.</li>
+      <li>Public repo: unlimited free minutes.</li>
+      <li>Trigger: <code>schedule: - cron: '0 14 * * *'</code> (14:00 UTC = 20:00 local for IST/Asia).</li>
+      <li>Secrets: GitHub Encrypted Secrets — encrypted at rest, exposed as env vars to the job.</li>
+      <li>Storage: commit the Playwright <code>storage_state.json</code> as a base64-encoded GitHub Encrypted Secret, or upload to S3 / R2.</li>
+    </ul>
+    <table>
+      <thead><tr><th>Component</th><th>Monthly cost</th></tr></thead>
+      <tbody>
+        <tr><td>Compute (150 min on Linux runners)</td><td class="num-right">$0 (free tier)</td></tr>
+        <tr><td>Secrets storage</td><td class="num-right">$0</td></tr>
+        <tr><td>Email delivery (Gmail SMTP via env var, or Resend free tier)</td><td class="num-right">$0</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num-right"><strong>$0/mo</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="callout callout-warn">
+      <strong>Watch out:</strong>
+      Cloudflare on Medium is more aggressive against GitHub Actions runner IPs than
+      against residential IPs. You will hit more challenges than running on a Mac.
+      Mitigations: run a self-hosted runner on a home machine, or accept a higher
+      partial-failure rate on cloud runners.
+    </div>
+  </section>
+
+  <section id="alt-n8n">
+    <h2><span class="icon">🧩</span>Self-hosted n8n / Activepieces / Make</h2>
+    <p>If you already operate a home server (Synology, Raspberry Pi, NAS, mini-PC), running
+       n8n locally gives you a visual workflow editor with a built-in scheduler. The
+       Field Monitor pipeline becomes 4–6 nodes: HTTP Request → HTML Extract → Function
+       (dedup) → HTML render → Send Email.</p>
+    <ul>
+      <li><strong>Cost:</strong> $0 (existing hardware) or ~$5/mo for the n8n Cloud Starter plan.</li>
+      <li><strong>Pro:</strong> No code to maintain. Easy to extend with more sources later.</li>
+      <li><strong>Con:</strong> Playwright is harder to wire into n8n than into a Python script. Less idiomatic for headless-browser scraping.</li>
+    </ul>
+  </section>
+
+  <section id="alt-compare">
+    <h2><span class="icon">📊</span>Side-by-Side Comparison</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Platform</th>
+          <th>Monthly $</th>
+          <th>Runs when laptop is off?</th>
+          <th>Cloudflare-friendly IP?</th>
+          <th>Setup effort</th>
+          <th>Best for</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Mac + launchd</strong> <span class="status-ok">(current)</span></td>
+          <td class="num-right">$0</td>
+          <td><span class="status-bad">No</span></td>
+          <td><span class="status-ok">Yes (residential)</span></td>
+          <td>Low</td>
+          <td>Single user, laptop usually awake</td>
+        </tr>
+        <tr>
+          <td>GitHub Actions</td>
+          <td class="num-right">$0</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>Low</td>
+          <td>Cheapest cloud, OK with occasional misses</td>
+        </tr>
+        <tr>
+          <td>AWS Lambda + EventBridge</td>
+          <td class="num-right">~$0.50</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>Medium</td>
+          <td>Already on AWS, want managed</td>
+        </tr>
+        <tr>
+          <td>AWS Bedrock + Lambda <em>(LLM upgrade)</em></td>
+          <td class="num-right">~$0.50–1.55</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>High</td>
+          <td>Compliance-bound on AWS, need summaries</td>
+        </tr>
+        <tr>
+          <td>ECS Fargate</td>
+          <td class="num-right">~$0.50</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>Medium-High</td>
+          <td>Long-term extensibility on AWS</td>
+        </tr>
+        <tr>
+          <td>GCP Cloud Run Jobs</td>
+          <td class="num-right">~$0.30</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>Medium</td>
+          <td>GCP-first orgs</td>
+        </tr>
+        <tr>
+          <td>Azure Container Apps Jobs</td>
+          <td class="num-right">~$0.40</td>
+          <td><span class="status-ok">Yes</span></td>
+          <td><span class="status-warn">Often blocked</span></td>
+          <td>Medium</td>
+          <td>Azure-first orgs</td>
+        </tr>
+        <tr>
+          <td>Self-hosted n8n</td>
+          <td class="num-right">$0–5</td>
+          <td><span class="status-ok">Yes (if NAS)</span></td>
+          <td><span class="status-ok">Yes (residential)</span></td>
+          <td>Medium</td>
+          <td>Existing home-server operators</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-blue">
+      <strong>The honest summary.</strong>
+      For this exact agent, "Mac + launchd" is hard to beat: it's free, it runs from a
+      residential IP (which Cloudflare trusts), and it has zero cloud setup. The strongest
+      case for a cloud move is reliability when the laptop is off — and even then,
+      <strong>GitHub Actions is the lowest-friction first step</strong>, not Bedrock.
+      Reach for Bedrock only when you've decided to add LLM features <em>and</em> your org
+      mandates AWS-resident inference.
+    </div>
+  </section>
+
+  <!-- ── RUN BOOK ───────────────────────────────────── -->
+  <section id="runbook">
+    <h2><span class="icon">📖</span>Run Book</h2>
+    <ol class="steps">
+      <li><div class="step-content"><h4>One-time setup</h4><p><code>python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python -m playwright install chromium</code></p></div></li>
+      <li><div class="step-content"><h4>Stash secrets</h4><p><code>cp .env.example .env && python scripts/store_secrets.py</code> — interactive, writes to Keychain.</p></div></li>
+      <li><div class="step-content"><h4>First Medium login</h4><p><code>python main.py --first-login --headed</code>. Click "Sign in with Google", complete MFA, return to terminal, press Enter.</p></div></li>
+      <li><div class="step-content"><h4>Verify dry run</h4><p><code>python main.py --dry-run --open-browser</code> opens today's HTML in your default browser. No email is sent.</p></div></li>
+      <li><div class="step-content"><h4>Install schedule</h4><p><code>cp scripts/com.vinayhegde.field-monitor.plist ~/Library/LaunchAgents/ && launchctl load -w ~/Library/LaunchAgents/com.vinayhegde.field-monitor.plist</code></p></div></li>
+      <li><div class="step-content"><h4>Force-fire to validate</h4><p><code>launchctl start com.vinayhegde.field-monitor && tail -f logs/field-monitor.out logs/field-monitor.err</code></p></div></li>
+    </ol>
+  </section>
+
+  <!-- ── LIMITATIONS ────────────────────────────────── -->
+  <section id="limitations">
+    <h2><span class="icon">⚠️</span>Known Limitations</h2>
+    <ul>
+      <li><strong>Mac must be on at 20:00 (or wake within the day).</strong> launchd catches up on next wake but the digest will be stale-by-N-hours. If the Mac is off for 36+ hours the run is missed entirely.</li>
+      <li><strong>Login session expires every few weeks.</strong> Google's session lifetime is opaque — when it lapses, the agent emails an alert and exits. Re-running <code>--first-login --headed</code> is a 30-second fix.</li>
+      <li><strong>Cloudflare is the silent killer.</strong> Most failures we'll see are Cloudflare interstitials on individual tag pages, not bugs in the scraper. The partial-success policy hides them in the digest with a yellow banner.</li>
+      <li><strong>Claps as ranking signal.</strong> Recent articles haven't accumulated claps yet, so the freshest content can be ranked below 12-hour-old viral pieces. Not great, but no obviously better signal is available without a model.</li>
+      <li><strong>Snippet quality varies.</strong> Some Medium authors don't write a strong lede; their snippets read as truncated mid-sentence. Adding LLM summaries fixes this — at the cost analyzed above.</li>
+    </ul>
+  </section>
+
+  <!-- ── ROADMAP ────────────────────────────────────── -->
+  <section id="roadmap">
+    <h2><span class="icon">🗺️</span>Roadmap</h2>
+    <ol>
+      <li><strong>v1 (shipped):</strong> Mac + launchd, snippet-only, 5 topics, daily HTML + email.</li>
+      <li><strong>v1.1:</strong> Add a "Trending This Week" appendix at the bottom — top 3 articles from the last 7 days regardless of 24h cutoff.</li>
+      <li><strong>v1.2:</strong> Optional Claude Haiku summarization with <code>--with-summaries</code> CLI flag (off by default to preserve $0/mo default).</li>
+      <li><strong>v1.3:</strong> Migrate the schedule to GitHub Actions if the laptop-off problem becomes annoying. Source code already cloud-portable; only the launchd plist needs replacement.</li>
+      <li><strong>v2 (maybe):</strong> Pull from arXiv RSS + Hacker News in addition to Medium when the user's interests broaden beyond Medium.</li>
+    </ol>
+  </section>
+
+</main>
+
+<footer>
+  <span>Field Monitor — Daily Medium Digest Agent</span>
+  <span>System Design · v1.0 · 2026-04-23</span>
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#161b22',
+      primaryColor: '#0d2137',
+      primaryBorderColor: '#58a6ff',
+      primaryTextColor: '#e6edf3',
+      lineColor: '#8b949e',
+      secondaryColor: '#21262d',
+      tertiaryColor: '#0d1117'
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true },
+    sequence: { useMaxWidth: true }
+  });
+
+  // Sidebar active-state highlighting
+  const links = document.querySelectorAll('nav#sidebar a');
+  const sections = document.querySelectorAll('main section[id]');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+
+</body>
+</html>
