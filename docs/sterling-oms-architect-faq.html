@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sterling OMS Architect — Interview FAQ</title>
+
+<!-- Mermaid.js -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:        #0d1117;
+    --bg-card:   #161b22;
+    --bg-hover:  #1c2128;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --text-muted:#8b949e;
+    --accent:    #58a6ff;
+    --accent2:   #3fb950;
+    --warn:      #d29922;
+    --danger:    #f85149;
+    --purple:    #bc8cff;
+    --tag-bg:    #1f6feb33;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0 20px 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .sidebar-section {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--purple);
+    padding: 18px 20px 6px;
+  }
+  .nav-item {
+    display: block;
+    padding: 6px 20px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12.5px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--tag-bg);
+  }
+  .nav-item .num {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-right: 6px;
+  }
+
+  .main {
+    flex: 1;
+    max-width: 1080px;
+    padding: 40px 48px;
+    margin: 0 auto;
+  }
+
+  .doc-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+  .doc-header h1 {
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .doc-header h1 span { color: var(--accent); }
+  .doc-header .subtitle { color: var(--text-muted); font-size: 14px; }
+  .meta-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 16px;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .badge-blue   { background: #1f6feb33; color: var(--accent); border: 1px solid #1f6feb66; }
+  .badge-green  { background: #238636aa; color: var(--accent2); border: 1px solid #2ea04366; }
+  .badge-yellow { background: #9e670022; color: var(--warn); border: 1px solid #9e670044; }
+  .badge-red    { background: #da363333; color: var(--danger); border: 1px solid #da363355; }
+  .badge-purple { background: #8957e533; color: var(--purple); border: 1px solid #8957e566; }
+
+  .section {
+    margin-bottom: 56px;
+    scroll-margin-top: 24px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .section-header h2 { font-size: 22px; font-weight: 600; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .callout {
+    padding: 14px 18px;
+    border-radius: 6px;
+    border-left: 3px solid;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .callout-info   { background: #1f6feb11; border-color: var(--accent); }
+  .callout-warn   { background: #9e670011; border-color: var(--warn); }
+  .callout-danger { background: #da363311; border-color: var(--danger); }
+  .callout-success{ background: #23863611; border-color: var(--accent2); }
+  .callout-title  { font-weight: 600; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .diagram-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .diagram-label {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-hover); }
+  td.rec { color: var(--accent2); font-weight: 500; }
+
+  /* === FAQ / Q&A blocks === */
+  .qa-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    margin: 18px 0;
+    overflow: hidden;
+  }
+  .qa-question {
+    padding: 16px 22px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    transition: background 0.15s;
+  }
+  .qa-question:hover { background: var(--bg-hover); }
+  .qa-q-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .qa-q-text .qa-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-right: 10px;
+    background: var(--tag-bg);
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .qa-toggle {
+    font-family: var(--mono);
+    color: var(--text-muted);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .qa-answer {
+    padding: 0 22px 22px;
+    display: none;
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+    padding-top: 18px;
+  }
+  .qa-answer.open { display: block; }
+
+  /* === Sub-system design block === */
+  .sysdesign {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .sysdesign-header {
+    background: linear-gradient(90deg, #1f6feb22, transparent);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sysdesign-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .sysdesign-header .num-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    color: #0d1117;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .sysdesign-body { padding: 22px 24px; }
+
+  .pre, pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #79c0ff;
+    background: #010409;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  pre code { color: var(--text); background: transparent; padding: 0; }
+
+  .content h3 { font-size: 16px; font-weight: 600; margin: 22px 0 10px; color: var(--accent); }
+  .content h4 { font-size: 13px; font-weight: 600; margin: 18px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .content p  { margin-bottom: 12px; color: #cdd9e5; }
+  .content ul, .content ol { padding-left: 22px; margin-bottom: 12px; }
+  .content li { margin-bottom: 6px; font-size: 14px; color: #cdd9e5; }
+  .content strong { color: var(--text); font-weight: 600; }
+
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .pillar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .pillar h5 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .pillar p { font-size: 13px; color: #cdd9e5; }
+
+  .anti-pattern {
+    background: #da363311;
+    border: 1px solid #da363344;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13.5px;
+  }
+  .anti-pattern strong { color: var(--danger); }
+  .pro-pattern {
+    background: #23863611;
+    border: 1px solid #2ea04344;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13.5px;
+  }
+  .pro-pattern strong { color: var(--accent2); }
+
+  @media print {
+    .sidebar { display: none; }
+    .main { padding: 20px; max-width: 100%; }
+    .qa-answer { display: block !important; }
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">Sterling OMS Architect</div>
+
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-item active" onclick="goTo(event,'s0')"><span class="num">00</span>Executive Summary</a>
+
+    <div class="sidebar-section">System Designs</div>
+    <a class="nav-item" onclick="goTo(event,'sd1')"><span class="num">01</span>Inventory Availability</a>
+    <a class="nav-item" onclick="goTo(event,'sd2')"><span class="num">02</span>Order Orchestration</a>
+    <a class="nav-item" onclick="goTo(event,'sd3')"><span class="num">03</span>BOPIS Fulfillment</a>
+    <a class="nav-item" onclick="goTo(event,'sd4')"><span class="num">04</span>Real-time Inventory Sync</a>
+    <a class="nav-item" onclick="goTo(event,'sd5')"><span class="num">05</span>Marketplace OMS</a>
+    <a class="nav-item" onclick="goTo(event,'sd6')"><span class="num">06</span>Returns Platform</a>
+    <a class="nav-item" onclick="goTo(event,'sd7')"><span class="num">07</span>Ship-from-Store</a>
+    <a class="nav-item" onclick="goTo(event,'sd8')"><span class="num">08</span>Distributed Reservations</a>
+
+    <div class="sidebar-section">Architect Q&amp;A</div>
+    <a class="nav-item" onclick="goTo(event,'q1')"><span class="num">Q1</span>Modernizing Sterling OMS</a>
+    <a class="nav-item" onclick="goTo(event,'q2')"><span class="num">Q2</span>Inside vs Outside Sterling</a>
+    <a class="nav-item" onclick="goTo(event,'q3')"><span class="num">Q3</span>Preventing Oversell</a>
+    <a class="nav-item" onclick="goTo(event,'q4')"><span class="num">Q4</span>Scaling Availability</a>
+    <a class="nav-item" onclick="goTo(event,'q5')"><span class="num">Q5</span>Designing BOPIS</a>
+    <a class="nav-item" onclick="goTo(event,'q6')"><span class="num">Q6</span>Modify After Release</a>
+    <a class="nav-item" onclick="goTo(event,'q7')"><span class="num">Q7</span>Kafka in OMS</a>
+    <a class="nav-item" onclick="goTo(event,'q8')"><span class="num">Q8</span>Reducing DB Contention</a>
+
+    <div class="sidebar-section">Closing</div>
+    <a class="nav-item" onclick="goTo(event,'cheat')"><span class="num">★</span>Interview Cheat Sheet</a>
+  </nav>
+
+  <main class="main">
+
+    <header class="doc-header">
+      <h1>Sterling OMS <span>Architect Interview FAQ</span></h1>
+      <p class="subtitle">Distributed OMS · Inventory Systems · Fulfillment Optimization · Modernization · EDA · Store Fulfillment · Integration · Scale</p>
+      <div class="meta-row">
+        <span class="badge badge-blue">Retail / Ecommerce</span>
+        <span class="badge badge-purple">Sterling OMS 9.x / 10.x</span>
+        <span class="badge badge-green">Director / Principal Architect</span>
+        <span class="badge badge-yellow">100K+ orders/day</span>
+        <span class="badge badge-blue">OpenShift · Kafka · AWS</span>
+        <span style="margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--text-muted);">
+          Generated: <span id="gen-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- ==================== EXECUTIVE SUMMARY ==================== -->
+    <section class="section" id="s0">
+      <div class="section-header">
+        <span class="section-num">00</span>
+        <h2>Executive Summary</h2>
+      </div>
+      <div class="content">
+        <p>This document is a practitioner-grade Architect-level FAQ for Sterling OMS interviews — the kind of depth expected at <strong>Tech Manager 2 / Senior Manager / Director / Principal Architect</strong> rounds at retail GCCs (lululemon, Walmart Global Tech, Fidelity, Target, Tesco, Macy's). It assumes you already know what an order pipeline, agent, or YFS_ORDER_HEADER is. The focus here is: <strong>how do you scale, modernize, and architect around Sterling, not how do you configure it.</strong></p>
+
+        <div class="pillar-grid">
+          <div class="pillar">
+            <h5>Distributed OMS</h5>
+            <p>Sterling as the system-of-record + microservices around it for read/write scale. Strangler Fig modernization.</p>
+          </div>
+          <div class="pillar">
+            <h5>Inventory Systems</h5>
+            <p>GIV is the truth, but availability lookups must serve 10K+ RPS — that requires a separate read-side system.</p>
+          </div>
+          <div class="pillar">
+            <h5>Fulfillment Optimization</h5>
+            <p>Sourcing across 1500+ stores + 5 DCs + 3PLs with cost, capacity, distance, and split-shipment minimization.</p>
+          </div>
+          <div class="pillar">
+            <h5>Event-Driven OMS</h5>
+            <p>Kafka backbone with Sterling events bridged via MQ → Kafka. CDC (Debezium) for legacy table reads.</p>
+          </div>
+          <div class="pillar">
+            <h5>Store Fulfillment</h5>
+            <p>BOPIS, Ship-from-Store, Curbside — all need store associate apps, capacity planning, and SLA tracking.</p>
+          </div>
+          <div class="pillar">
+            <h5>Modernization Patterns</h5>
+            <p>Anti-Corruption Layer, Strangler Fig, CQRS for reads, Saga for cross-service consistency.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">How to use this doc in an interview</div>
+          <p style="font-size:13.5px;margin-top:6px;">Each system design has a high-level diagram + sequence flow. Each Q&amp;A starts with a <strong>30-second elevator answer</strong>, then drills into the architect-level depth. Anchor your answers in real Sterling primitives (YFS_TASK_Q, RTAM, changeOrder API, GIV, scheduleOrder agent) — that's the interviewer's signal that you've actually run Sterling in production, not just read about it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================================ -->
+    <!-- =====================   PART 1: SYSTEM DESIGNS   =========================== -->
+    <!-- ============================================================================ -->
+
+    <section class="section" id="systemdesigns">
+      <div class="section-header">
+        <span class="section-num">PART I</span>
+        <h2>System Designs — 8 Core OMS Subsystems</h2>
+      </div>
+      <div class="content">
+        <p>Each design below has been sized for a <strong>tier-1 retailer</strong>: ~100K orders/day, 5M SKUs, 1500+ stores, 5 DCs, peak 50× during Black Friday / EOSS / Diwali sales. The architecture is opinionated — every choice has a "why not" implicit in it.</p>
+      </div>
+    </section>
+
+    <!-- ============== SD1: INVENTORY AVAILABILITY ============== -->
+    <section class="section" id="sd1">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-01</span>
+          <h3>Inventory Availability Service</h3>
+          <span class="badge badge-green" style="margin-left:auto;">Read-heavy · 50K RPS</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Every PDP view, cart add, checkout, and search filter calls "is this SKU available, where, and how many?" Sterling GIV (<code>YFS_INVENTORY_SUPPLY</code> + <code>YFS_INVENTORY_DEMAND</code> + ATP rules) is authoritative but DB-bound. At 50K+ availability lookups per second, hitting Sterling directly will <strong>melt the Oracle DB</strong>.</p>
+
+          <h4>Architecture (CQRS Read-Side)</h4>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD1.1 — Availability Read-Side Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+    PDP[PDP / Search / Cart] --> AGW[API Gateway]
+    AGW --> AVS[Availability Service<br/>Spring Boot · k8s]
+    AVS --> L1[(L1: Caffeine<br/>local cache · 30s TTL)]
+    AVS --> L2[(L2: Redis Cluster<br/>3-node · 5min TTL)]
+    AVS --> L3[(L3: DynamoDB / Cassandra<br/>per-node-SKU rollup)]
+    L3 -.read miss.-> GIV[Sterling GIV<br/>RTAM API]
+    GIV --> ORA[(Oracle DB<br/>YFS_INVENTORY_*)]
+    
+    subgraph EVENT[Event-Driven Refresh]
+      RTAM[RTAM Agent] --> KFK[Kafka<br/>inventory.changed]
+      KFK --> SYNC[Inventory Sync<br/>Consumer]
+      SYNC --> L3
+      SYNC --> INV2[Cache Invalidator]
+      INV2 --> L2
+    end
+    
+    style AVS fill:#1f6feb33,stroke:#58a6ff
+    style L3 fill:#23863633,stroke:#3fb950
+    style GIV fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Sequence — Availability Lookup with Cache Hierarchy</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD1.2 — Availability Lookup Sequence</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant C as Client
+    participant AVS as Availability Svc
+    participant L1 as Caffeine (L1)
+    participant L2 as Redis (L2)
+    participant L3 as DynamoDB (L3)
+    participant K as Kafka (refresh)
+    participant GIV as Sterling GIV
+    
+    C->>AVS: GET /availability?sku=ABC&pin=560001
+    AVS->>L1: get(ABC:560001)
+    L1-->>AVS: MISS
+    AVS->>L2: get(ABC:560001)
+    L2-->>AVS: HIT (qty=42, ttl=4m)
+    AVS->>L1: put(qty=42, 30s)
+    AVS-->>C: 200 {available:true, qty:42, nodes:[...]}
+    
+    Note over K,GIV: Async refresh path
+    GIV->>K: inventory.changed {sku:ABC, node:N1, qty:40}
+    K->>L3: upsert
+    K->>L2: invalidate(ABC:*)
+            </div>
+          </div>
+
+          <h4>Key Design Decisions</h4>
+          <ul>
+            <li><strong>3-tier cache</strong>: Caffeine (in-process) → Redis (cluster) → DynamoDB (durable rollup). Each tier absorbs &gt;90% of misses from the next.</li>
+            <li><strong>Pre-aggregated rollup</strong>: Storage pattern <code>{sku}#{pincode}</code> with available qty across all eligible nodes (DC+stores within ship-radius). Avoids fan-out at read time.</li>
+            <li><strong>Event-driven invalidation</strong>: Sterling RTAM emits <code>INVENTORY_CHANGE</code> events → MQ → Kafka bridge → consumer updates L3 + invalidates L2. P99 propagation &lt; 2s.</li>
+            <li><strong>Stale-while-revalidate</strong>: Better to show 5-second-old data than to time out. Hard refresh only on add-to-cart.</li>
+            <li><strong>Reservation-aware</strong>: Subtract soft holds (cart reservations) from displayed qty to reduce oversell at PDP level.</li>
+          </ul>
+
+          <h4>Data Model (DynamoDB)</h4>
+          <pre><code>PK = "AVAIL#{sku}"
+SK = "PIN#{pincode}"
+Attributes:
+  available_qty       : N
+  node_breakdown      : L  [{node:"DC01", qty:30}, {node:"STR_BLR042", qty:12}]
+  last_refresh_ts     : N  (epoch ms)
+  reservation_holds   : N  (cart soft holds)
+  network_eligible    : BOOL
+  ttl                 : N  (auto-expire 1hr → forces re-read from GIV)</code></pre>
+
+          <div class="callout callout-warn">
+            <div class="callout-title">Anti-pattern: Hitting GIV directly from web tier</div>
+            <p style="font-size:13.5px;">Every failed Black Friday OMS post-mortem includes this. RTAM is an <em>operational</em> API — it was never designed for 10K+ RPS PDP traffic. Always front it with a CQRS read model.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD2: ORDER ORCHESTRATION ============== -->
+    <section class="section" id="sd2">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-02</span>
+          <h3>High-Scale Order Orchestration</h3>
+          <span class="badge badge-yellow" style="margin-left:auto;">Stateful · Long-running</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>An order is a long-running stateful process: <em>captured → validated → reserved → released → scheduled → shipped → delivered → invoiced</em>. Sterling does this via the <strong>order pipeline</strong> + <strong>YFS_TASK_Q</strong> + scheduled agents (scheduleOrder, releaseOrder, etc.). At 100K+ orders/day with peaks 5× higher, the YFS_TASK_Q becomes the bottleneck and pipeline determination logic gets unwieldy.</p>
+
+          <h4>Modernized Architecture — Sterling as Core + Temporal Orchestrator</h4>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD2.1 — Hybrid Sterling + Temporal Orchestration</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    subgraph CHANNELS[Channels]
+      WEB[Web/Mobile]
+      STR[Store POS]
+      MKT[Marketplaces]
+    end
+    
+    CHANNELS --> OAPI[Order API<br/>Spring Boot]
+    OAPI --> KFK1[Kafka<br/>order.created]
+    KFK1 --> ORCH[Temporal Workflow<br/>OrderOrchestrator]
+    
+    ORCH --> VAL[Validation Activity]
+    ORCH --> RES[Reservation Activity]
+    ORCH --> PAY[Payment Activity]
+    ORCH --> SRC[Sourcing Activity]
+    ORCH --> STG[Sterling Sync Activity]
+    
+    STG --> ACL[Anti-Corruption Layer]
+    ACL --> STERLING[Sterling OMS<br/>createOrder · changeOrder]
+    STERLING --> ORA[(Oracle)]
+    
+    SRC --> SOURCE[Sourcing Engine<br/>Drools/OptaPlanner]
+    RES --> RESV[Reservation Service<br/>Redis + Postgres]
+    PAY --> PSP[Payment Gateway]
+    
+    STERLING --> KFK2[MQ Bridge]
+    KFK2 --> KFK3[Kafka<br/>order.released]
+    KFK3 --> ORCH
+    
+    style ORCH fill:#1f6feb33,stroke:#58a6ff
+    style STERLING fill:#9e670022,stroke:#d29922
+    style ACL fill:#8957e533,stroke:#bc8cff
+            </div>
+          </div>
+
+          <h4>Why Temporal over Sterling Pipeline (or pure Kafka choreography)</h4>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Capability</th><th>Sterling Pipeline</th><th>Pure Kafka Choreography</th><th>Temporal Workflow</th></tr>
+              <tr><td>Long-running state</td><td>YFS_TASK_Q (DB-backed)</td><td>External state needed</td><td class="rec">Native, durable</td></tr>
+              <tr><td>Visibility / debugging</td><td>YFS log tables</td><td>Hard — distributed trace</td><td class="rec">Built-in UI, replay</td></tr>
+              <tr><td>Compensation (Saga)</td><td>Manual, brittle</td><td>Manual</td><td class="rec">First-class</td></tr>
+              <tr><td>Throughput</td><td>~5K orders/min</td><td>50K+/min</td><td class="rec">10K+/min per cluster</td></tr>
+              <tr><td>Retry/timeout policy</td><td>Agent retry counts</td><td>Manual per consumer</td><td class="rec">Declarative</td></tr>
+            </table>
+          </div>
+
+          <h4>Sequence — Order Capture to Release</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD2.2 — End-to-end Order Lifecycle</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant C as Client
+    participant API as Order API
+    participant K as Kafka
+    participant T as Temporal
+    participant R as Reservation Svc
+    participant P as Payment Svc
+    participant S as Sterling (ACL)
+    participant SRC as Sourcing
+    
+    C->>API: POST /orders
+    API->>K: publish order.captured
+    API-->>C: 202 Accepted (order_id)
+    
+    K->>T: trigger OrderWorkflow
+    T->>R: reserve(items)
+    R-->>T: reservation_id
+    T->>P: authorize(amount)
+    P-->>T: auth_ok
+    T->>S: createOrder (via ACL)
+    S-->>T: sterling_order_no
+    T->>SRC: schedule + source
+    SRC-->>T: shipment_plan
+    T->>S: scheduleOrder + releaseOrder
+    S-->>T: released
+    T->>K: publish order.released
+            </div>
+          </div>
+
+          <h4>Scaling Levers</h4>
+          <ul>
+            <li><strong>Workflow sharding</strong>: Temporal partitions by <code>order_id</code> hash → linear horizontal scale.</li>
+            <li><strong>Sterling write throttling</strong>: ACL batches changeOrder calls into bulk APIs (Sterling supports up to 200 orders/call) — reduces DB locking on YFS_ORDER_HEADER.</li>
+            <li><strong>Idempotency</strong>: Every Activity is idempotent via <code>(order_id + step_id)</code> key in Redis dedup table.</li>
+          </ul>
+
+          <div class="callout callout-info">
+            <div class="callout-title">Pragmatic alternative</div>
+            <p style="font-size:13.5px;">If your org isn't ready for Temporal, the same outcome is achievable with <strong>Kafka Streams + state stores</strong> for stateless steps, and <strong>Sterling pipelines for the stateful orchestration</strong>. Temporal is a 12–18 month adoption.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD3: BOPIS ============== -->
+    <section class="section" id="sd3">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-03</span>
+          <h3>BOPIS Fulfillment System</h3>
+          <span class="badge badge-purple" style="margin-left:auto;">Store-aware · SLA-driven</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Buy Online, Pick up In Store (BOPIS) requires: (1) showing only stores with the item in stock and within pickup SLA, (2) reserving against a specific store node, (3) routing the pick task to the store associate, (4) tracking pickup-ready / picked-up state, and (5) handling no-show + return-to-stock. Failure modes are visible and brand-damaging — customer drives to the store, item isn't there.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD3.1 — BOPIS Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    CUST[Customer<br/>web/mobile] --> CART[Cart Service]
+    CART --> BOPISVC[BOPIS Service]
+    BOPISVC --> AVS[Availability Svc<br/>store-level]
+    BOPISVC --> CAP[Store Capacity Svc<br/>picks/hr per store]
+    BOPISVC --> GEO[Geo Service<br/>distance/SLA]
+    
+    CUST --> ORDER[Order Service]
+    ORDER --> STERLING[Sterling OMS<br/>order pipeline]
+    STERLING --> AGENT[Pick Agent<br/>routes to store]
+    AGENT --> SAPP[Store Associate App<br/>iOS/Android]
+    
+    SAPP --> EVENTS[Kafka<br/>pick.events]
+    EVENTS --> NOTIF[Notification Svc<br/>SMS/Email/Push]
+    EVENTS --> STERLING
+    
+    EVENTS --> NOSHOW[No-show Timer<br/>72h SLA]
+    NOSHOW --> RTS[Return-to-Stock]
+    RTS --> STERLING
+    
+    style BOPISVC fill:#8957e533,stroke:#bc8cff
+    style SAPP fill:#23863633,stroke:#3fb950
+    style STERLING fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Sequence — BOPIS Order Lifecycle</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD3.2 — BOPIS Pickup Flow</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant C as Customer
+    participant W as Website
+    participant B as BOPIS Svc
+    participant S as Sterling
+    participant SA as Store App
+    participant N as Notif Svc
+    
+    C->>W: Select pickup store (BLR-042)
+    W->>B: validate(sku, store=BLR-042)
+    B-->>W: available, ready in 2h
+    C->>W: Place order
+    W->>S: createOrder(fulfilType=PICKUP, node=BLR-042)
+    S->>S: scheduleOrder → release to store
+    S->>SA: pick task created
+    N-->>C: "Order received"
+    
+    SA->>S: confirmPick(items)
+    S->>N: order.ready_for_pickup
+    N-->>C: "Ready! 72hr to pick up"
+    
+    alt Customer arrives
+      C->>SA: show ID/QR
+      SA->>S: confirmPickup
+      S->>N: order.delivered
+      N-->>C: "Thank you"
+    else No-show after 72h
+      S->>S: cancelOrder + restock
+      N-->>C: "Refunded"
+    end
+            </div>
+          </div>
+
+          <h4>Key Design Decisions</h4>
+          <ul>
+            <li><strong>Store capacity as a constraint</strong>: A store can only pick N orders/hour. Sourcing logic must respect <code>store_pick_capacity</code> alongside inventory. Without this, popular stores get overwhelmed during peak.</li>
+            <li><strong>Soft reservation at PDP, hard at order</strong>: When customer selects a store, soft-reserve in Redis (5 min TTL). On checkout, convert to hard reservation in Sterling.</li>
+            <li><strong>Pick task = Sterling shipment</strong>: Model as a single-line shipment with <code>ShipNode = StoreNode</code>. Reuse Sterling pick/pack/ship pipeline; UI is the store associate app.</li>
+            <li><strong>Short hold + auto-restock</strong>: 72-hour pickup SLA is standard. After SLA, agent auto-cancels and triggers restock event back to availability service.</li>
+          </ul>
+
+          <h4>Store Capacity Model</h4>
+          <pre><code>store_capacity:
+  store_id: BLR-042
+  windows:
+    - hour: 09  picks_per_hr: 30  reserved: 22
+    - hour: 10  picks_per_hr: 30  reserved: 18
+  current_load_pct: 73
+  cutoff_for_today: 18:00
+  next_available_window: tomorrow 09:00</code></pre>
+
+          <div class="callout callout-success">
+            <div class="callout-title">Why this beats vanilla Sterling BOPIS</div>
+            <p style="font-size:13.5px;">Sterling supports BOPIS out of the box (sourcing rules, ShipNode = store), but it doesn't model real-time store capacity, SLA-driven UI promises, or low-latency store-level availability. You add those <em>around</em> Sterling, not <em>in</em> it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD4: REAL-TIME INVENTORY SYNC ============== -->
+    <section class="section" id="sd4">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-04</span>
+          <h3>Real-time Inventory Sync</h3>
+          <span class="badge badge-blue" style="margin-left:auto;">EDA · Bi-directional</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Inventory updates flow in from multiple authoritative sources: <strong>WMS</strong> (DC pick/pack/receive), <strong>store POS</strong> (sales, returns, cycle counts), <strong>3PLs</strong> (drop-ship vendors), <strong>marketplaces</strong> (consumed inventory). Sterling GIV must be reconciled to these continuously. Conversely, downstream systems (search index, recommendation engine, marketplace listings) need GIV state. Sync must be <strong>near real-time, idempotent, ordered per SKU+node, and resilient to source outages</strong>.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD4.1 — Bi-directional Inventory Sync Topology</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+    subgraph SOURCES[Inbound Sources]
+      WMS[WMS<br/>Manhattan/Blue Yonder]
+      POS[Store POS]
+      TPL[3PL Drop-ship]
+      MKT[Marketplaces<br/>Amazon · Flipkart]
+    end
+    
+    SOURCES --> CDC[Debezium CDC<br/>+ MQ adapters]
+    CDC --> KFK[(Kafka<br/>inventory.delta<br/>partition=sku+node)]
+    
+    KFK --> NORM[Normalizer<br/>schema+unit conversion]
+    NORM --> DEDUP[Dedup<br/>sequence_id check]
+    DEDUP --> RECON[Reconciler]
+    RECON --> RTAM[Sterling RTAM<br/>adjustInventory API]
+    RTAM --> GIV[(GIV Tables)]
+    
+    GIV --> RTAGENT[RTAM Agent<br/>publishes deltas]
+    RTAGENT --> KFK2[(Kafka<br/>inventory.changed)]
+    KFK2 --> SEARCH[Search Indexer]
+    KFK2 --> AVS[Availability Svc]
+    KFK2 --> MLIST[Marketplace<br/>Listing Sync]
+    
+    style KFK fill:#1f6feb33,stroke:#58a6ff
+    style GIV fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Idempotency &amp; Ordering — The Hard Part</h4>
+          <ul>
+            <li><strong>Partition key = <code>{sku}#{node_id}</code></strong> ensures all deltas for a SKU at a location land in the same Kafka partition → strict per-key ordering.</li>
+            <li><strong>Sequence numbers</strong>: Each source attaches a monotonic <code>source_seq</code>. Reconciler skips deltas with <code>seq &lt;= last_processed_seq</code> per <code>{sku, node, source}</code>.</li>
+            <li><strong>Out-of-order tolerance</strong>: If <code>seq=105</code> arrives before <code>seq=104</code>, buffer briefly (Kafka Streams windowed state store) — most cases self-resolve in seconds.</li>
+            <li><strong>Compensating drift</strong>: A daily reconciliation job snapshots WMS + GIV and fixes drift. Alerts if drift &gt; 0.1% of SKUs.</li>
+          </ul>
+
+          <h4>Sequence — Inventory Delta Reconciliation</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD4.2 — WMS → GIV Sync</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant W as WMS
+    participant CDC as Debezium
+    participant K as Kafka
+    participant N as Normalizer
+    participant R as Reconciler
+    participant G as Sterling GIV
+    
+    W->>CDC: TX: pick 5 units SKU=A node=DC01
+    CDC->>K: inventory.delta {sku:A, node:DC01, qty:-5, seq:1042}
+    K->>N: consume (partition by sku+node)
+    N->>N: validate, unit conv (CASE→EA)
+    N->>R: normalized delta
+    R->>R: check last_seq < 1042 ✓
+    R->>G: adjustInventory(SKU=A, node=DC01, delta=-5)
+    G-->>R: ack
+    R->>R: persist last_seq=1042
+            </div>
+          </div>
+
+          <div class="callout callout-warn">
+            <div class="callout-title">Common pitfall — duplicate adjustments</div>
+            <p style="font-size:13.5px;">If you don't track sequence numbers per-source, a Kafka consumer rebalance can replay messages and double-decrement GIV. Always store <code>(sku, node, source) → max_seq</code> in a Postgres dedup table or RocksDB state store.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD5: MARKETPLACE OMS ============== -->
+    <section class="section" id="sd5">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-05</span>
+          <h3>Marketplace OMS</h3>
+          <span class="badge badge-yellow" style="margin-left:auto;">Multi-tenant · 3P sellers</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>You run a marketplace where 3rd-party sellers list inventory alongside your 1P stock. The OMS must: (1) onboard sellers, (2) ingest their inventory feeds, (3) route orders to the right seller, (4) track seller-side fulfillment, (5) reconcile commissions and payouts, (6) handle SLA breaches and cancellations. Sterling alone is single-tenant — extending to multi-seller requires careful modeling.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD5.1 — Marketplace OMS Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    subgraph SELLERS[3P Sellers]
+      S1[Seller A<br/>API integration]
+      S2[Seller B<br/>SFTP feeds]
+      S3[Seller C<br/>Portal upload]
+    end
+    
+    SELLERS --> SP[Seller Platform<br/>onboarding · KYC · SLA]
+    SP --> FEED[Feed Ingestion<br/>inventory + catalog]
+    FEED --> KFK[(Kafka)]
+    KFK --> CAT[Catalog Service]
+    KFK --> INV[Inventory Service]
+    
+    CUST[Customer] --> ORDER[Order Service]
+    ORDER --> ROUTER[Order Router<br/>1P vs 3P]
+    ROUTER --> STERLING[Sterling OMS<br/>1P fulfillment]
+    ROUTER --> SOMS[Seller Order Mgmt<br/>per-seller routing]
+    SOMS --> SAPI[Seller APIs<br/>order.dispatched]
+    
+    SAPI --> TRACK[Tracking Svc<br/>shipment + delivery]
+    TRACK --> SETTLE[Settlement Svc<br/>commission · payout]
+    SETTLE --> ERP[Finance/ERP]
+    
+    style SOMS fill:#8957e533,stroke:#bc8cff
+    style ROUTER fill:#1f6feb33,stroke:#58a6ff
+    style STERLING fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Sequence — Mixed-Cart Order (1P + 3P)</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD5.2 — Order Splitting Across 1P / 3P</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant C as Customer
+    participant O as Order Svc
+    participant R as Order Router
+    participant S as Sterling (1P)
+    participant SO as Seller OMS (3P)
+    participant A as Seller A
+    
+    C->>O: place order [SKU1=1P, SKU2=3P-A]
+    O->>R: split by ownership
+    R->>S: subOrder #1 (1P)
+    R->>SO: subOrder #2 (3P, seller=A)
+    S-->>O: 1P released
+    SO->>A: dispatch via seller API
+    A-->>SO: ack + tracking
+    SO-->>O: 3P released
+    O-->>C: "Order placed (2 shipments)"
+            </div>
+          </div>
+
+          <h4>Critical Design Choices</h4>
+          <ul>
+            <li><strong>Sub-order model</strong>: Parent order → child orders per seller. Sterling handles 1P child; seller OMS handles each 3P child. Customer sees one order ID.</li>
+            <li><strong>Inventory namespacing</strong>: <code>inventory_owner</code> is a first-class field. 1P stock in GIV; 3P stock in a separate Cassandra/Postgres store with seller-supplied feeds.</li>
+            <li><strong>SLA enforcement</strong>: Each seller has SLA (e.g., dispatch within 24h). Orchestrator escalates / cancels and reroutes if breached.</li>
+            <li><strong>Settlement decoupled</strong>: Don't tangle order processing with finance. Emit <code>order.delivered</code> events → settlement service computes commission, GST, TDS, and ERP entries asynchronously.</li>
+          </ul>
+
+          <div class="callout callout-info">
+            <div class="callout-title">Why not put 3P inventory in Sterling GIV?</div>
+            <p style="font-size:13.5px;">3P inventory updates faster, has lower trust, and follows different reconciliation rules. Putting it in GIV pollutes your 1P operational data and forces a single tenancy model. Keep them separate; the order router unifies the customer experience.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD6: RETURNS PLATFORM ============== -->
+    <section class="section" id="sd6">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-06</span>
+          <h3>Returns Platform</h3>
+          <span class="badge badge-red" style="margin-left:auto;">Reverse logistics · Fraud-aware</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Returns in retail run 15–35% of online orders. Sterling supports returns natively (<code>createReturnOrder</code>, <code>YFS_ORDER_HEADER.OrderType=RETURN</code>) but a modern returns platform must handle: self-service initiation, reason capture, eligibility rules, RMA generation, reverse logistics pickup, multi-step QC at warehouse, refund vs exchange vs store credit, fraud detection, and analytics back to merchandising.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD6.1 — Returns Platform Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    CUST[Customer<br/>self-service portal] --> RAPI[Returns API]
+    RAPI --> ELIG[Eligibility Engine<br/>policy + window]
+    RAPI --> FRAUD[Fraud Score<br/>ML model]
+    
+    ELIG --> RMA[RMA Generator]
+    FRAUD --> RMA
+    RMA --> STERLING[Sterling<br/>createReturnOrder]
+    RMA --> CARRIER[3PL Pickup<br/>Bluedart/FedEx]
+    
+    CARRIER --> WMS[WMS Receiving]
+    WMS --> QC[QC Inspection<br/>condition grading]
+    QC --> DISP{Disposition}
+    DISP -->|A-grade| RESTOCK[Restock to GIV]
+    DISP -->|B-grade| OUTLET[Outlet/Liquidation]
+    DISP -->|Damaged| WRITE[Write-off]
+    
+    QC --> REFUND[Refund Service]
+    REFUND --> PSP[Payment Gateway]
+    REFUND --> WALLET[Store Credit/Wallet]
+    
+    RAPI --> ANLY[Analytics<br/>reason codes → merch]
+    
+    style RMA fill:#1f6feb33,stroke:#58a6ff
+    style FRAUD fill:#da363333,stroke:#f85149
+    style STERLING fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Sequence — Self-service Return</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD6.2 — Return Initiation to Refund</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant C as Customer
+    participant R as Returns API
+    participant E as Eligibility
+    participant F as Fraud
+    participant S as Sterling
+    participant W as WMS/QC
+    participant P as Payment
+    
+    C->>R: initiate return (order#, items, reason)
+    R->>E: check policy (window, condition, channel)
+    E-->>R: eligible
+    R->>F: score(customer, order, item)
+    F-->>R: low_risk
+    R->>S: createReturnOrder
+    S-->>R: RMA + label
+    R-->>C: label + pickup scheduled
+    
+    Note over W: Days later
+    W->>S: receive + QC pass
+    S->>P: refund(amount)
+    P-->>C: refunded
+    S->>S: restock to GIV
+            </div>
+          </div>
+
+          <h4>Critical Design Choices</h4>
+          <ul>
+            <li><strong>Eligibility as a rules engine</strong>: Drools/Camunda rule sets per category, channel, customer tier. <em>"Apparel: 30 days, with tags"</em>; <em>"Electronics: 7 days, sealed box only"</em>. Externalize so merch teams change rules without deploys.</li>
+            <li><strong>Fraud scoring at initiation</strong>: ML model on customer return rate, order velocity, IP/device, item value. High-risk → manual review queue, not auto-approve.</li>
+            <li><strong>Disposition ≠ Restock</strong>: Don't restock blindly. QC grades drive outcomes: A → resell, B → outlet, C → liquidator, D → write-off. Each path is a separate inventory movement.</li>
+            <li><strong>Refund timing options</strong>: Instant refund (trust-based, for top-tier customers) vs. on-receipt (default) vs. on-QC-pass (high-fraud risk segment).</li>
+            <li><strong>Reason codes feed merchandising</strong>: <em>"Wrong size — 38% of dress returns"</em> drives size-chart fixes. The returns platform is also a product-quality signal pipeline.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD7: SHIP-FROM-STORE ============== -->
+    <section class="section" id="sd7">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-07</span>
+          <h3>Ship-from-Store Architecture</h3>
+          <span class="badge badge-green" style="margin-left:auto;">Network optimization</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Treat 1500+ stores as mini-DCs. Benefits: faster delivery, reduced split shipments, leverages dead inventory in low-foot-traffic stores. Risks: store associates aren't packers, capacity is unpredictable, and shipping from a store can break customer experience (delays, cancellations) if poorly managed. Sterling supports SFS via sourcing rules + ShipNode = StoreNode, but the architecture around it determines whether it scales or implodes.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD7.1 — Ship-from-Store Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    ORDER[Order Service] --> SOURCING[Sourcing Engine<br/>Drools/OptaPlanner]
+    
+    SOURCING --> COST[Cost Function<br/>distance + ship cost<br/>+ split penalty<br/>+ store-cost diff]
+    SOURCING --> CAP[Store Capacity<br/>orders/day max]
+    SOURCING --> AVAIL[Per-Store Availability<br/>buffer for walk-ins]
+    SOURCING --> PERF[Store Perf Score<br/>cancel rate · SLA]
+    
+    SOURCING --> DECISION{Source Decision}
+    DECISION --> DC[Ship from DC<br/>default]
+    DECISION --> STORE[Ship from Store<br/>STR_BLR042]
+    
+    STORE --> STERLING[Sterling<br/>ShipNode=Store]
+    STERLING --> SAPP[Store Associate App<br/>pick · pack · label]
+    SAPP --> CARRIER[Carrier Pickup<br/>scheduled tour]
+    CARRIER --> CUST[Customer]
+    
+    SAPP --> KFK[Kafka<br/>sfs.events]
+    KFK --> METRICS[SFS Metrics<br/>cancel · SLA · cost]
+    METRICS --> SOURCING
+    
+    style SOURCING fill:#1f6feb33,stroke:#58a6ff
+    style SAPP fill:#23863633,stroke:#3fb950
+    style STERLING fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Sourcing Cost Function (the heart of SFS)</h4>
+          <pre><code>cost(node, order) =
+    α · ship_distance_km
+  + β · ship_carrier_cost
+  + γ · split_shipment_penalty   // discourage 3-package fulfillment
+  + δ · markdown_risk(node, sku) // dead stock at this store?
+  - ε · store_perf_score(node)   // reliable stores get priority
+  + θ · capacity_pressure(node)  // already at 80% load? penalize
+
+minimize Σ cost over all line-items
+subject to:
+  - inventory_available(node, sku) ≥ qty
+  - store_capacity_remaining(node) ≥ 0
+  - ship_sla_meetable(node, customer)</code></pre>
+
+          <h4>Sequence — SFS Order Routing</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD7.2 — Sourcing Decision + Store Pick</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant O as Order Svc
+    participant SR as Sourcing Engine
+    participant S as Sterling
+    participant SA as Store App
+    participant C as Carrier
+    
+    O->>SR: source(order)
+    SR->>SR: evaluate DCs + 1500 stores
+    SR-->>O: optimal: STR_BLR042
+    O->>S: createOrder + ShipNode=BLR042
+    S->>SA: pick task
+    SA->>SA: associate picks (10 min SLA)
+    SA->>S: confirmPick
+    S->>SA: print label (Sterling integ w/ carrier)
+    SA->>C: handoff at next pickup
+    C-->>S: shipment.in_transit
+            </div>
+          </div>
+
+          <h4>Operational Guardrails</h4>
+          <ul>
+            <li><strong>Per-store cancellation rate ceiling</strong>: If store rejects &gt; 5% of pick tasks (out-of-stock, can't find item), auto-reduce its sourcing eligibility for 24h.</li>
+            <li><strong>Inventory buffer</strong>: Reserve 10–20% of store inventory for walk-in customers. Don't let online drain the floor.</li>
+            <li><strong>Cutoff times</strong>: Stores have daily carrier pickup windows. Sourcing must factor cutoff — orders after 3pm route to next-day stores only.</li>
+            <li><strong>Pack quality</strong>: Stores often pack worse than DCs. Train + audit; use a few "champion" stores for high-value items.</li>
+          </ul>
+
+          <div class="callout callout-warn">
+            <div class="callout-title">Real-world incident pattern</div>
+            <p style="font-size:13.5px;">A store does inventory cycle count → finds 8 fewer units than GIV says → 12 already-released SFS orders get cancelled in 5 minutes → angry customers, brand damage. Mitigation: dampen GIV trust on store nodes (hold-back factor of 0.9), and don't auto-source SFS for orders &gt; ₹10K without DC fallback.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== SD8: DISTRIBUTED RESERVATION ============== -->
+    <section class="section" id="sd8">
+      <div class="sysdesign">
+        <div class="sysdesign-header">
+          <span class="num-pill">SD-08</span>
+          <h3>Distributed Reservation System</h3>
+          <span class="badge badge-red" style="margin-left:auto;">Strong consistency</span>
+        </div>
+        <div class="sysdesign-body content">
+
+          <h4>Problem</h4>
+          <p>Reservations are the crux of oversell prevention. When a customer adds-to-cart or pays, you "hold" inventory across many possible nodes. The system must be: (1) <strong>strongly consistent</strong> per <code>{sku, node}</code>, (2) low-latency (&lt;50ms), (3) auto-expiring (cart abandoned → release), (4) idempotent (retry-safe), and (5) able to do partial / cross-node reservations for split shipments.</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD8.1 — Reservation Service Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    CART[Cart Svc] --> RES[Reservation API]
+    CHECKOUT[Checkout Svc] --> RES
+    ORDER[Order Svc] --> RES
+    
+    RES --> COORD[Coordinator<br/>routes by sku+node hash]
+    COORD --> S1[Shard 1<br/>Redis + Postgres]
+    COORD --> S2[Shard 2]
+    COORD --> S3[Shard N]
+    
+    S1 -.WAL.-> PG1[(Postgres<br/>durable log)]
+    S1 --> RDS1[(Redis<br/>hot state)]
+    
+    RES --> EXP[Expiry Worker<br/>scheduled · 30s]
+    EXP --> S1
+    EXP --> KFK[Kafka<br/>reservation.expired]
+    
+    KFK --> AVS[Availability Svc<br/>recompute]
+    KFK --> GIV[Sterling GIV<br/>release demand]
+    
+    style RES fill:#1f6feb33,stroke:#58a6ff
+    style COORD fill:#8957e533,stroke:#bc8cff
+            </div>
+          </div>
+
+          <h4>API Contract</h4>
+          <pre><code>POST /reservations
+{
+  "reservation_id": "rsv_abc123",      // client-generated UUID = idempotency key
+  "owner": "cart_xyz",
+  "ttl_seconds": 900,                   // 15 min for cart, 30s for checkout
+  "lines": [
+    {"sku":"A1", "node":"DC01", "qty":2},
+    {"sku":"A1", "node":"STR_BLR042", "qty":1}
+  ]
+}
+
+Response:
+  201: {reservation_id, expires_at, holds:[...]}
+  409: {error:"INSUFFICIENT_INVENTORY", available:{...}}
+  
+PATCH /reservations/{id}/extend  (extend TTL)
+DELETE /reservations/{id}        (explicit release)
+POST /reservations/{id}/commit   (convert hold → consumed at order release)</code></pre>
+
+          <h4>Sequence — Reservation Commit on Order Release</h4>
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig SD8.2 — Hold → Commit Flow</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant Cart
+    participant R as Reservation Svc
+    participant K as Kafka
+    participant S as Sterling GIV
+    
+    Cart->>R: POST /reservations (15min TTL)
+    R->>R: atomic decrement Redis counter
+    R->>R: WAL to Postgres
+    R-->>Cart: 201 (reserved)
+    
+    Note over Cart: Customer checks out
+    Cart->>R: POST /commit
+    R->>R: state: HELD → COMMITTED
+    R->>K: reservation.committed
+    K->>S: adjustInventory (SUPPLY -= qty)
+    
+    alt Cart abandoned
+      R->>R: TTL expired worker
+      R->>K: reservation.expired
+      K->>S: no-op (never committed)
+    end
+            </div>
+          </div>
+
+          <h4>Consistency &amp; Sharding</h4>
+          <ul>
+            <li><strong>Shard key = <code>{sku}#{node_id}</code></strong>: All operations on a SKU at a node are serialized to a single shard → strong consistency without distributed locks.</li>
+            <li><strong>Atomic Redis ops</strong>: Use <code>DECRBY</code> with Lua script to check-then-decrement under one round-trip. Reject negative results.</li>
+            <li><strong>Postgres WAL</strong>: Every reservation event written to Postgres as durable log (with reservation_id unique constraint = idempotency). Redis is the hot view; Postgres is recovery.</li>
+            <li><strong>Cross-shard reservations</strong>: For multi-line / multi-node holds, use a 2-phase pattern: (a) try-reserve all shards, (b) if any fails, compensating release of acquired holds. The orchestrator (Temporal) handles this saga.</li>
+            <li><strong>Don't reserve in Sterling GIV directly</strong>: GIV demand inserts are too slow (~50ms/row + lock contention). Sterling sees only committed orders.</li>
+          </ul>
+
+          <div class="callout callout-success">
+            <div class="callout-title">Why not just use Sterling reservations?</div>
+            <p style="font-size:13.5px;">Sterling's <code>reserveAvailableInventory</code> writes to <code>YFS_INVENTORY_DEMAND</code>. At 1000 reservations/second this becomes the #1 lock contention source on Oracle. A dedicated reservation service offloads 95% of holds (cart-level), and only commits the survivors to GIV.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============================================================================ -->
+    <!-- =====================   PART 2: ARCHITECT Q&A   ============================ -->
+    <!-- ============================================================================ -->
+
+    <section class="section" id="qaintro">
+      <div class="section-header">
+        <span class="section-num">PART II</span>
+        <h2>Architect-Level Interview Q&amp;A</h2>
+      </div>
+      <div class="content">
+        <p>For each question: <strong>Elevator answer</strong> (30s), then <strong>Architect-level depth</strong> (anchored to Sterling primitives + scale realities), then <strong>Common follow-ups</strong> the interviewer will probe.</p>
+      </div>
+    </section>
+
+    <!-- ============== Q1: MODERNIZATION ============== -->
+    <section class="section" id="q1">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q1</span>How would you modernize Sterling OMS?</div>
+          <span class="qa-toggle">−</span>
+        </div>
+        <div class="qa-answer open content">
+
+          <h4>Elevator answer (30s)</h4>
+          <p><strong>Strangler Fig around Sterling, not replace it.</strong> Sterling stays as the system-of-record for the order lifecycle and inventory truth. We build a microservices ring around it for reads (CQRS), event distribution (Kafka via MQ bridge), and channel-specific orchestration (Temporal). New capabilities (BOPIS, marketplace, returns) are built outside Sterling, integrated via an Anti-Corruption Layer. We don't touch the Sterling core unless we're moving to OpenShift or upgrading the version. Migration is 18–24 months, evaluated quarterly.</p>
+
+          <h4>Architect depth</h4>
+
+          <p><strong>1. Why not rip-and-replace?</strong> Sterling encodes 10+ years of business rules in <code>condition codes</code>, <code>user exits</code>, <code>pipeline determinations</code>, and <code>agent configurations</code>. A full rewrite is a 3–5 year program with high risk of regression — most fail. Strangler Fig gets value in 3-month increments.</p>
+
+          <p><strong>2. The five-layer modernization stack</strong>:</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig Q1.1 — Modernization Layered Architecture</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    subgraph L5[Layer 5 · Channels]
+      WEB[Web/Mobile BFF]
+      STR[Store POS]
+      MKT[Marketplaces]
+      VOICE[Voice/Chat]
+    end
+    
+    subgraph L4[Layer 4 · Orchestration]
+      TEMP[Temporal Workflows]
+      SAGA[Saga Coordinator]
+    end
+    
+    subgraph L3[Layer 3 · Domain Microservices]
+      AVS[Availability]
+      RES[Reservations]
+      PRC[Pricing]
+      RTN[Returns]
+      BOPIS[BOPIS]
+      SFS[Ship-from-Store]
+    end
+    
+    subgraph L2[Layer 2 · Anti-Corruption Layer]
+      ACL[ACL · Sterling adapter<br/>API translation · DDD context map]
+      MQK[MQ ↔ Kafka Bridge]
+      CDC[Debezium CDC]
+    end
+    
+    subgraph L1[Layer 1 · Sterling Core]
+      STERL[Sterling OMS<br/>order pipeline · GIV · agents]
+      ORA[(Oracle)]
+    end
+    
+    L5 --> L4
+    L4 --> L3
+    L3 --> L2
+    L2 --> L1
+    
+    style L1 fill:#9e670022,stroke:#d29922
+    style L2 fill:#8957e533,stroke:#bc8cff
+    style L3 fill:#1f6feb33,stroke:#58a6ff
+    style L4 fill:#23863633,stroke:#3fb950
+            </div>
+          </div>
+
+          <p><strong>3. What gets carved out first (priority order)</strong>:</p>
+          <ol>
+            <li><strong>Inventory availability reads</strong> (highest ROI; offloads RTAM/GIV instantly)</li>
+            <li><strong>Reservations</strong> (kills DEMAND-table contention)</li>
+            <li><strong>Sourcing engine</strong> (Sterling sourcing rules are inflexible at scale)</li>
+            <li><strong>Pricing &amp; promotions</strong> (rapid change cycle, doesn't belong in OMS)</li>
+            <li><strong>Returns / Exchange</strong> (modern UX, fraud signals)</li>
+            <li><strong>Notifications</strong> (Sterling email templates → modern notification platform)</li>
+          </ol>
+
+          <p><strong>4. What stays inside Sterling (for now)</strong>: order lifecycle state machine, post-release modifications (changeOrder), pick/pack/ship pipeline, integrations to legacy WMS, financial integrations. These have deep business logic in pipelines and user exits.</p>
+
+          <p><strong>5. Modernization patterns applied</strong>:</p>
+          <ul>
+            <li><strong>Strangler Fig</strong>: API gateway routes new traffic to microservices, falls back to Sterling for un-migrated paths.</li>
+            <li><strong>Anti-Corruption Layer</strong>: Translates between modern domain model (Order, LineItem, Reservation) and Sterling's XML/SOAP-style API surface. Hides Sterling quirks from microservices.</li>
+            <li><strong>CQRS</strong>: All availability/order reads from Kafka-fed materialized views (Cassandra/Mongo); writes still go through Sterling.</li>
+            <li><strong>Event sourcing (selective)</strong>: For domains where audit + replay matters — returns, payments. Not the whole OMS.</li>
+            <li><strong>Outbox pattern</strong>: Sterling writes its events to a YFS table; CDC publishes to Kafka. Avoids dual-write inconsistency.</li>
+          </ul>
+
+          <p><strong>6. Containerization on OpenShift</strong>: Sterling 10.x supports container deployment via <code>om-app</code>, <code>om-agent</code>, <code>om-base</code> Helm charts. Move to OCP for elastic agent scaling (pick agents during peak), deployment velocity, and parity with microservices platform.</p>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"How do you justify keeping Sterling at all?"</em> → cost of business-rule re-implementation, regulatory audit trail, integrations already certified</li>
+            <li><em>"What's the rollback if a microservice fails?"</em> → API gateway feature flag flips traffic back to Sterling path; works because Sterling is still authoritative</li>
+            <li><em>"How long is the migration?"</em> → 18–24 months for the high-value 60%; the long tail of Sterling-only flows can persist 3+ years</li>
+            <li><em>"What's the team structure?"</em> → product-aligned squads (Inventory, Order Capture, Fulfillment), each owns its slice of the strangler ring; a "Sterling Platform" team owns the ACL + core upgrade</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q2: INSIDE vs OUTSIDE ============== -->
+    <section class="section" id="q2">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q2</span>What should remain inside Sterling vs. outside?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Inside Sterling: anything that depends on its <strong>state machine, audit trail, or deep business rules</strong> (order lifecycle, post-release modifications, fulfillment pipelines, financial integrations). Outside: anything <strong>read-heavy, customer-experience-facing, or rapidly changing</strong> (availability reads, pricing, search, notifications, modern returns UX, marketplace).</p>
+
+          <h4>Architect depth — the decision framework</h4>
+
+          <p>Apply these four tests to each capability:</p>
+          <ol>
+            <li><strong>Lifecycle test</strong>: Does it modify YFS_ORDER_HEADER state or rely on pipeline transitions? <em>If yes → inside.</em></li>
+            <li><strong>Read scale test</strong>: Does it serve &gt;1K RPS of reads? <em>If yes → outside (CQRS).</em></li>
+            <li><strong>Change velocity test</strong>: Does business want to change rules weekly? <em>If yes → outside (rules engine).</em></li>
+            <li><strong>Channel-specificity test</strong>: Is logic tied to one channel (mobile, store, marketplace)? <em>If yes → outside (BFF/channel service).</em></li>
+          </ol>
+
+          <h4>Decision matrix</h4>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Capability</th><th>Lifecycle</th><th>Reads</th><th>Velocity</th><th>Channel</th><th>Verdict</th></tr>
+              <tr><td>Order pipeline state</td><td>✅ core</td><td>—</td><td>low</td><td>—</td><td class="rec">Inside Sterling</td></tr>
+              <tr><td>changeOrder API</td><td>✅ core</td><td>—</td><td>low</td><td>—</td><td class="rec">Inside Sterling</td></tr>
+              <tr><td>Pick/pack/ship pipeline</td><td>✅ core</td><td>—</td><td>low</td><td>—</td><td class="rec">Inside Sterling</td></tr>
+              <tr><td>GIV write (final commit)</td><td>✅ core</td><td>—</td><td>low</td><td>—</td><td class="rec">Inside Sterling</td></tr>
+              <tr><td>Availability reads (PDP)</td><td>—</td><td>50K RPS</td><td>—</td><td>—</td><td>Outside · CQRS</td></tr>
+              <tr><td>Cart reservations</td><td>partial</td><td>5K RPS</td><td>—</td><td>—</td><td>Outside · Reservation Svc</td></tr>
+              <tr><td>Sourcing engine</td><td>—</td><td>—</td><td>weekly</td><td>—</td><td>Outside · Drools/OptaPlanner</td></tr>
+              <tr><td>Pricing &amp; promo</td><td>—</td><td>10K RPS</td><td>daily</td><td>—</td><td>Outside · Pricing Svc</td></tr>
+              <tr><td>Returns UX + fraud</td><td>partial</td><td>—</td><td>weekly</td><td>customer</td><td>Outside · Returns Platform</td></tr>
+              <tr><td>BOPIS UX + capacity</td><td>partial</td><td>—</td><td>weekly</td><td>store/web</td><td>Outside</td></tr>
+              <tr><td>Notifications</td><td>—</td><td>—</td><td>daily</td><td>multi</td><td>Outside · Notif Svc</td></tr>
+              <tr><td>Marketplace 3P</td><td>partial</td><td>—</td><td>daily</td><td>marketplace</td><td>Outside · Seller OMS</td></tr>
+              <tr><td>Tax / VAT calc</td><td>—</td><td>—</td><td>quarterly</td><td>—</td><td>Outside · Vertex/Avalara</td></tr>
+              <tr><td>Pick task to store assoc</td><td>—</td><td>—</td><td>—</td><td>store</td><td>Outside · Store App (reads from Sterling)</td></tr>
+            </table>
+          </div>
+
+          <p><strong>Edge cases</strong>:</p>
+          <ul>
+            <li><strong>Order modification</strong>: Customer-initiated cancel/modify is an outside service that calls Sterling <code>changeOrder</code>. The mutation logic lives outside; the persistence + side-effects live inside.</li>
+            <li><strong>Inventory truth</strong>: Authoritative state inside (GIV); read-side projections outside; reconciliation is async via Kafka.</li>
+            <li><strong>Sourcing</strong>: Decision externalized; Sterling receives the chosen ShipNode and runs its release pipeline. This is the highest-impact carve-out at most retailers.</li>
+          </ul>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"What if a microservice and Sterling disagree?"</em> → Sterling wins for state; events are reconciled via CDC on a 1-min cadence; alerts trigger if drift &gt; threshold</li>
+            <li><em>"Why not move sourcing back into Sterling?"</em> → Sterling sourcing rules are XML configs, no real-time signals (carrier capacity, store performance), and not solver-based</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q3: PREVENT OVERSELL ============== -->
+    <section class="section" id="q3">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q3</span>How do you prevent inventory oversell?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Defense in depth: <strong>(1)</strong> show pessimistic, reservation-aware availability at PDP, <strong>(2)</strong> hard-reserve at add-to-cart in a strongly-consistent reservation service, <strong>(3)</strong> re-validate at checkout, <strong>(4)</strong> commit to Sterling GIV only on order release, <strong>(5)</strong> hold-back buffer on store nodes, <strong>(6)</strong> reconciliation jobs against WMS/POS, <strong>(7)</strong> graceful degradation when a layer fails (don't fail open).</p>
+
+          <h4>Architect depth — the 7 layers</h4>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig Q3.1 — Layered Oversell Prevention</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+    L1[Layer 1<br/>PDP show qty<br/>conservative + buffered] --> L2
+    L2[Layer 2<br/>Add-to-cart<br/>soft reservation 15m] --> L3
+    L3[Layer 3<br/>Checkout<br/>re-validate + extend hold] --> L4
+    L4[Layer 4<br/>Order capture<br/>hard reserve in Sterling demand] --> L5
+    L5[Layer 5<br/>Order release<br/>GIV commit transactional] --> L6
+    L6[Layer 6<br/>Hold-back buffer<br/>10-20% per store node]
+    L7[Layer 7<br/>Reconciliation<br/>WMS/POS daily snapshot]
+    
+    L7 -.feedback.-> L1
+    
+    style L4 fill:#1f6feb33,stroke:#58a6ff
+    style L5 fill:#23863633,stroke:#3fb950
+            </div>
+          </div>
+
+          <p><strong>Layer 1 — Pessimistic display</strong>: Show <code>available - active_reservations - safety_buffer</code>. Better to say "out of stock" with 2 left than to take an order you can't fulfill.</p>
+
+          <p><strong>Layer 2 — Soft reservation at cart add</strong>: 15-minute Redis-backed hold. Atomic <code>DECRBY</code> in a Lua script ensures concurrent adds can't both succeed. Failed adds get a "out of stock" toast.</p>
+
+          <p><strong>Layer 3 — Checkout re-validation</strong>: Re-fetch reservation status; if expired, attempt re-acquire with extended TTL (90s). If unavailable, surface to user immediately.</p>
+
+          <p><strong>Layer 4 — Order capture (hard reserve)</strong>: Convert soft hold to Sterling demand row (<code>YFS_INVENTORY_DEMAND</code>) atomically with order header insert. This is the consistency boundary.</p>
+
+          <p><strong>Layer 5 — GIV commit on release</strong>: Sterling release pipeline atomically decrements supply + clears demand. Done in same DB transaction as order release status update.</p>
+
+          <p><strong>Layer 6 — Hold-back buffer</strong>: Especially on store nodes. <code>available_to_promise(store) = on_hand - safety_stock - walk_in_buffer(15%)</code>. Prevents online orders from draining a store's floor stock.</p>
+
+          <p><strong>Layer 7 — Reconciliation</strong>: Daily diff job: <code>{wms_on_hand} vs {giv_on_hand}</code> per SKU+node. Discrepancies &gt; 1 unit raise alerts; auto-correction only for trusted sources (DC), manual review for stores.</p>
+
+          <h4>Race conditions you must address</h4>
+          <ul>
+            <li><strong>Last-unit race</strong>: Two customers add the last unit simultaneously. Solved by atomic Redis DECRBY in reservation service.</li>
+            <li><strong>Cart-vs-cart</strong>: Customer A holds; B sees zero; A abandons; B's cached PDP still shows zero for 30s. Solved by L1 cache TTL ≤ 30s + invalidation events.</li>
+            <li><strong>Reservation-vs-WMS-cycle-count</strong>: WMS reports 5 fewer than GIV; orders already reserved. Solved by hold-back buffer + immediate event-driven re-evaluation.</li>
+            <li><strong>Split-shipment partial reserve</strong>: Reserved 1 at DC + 1 at store; store's failed. Solved by saga-style compensating release of DC reservation, then re-source.</li>
+          </ul>
+
+          <div class="callout callout-warn">
+            <div class="callout-title">The trade-off you must verbalize</div>
+            <p style="font-size:13.5px;">More aggressive oversell prevention = more "out of stock" shown to real customers = lost revenue. The right balance depends on margin and brand: luxury brands tolerate &lt; 0.1% oversell at the cost of 5% lost sales; commodity retailers accept higher oversell for lower lost-sale rate. <strong>Always ask the interviewer for the brand's tolerance.</strong></p>
+          </div>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"Why not just reserve in Sterling at cart add?"</em> → demand-table contention; Sterling can't handle 5K reservations/sec without OLTP impact</li>
+            <li><em>"What if Redis goes down?"</em> → Postgres WAL is the durable source; service degrades to slower path with Postgres-only checks</li>
+            <li><em>"How do you handle promotions where everyone races for 100 units?"</em> → queue-based admission control + tighter TTL (30s)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q4: SCALE AVAILABILITY ============== -->
+    <section class="section" id="q4">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q4</span>How do you scale inventory availability?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Treat it as a <strong>read-heavy CQRS problem</strong>. Sterling GIV is the write side. Build a 3-tier cache (in-process → Redis cluster → DynamoDB) fed by event-driven invalidation from RTAM, partition by <code>{sku}#{pincode}</code>, pre-aggregate node rollups, and serve from the closest tier. Scale each tier independently; don't let any read traffic reach Sterling RTAM.</p>
+
+          <h4>Architect depth — scaling math</h4>
+
+          <p><strong>Workload characterization</strong>:</p>
+          <pre><code>Peak PDP traffic        : 50,000 RPS
+SKU x pincode space     : 5M SKUs × 30K pincodes ≈ 150B combinations
+Realistic working set   : 10M hot keys (top SKUs × top pincodes)
+Avg payload             : 200 bytes / response
+Read amplification      : 1 PDP view = 5 availability calls (variants, recommendations)
+
+Cache target hit rates  : L1 80% · L2 95% · L3 99.5% · GIV 0.5%
+Sterling RTAM ceiling   : ~500 RPS sustained (DB-bound)
+=> Cache must absorb 99% of traffic = 49.5K RPS</code></pre>
+
+          <p><strong>Storage tiers</strong>:</p>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Tier</th><th>Tech</th><th>TTL</th><th>Hit rate</th><th>Latency</th><th>Capacity</th></tr>
+              <tr><td>L1</td><td>Caffeine (in-JVM)</td><td>30s</td><td>80%</td><td>&lt;1ms</td><td>50K hot keys/pod</td></tr>
+              <tr><td>L2</td><td>Redis Cluster (3 shards)</td><td>5min</td><td>95% of L1 miss</td><td>~2ms</td><td>10M keys, 50GB</td></tr>
+              <tr><td>L3</td><td>DynamoDB (per-region)</td><td>1hr</td><td>99.5%</td><td>~10ms</td><td>150B keys, sparse</td></tr>
+              <tr><td>L4</td><td>Sterling GIV (RTAM)</td><td>—</td><td>0.5%</td><td>~50ms</td><td>truth</td></tr>
+            </table>
+          </div>
+
+          <p><strong>Key design moves</strong>:</p>
+          <ol>
+            <li><strong>Pre-aggregation</strong>: For PDP, the question is "is this SKU available for ship-to PIN 560001?" — not "what's the qty in DC01 and STR_BLR042 and STR_BLR099?". Pre-compute the answer keyed by <code>{sku}#{pincode}</code> and refresh on inventory deltas.</li>
+            <li><strong>Stale-while-revalidate</strong>: Return cached value immediately, async-refresh in background if older than threshold. PDP correctness is "good enough at 30s old."</li>
+            <li><strong>Graceful degradation</strong>: If L2 is down, fall through to L3. If L3 is down, return last-known-good with a warning flag. Never call RTAM under load.</li>
+            <li><strong>Per-region read replicas</strong>: Replicate L3 (DynamoDB Global Tables) so each region serves locally; reduces tail latency and provides region-failover.</li>
+            <li><strong>Bulk APIs</strong>: <code>POST /availability/bulk</code> accepts up to 100 SKUs; reduces per-call overhead for category pages and search.</li>
+            <li><strong>Negative caching</strong>: Cache "out of stock" results too — they're equally valid.</li>
+          </ol>
+
+          <h4>Event-driven freshness</h4>
+          <ul>
+            <li>Sterling RTAM agent publishes <code>INVENTORY_CHANGE</code> events on every supply or demand change.</li>
+            <li>MQ → Kafka bridge, partition by <code>{sku}#{node}</code>.</li>
+            <li>Sync consumer recomputes <code>{sku}#{pincode}</code> rollups (it knows which pincodes are served from each node).</li>
+            <li>Updates DynamoDB; emits invalidation event to L2/L1.</li>
+            <li>Target P99 propagation: 2 seconds. Operationally critical: monitor consumer lag; alert at &gt; 30s.</li>
+          </ul>
+
+          <div class="callout callout-info">
+            <div class="callout-title">Scaling pitfall — the "hot SKU" problem</div>
+            <p style="font-size:13.5px;">During a promo, 1 SKU gets 30% of all availability traffic. L1 cache absorbs it (good), but on a deploy / pod restart, all pods cold-start and hammer L2 simultaneously (thundering herd). Mitigations: warmup hooks, request coalescing per pod (singleflight pattern), and L2 read-replicas.</p>
+          </div>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"What's your cache invalidation strategy?"</em> → event-driven (preferred) + TTL fallback (safety net)</li>
+            <li><em>"How does this work cross-region?"</em> → DynamoDB Global Tables; Kafka MirrorMaker for events; tolerate sub-second cross-region staleness</li>
+            <li><em>"What if the PIN code lookup is wrong?"</em> → rollups are computed by serviceability rules; reconcile nightly with carrier ZIP coverage data</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q5: BOPIS DESIGN ============== -->
+    <section class="section" id="q5">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q5</span>How would you design BOPIS?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>BOPIS is a <strong>store-aware availability + capacity + workflow</strong> problem. Show only stores with the SKU in stock and pickup capacity within SLA. Reserve hard at order time against the chosen store. Route a pick task via Sterling pipeline to the store associate app. Track ready/picked-up state, with auto-cancel at 72h no-show. The hard parts are <em>store capacity modeling</em> and <em>graceful failure when the store can't fulfill</em>.</p>
+
+          <h4>Architect depth</h4>
+
+          <p>See <strong>SD-03</strong> above for the full architecture. Here are the architect-level points an interviewer probes:</p>
+
+          <p><strong>1. Eligibility filter (the easy part interviewers think is hard)</strong>:</p>
+          <pre><code>eligible_stores(sku, customer_pin) = stores
+  WHERE distance(store, customer_pin) ≤ max_radius
+  AND   is_pickup_enabled(store)
+  AND   available_qty(store, sku) ≥ 1 - safety_buffer
+  AND   pickup_capacity_remaining(store, today) ≥ 1
+  AND   is_open_today(store)
+ORDER BY pickup_ready_at ASC, distance ASC
+LIMIT 5</code></pre>
+
+          <p><strong>2. Store capacity modeling (the actual hard part)</strong>:</p>
+          <ul>
+            <li>Each store has a <code>picks_per_hour</code> ceiling — typically 20–60.</li>
+            <li>Ceiling varies by hour, by day-of-week, by season. Tuesday 11am ≠ Saturday 2pm.</li>
+            <li>Capacity is shared with SFS picks. Holistic model needed.</li>
+            <li>When capacity is full, push pickup-ready ETA to next available window — show that to customer pre-purchase.</li>
+            <li>Real-time decrement on pick task creation; restore on pick complete or task expire.</li>
+          </ul>
+
+          <p><strong>3. SLA tiers — set customer expectations</strong>:</p>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Tier</th><th>Promise</th><th>How achieved</th></tr>
+              <tr><td>Express (2hr)</td><td>"Ready in 2 hours"</td><td>Real-time capacity check + small inventory buffer</td></tr>
+              <tr><td>Same-day</td><td>"Ready by 6pm today"</td><td>Default; allows 4–6h pick window</td></tr>
+              <tr><td>Next-day</td><td>"Ready tomorrow morning"</td><td>Used when today's capacity exhausted</td></tr>
+            </table>
+          </div>
+
+          <p><strong>4. Failure modes and recovery</strong>:</p>
+          <ul>
+            <li><strong>Store can't find item</strong>: Associate marks "OOS"; orchestration triggers — (a) auto-substitute (only if customer pre-consented), (b) re-source to nearest store with stock, (c) cancel + refund. Customer notified at each step.</li>
+            <li><strong>Customer no-show</strong>: 72h SLA → auto-cancel → restock to GIV → refund. Some retailers extend to 7 days for CS-flagged customers.</li>
+            <li><strong>Wrong store selected (customer error)</strong>: Pre-pickup window allows customer to switch stores via self-service if SKU is available at new store.</li>
+          </ul>
+
+          <h4>Sterling integration specifics</h4>
+          <ul>
+            <li>Order's <code>FulfillmentType = PICKUP</code>, <code>ShipNode = StoreCode</code>.</li>
+            <li>Sterling release pipeline routes to store; pick task surfaces in store associate app via Sterling Store Inventory Management (SIM) or a custom app reading from Sterling APIs.</li>
+            <li>Pick confirmation calls <code>confirmShipment</code>; that triggers <code>ORDER_RELEASED</code> → <code>READY_FOR_PICKUP</code> status transition.</li>
+            <li>Customer pickup confirmation calls custom transaction → <code>DELIVERED</code> status.</li>
+          </ul>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"How do you model multi-item BOPIS where items are at different stores?"</em> → either ship-to-store consolidation (slower) or split pickup (faster but worse UX); offer both as customer choice</li>
+            <li><em>"What if the customer wants to pick up in a different city than they ordered from?"</em> → ship-to-store flow: source from DC, ship to chosen store, then pickup; Sterling handles via two shipment legs</li>
+            <li><em>"How do you measure success?"</em> → SLA adherence (% ready on time), cancel rate, customer satisfaction, basket-size lift vs ship-to-home</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q6: MODIFY AFTER RELEASE ============== -->
+    <section class="section" id="q6">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q6</span>How do you handle order modification after release?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Once an order is released, modifications are <strong>conditional and stage-aware</strong>. Sterling's <code>changeOrder</code> API is the only safe path — never write directly to YFS tables. Each modification type (cancel, address change, item change) has different rules based on the order's pipeline state (released, allocated, picked, packed, shipped). The architecture wraps changeOrder in a saga that handles compensating actions: re-source, refund delta, restock, notify carrier. Some modifications are simply <strong>not allowed</strong> after a state — be explicit about that in the API.</p>
+
+          <h4>Architect depth — the modification matrix</h4>
+
+          <div class="table-wrap">
+            <table>
+              <tr><th>Modification</th><th>Released</th><th>Allocated</th><th>Picked</th><th>Packed</th><th>Shipped</th></tr>
+              <tr><td>Cancel order</td><td>✅</td><td>✅</td><td>⚠️ partial</td><td>⚠️ in-transit return</td><td>❌ → return</td></tr>
+              <tr><td>Cancel line item</td><td>✅</td><td>✅</td><td>⚠️</td><td>❌</td><td>❌</td></tr>
+              <tr><td>Change qty (down)</td><td>✅</td><td>⚠️</td><td>❌</td><td>❌</td><td>❌</td></tr>
+              <tr><td>Change qty (up)</td><td>⚠️ new line</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+              <tr><td>Change ship address</td><td>✅</td><td>⚠️ if same node</td><td>⚠️</td><td>❌ (carrier)</td><td>❌</td></tr>
+              <tr><td>Change billing</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Apply promo retro</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Switch BOPIS↔ship</td><td>✅</td><td>⚠️ rare</td><td>❌</td><td>❌</td><td>❌</td></tr>
+            </table>
+          </div>
+
+          <p><strong>Architecture pattern</strong>:</p>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig Q6.1 — Modification Saga</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant CS as CS Agent / Customer
+    participant API as Mod API
+    participant POL as Policy Engine
+    participant SAGA as Saga Coordinator
+    participant S as Sterling (changeOrder)
+    participant PAY as Payment
+    participant INV as Inventory/Reservation
+    participant CARR as Carrier API
+    
+    CS->>API: modify(order, change)
+    API->>POL: is_allowed(state, change)
+    POL-->>API: allowed_with_compensations
+    API->>SAGA: execute saga
+    SAGA->>S: changeOrder(...)
+    S-->>SAGA: ok
+    SAGA->>INV: release/adjust reservation
+    SAGA->>PAY: refund delta / re-auth
+    SAGA->>CARR: redirect/cancel shipment
+    SAGA-->>API: success
+    
+    Note over SAGA: On any failure, compensate prior steps
+            </div>
+          </div>
+
+          <p><strong>Key design points</strong>:</p>
+          <ul>
+            <li><strong>Policy engine externalized</strong>: Drools/Camunda rules table. Business adjusts thresholds (e.g., "address change OK if not yet picked") without code deploys.</li>
+            <li><strong>Saga, not transaction</strong>: Sterling changeOrder + payment refund + carrier API + reservation release span 4+ systems. Use Temporal (or equivalent) for orchestration with compensations.</li>
+            <li><strong>Idempotency</strong>: Every modification has a <code>request_id</code>; CS retries are deduped.</li>
+            <li><strong>Customer-facing transparency</strong>: Show the customer in real time what's possible — "your order is being packed; address change no longer possible." Don't fail at submit.</li>
+            <li><strong>Audit trail</strong>: Every mod attempt (success or fail) logged with reason. Critical for CS quality, fraud detection, and merch dispute resolution.</li>
+            <li><strong>"Cancel + replace" pattern</strong>: For impossible mods (qty up, item swap mid-pipeline), cancel original + create new order. Atomically link them via parent_order_id.</li>
+          </ul>
+
+          <h4>Sterling specifics</h4>
+          <ul>
+            <li><code>changeOrder</code> is the universal entry; it triggers pipeline events (<code>ORDER_MODIFIED</code>) which drive downstream agents.</li>
+            <li><code>cancelOrder</code> is a special-cased changeOrder; releases demand and triggers refund event.</li>
+            <li>Past pick-confirm, the order's shipment is locked at the WMS — Sterling can't reverse that. Mod must wait for shipment + return flow.</li>
+            <li><code>OrderHoldType</code> can be applied to pause an order pipeline mid-flight while CS investigates a mod request — extremely useful pattern.</li>
+          </ul>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"How do you handle a cancel that races with shipment confirmation?"</em> → optimistic: try cancel; if shipped concurrently, fall back to "cancel-on-arrival" or in-transit return</li>
+            <li><em>"What about partial shipments?"</em> → mods apply per shipment; some shipments cancellable, others already gone — UI shows status per line</li>
+            <li><em>"How do you keep payments reconciled?"</em> → emit <code>order.modified</code> event with delta; payment service handles refund/re-auth idempotently keyed by mod_request_id</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q7: KAFKA in OMS ============== -->
+    <section class="section" id="q7">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q7</span>How would Kafka fit into OMS?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Kafka is the <strong>event backbone</strong> connecting Sterling to the modern microservices ring. Sterling speaks JMS/MQ; we bridge MQ ↔ Kafka. We also use Debezium CDC on Sterling tables for events Sterling doesn't natively publish. Outside Sterling, Kafka carries inventory deltas, order events, fulfillment events, returns, and pricing changes — partitioned for ordering guarantees, with idempotent consumers and DLQs for poison messages. Kafka Streams handles stateful joins (e.g., enriching order events with customer + product data).</p>
+
+          <h4>Architect depth</h4>
+
+          <div class="diagram-wrap">
+            <div class="diagram-label">Fig Q7.1 — Kafka Topology in OMS</div>
+            <div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+flowchart TB
+    subgraph PRODUCERS[Producers]
+      STERL[Sterling<br/>via MQ bridge]
+      CDC[Debezium<br/>CDC on YFS tables]
+      MS1[Reservation Svc]
+      MS2[Order Svc]
+      MS3[Returns Svc]
+      WMS[WMS via Adapter]
+    end
+    
+    PRODUCERS --> KFK[(Kafka Cluster<br/>3 brokers · MSK/Confluent)]
+    
+    subgraph TOPICS[Key Topics]
+      T1[order.captured · 12 partitions · key=order_id]
+      T2[order.released · 12 partitions]
+      T3[inventory.delta · 24 partitions · key=sku+node]
+      T4[reservation.events · 12 partitions]
+      T5[shipment.events · 6 partitions]
+      T6[returns.events · 6 partitions]
+    end
+    
+    KFK --> CONSUMERS[Consumers]
+    CONSUMERS --> AVS[Availability Sync]
+    CONSUMERS --> SEARCH[Search Indexer]
+    CONSUMERS --> ANLY[Analytics Pipeline]
+    CONSUMERS --> NOTIF[Notification Svc]
+    CONSUMERS --> ML[ML Feature Store]
+    
+    KFK --> KS[Kafka Streams<br/>enrichment + joins]
+    KS --> KFK
+    
+    KFK --> DLQ[DLQ Topics<br/>per consumer]
+    
+    style KFK fill:#1f6feb33,stroke:#58a6ff
+    style STERL fill:#9e670022,stroke:#d29922
+            </div>
+          </div>
+
+          <h4>Topic design principles</h4>
+          <ul>
+            <li><strong>One topic per domain event</strong>: <code>order.captured</code>, <code>order.released</code>, <code>inventory.delta</code>. Don't dump everything in one mega-topic.</li>
+            <li><strong>Partition key = aggregate ID</strong>: order events keyed by <code>order_id</code>; inventory deltas by <code>{sku}#{node}</code>. Guarantees per-aggregate ordering.</li>
+            <li><strong>Retention = 7 days minimum</strong> for replay; some topics (financial events) → 30+ days or compacted.</li>
+            <li><strong>Schema Registry mandatory</strong>: Avro/Protobuf with backward+forward compatibility rules. Prevents the dreaded "consumer can't parse new producer message."</li>
+          </ul>
+
+          <h4>Sterling ↔ Kafka bridging — the practical reality</h4>
+          <p>Sterling's native event mechanism is <strong>YIF transactions + MQ topics/queues</strong>. Three patterns:</p>
+          <ol>
+            <li><strong>MQ → Kafka bridge</strong> (Camel/Kafka Connect MQ source connector): drains Sterling's outbound MQ, republishes to Kafka. Most events flow this way.</li>
+            <li><strong>Debezium CDC</strong>: For events Sterling doesn't publish but you need (e.g., specific status transitions, custom column changes). Reads Oracle redo logs.</li>
+            <li><strong>Outbox pattern (when you can modify Sterling)</strong>: Sterling user exit writes events to an outbox table; Debezium publishes from there. Cleanest for bidirectional consistency.</li>
+          </ol>
+
+          <h4>Consumer patterns</h4>
+          <ul>
+            <li><strong>Idempotent consumers</strong>: Use event_id dedup table or Kafka's transactional reads. Critical for DB writes.</li>
+            <li><strong>Lag monitoring</strong>: Per-consumer-group lag SLO (e.g., &lt; 30s for inventory.delta). Alerts trigger autoscale.</li>
+            <li><strong>DLQ + retry topic</strong>: Failed messages → retry topic with delay; after N retries → DLQ for manual triage.</li>
+            <li><strong>Co-partitioning</strong>: When joining two streams (orders + customers), they must share partition key. Kafka Streams enforces this at join time.</li>
+          </ul>
+
+          <h4>What Kafka is NOT for in OMS</h4>
+          <ul>
+            <li><strong>Synchronous request/response</strong>: Don't use Kafka for "is this SKU available right now?" — use REST + cache.</li>
+            <li><strong>Workflow orchestration</strong>: Kafka choreography breaks down beyond 4-5 steps. Use Temporal/Camunda for true workflows.</li>
+            <li><strong>Source of truth</strong>: Kafka is a transport, not a database. Materialized views are derived state.</li>
+          </ul>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"How do you handle out-of-order events?"</em> → partition key ensures per-key order; if cross-key ordering matters, use windowed joins in Kafka Streams</li>
+            <li><em>"What's your DR strategy for Kafka?"</em> → MirrorMaker 2.0 to secondary region; consumers fail over with reset to last committed offset</li>
+            <li><em>"How do you migrate consumers without losing messages?"</em> → blue/green consumer groups with dual-read, then cutover offset</li>
+            <li><em>"Why not RabbitMQ?"</em> → throughput (Kafka 10× higher), retention/replay, partition ordering, ecosystem (Connect, Streams, ksqlDB)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q8: REDUCE DB CONTENTION ============== -->
+    <section class="section" id="q8">
+      <div class="qa-block">
+        <div class="qa-question" onclick="toggleQA(this)">
+          <div class="qa-q-text"><span class="qa-num">Q8</span>How do you reduce Sterling DB contention?</div>
+          <span class="qa-toggle">+</span>
+        </div>
+        <div class="qa-answer content">
+
+          <h4>Elevator answer</h4>
+          <p>Six attack vectors: <strong>(1)</strong> offload reads via CQRS (availability, order status), <strong>(2)</strong> move reservations out of YFS_INVENTORY_DEMAND to a dedicated service, <strong>(3)</strong> fix YFS_TASK_Q hot-spotting via agent partitioning + criteria tuning, <strong>(4)</strong> bulk-API everything (changeOrder batching), <strong>(5)</strong> archive cold orders aggressively, <strong>(6)</strong> tune Oracle (indexes, partitioning, optimizer stats). Each tackles a specific top-wait-event in the AWR report.</p>
+
+          <h4>Architect depth — the AWR-driven approach</h4>
+
+          <p>Don't guess. Pull a Sterling AWR / Statspack report during peak hour. The top wait events tell you exactly where to invest.</p>
+
+          <div class="table-wrap">
+            <table>
+              <tr><th>AWR Top Wait</th><th>Likely cause</th><th>Mitigation</th></tr>
+              <tr><td>buffer busy waits on YFS_INVENTORY_DEMAND</td><td>Reservation insert contention</td><td class="rec">External reservation service</td></tr>
+              <tr><td>row lock contention on YFS_ORDER_HEADER</td><td>Concurrent changeOrder</td><td class="rec">Batched changeOrder API; status-driven sharding</td></tr>
+              <tr><td>enq: TX - row lock on YFS_TASK_Q</td><td>Agent picking same tasks</td><td class="rec">Agent criteria narrowing; partitioning; lock_id</td></tr>
+              <tr><td>SQL*Net waits</td><td>App-side N+1</td><td>Batch JDBC; reduce round-trips</td></tr>
+              <tr><td>db file sequential read</td><td>Index seeks on huge tables</td><td>Range partitioning by order_date; archive</td></tr>
+              <tr><td>library cache lock</td><td>Bind variable misuse / hard parse</td><td>Cursor sharing; reuse statements</td></tr>
+            </table>
+          </div>
+
+          <h4>Six attack vectors in detail</h4>
+
+          <p><strong>1. CQRS for reads</strong></p>
+          <ul>
+            <li>Order status / history → Mongo or Postgres replica fed by CDC.</li>
+            <li>Availability → DynamoDB (see SD-01).</li>
+            <li>Customer order list → Elasticsearch (search + filter).</li>
+            <li>Goal: 0 RPS of vanilla read traffic from web/mobile reaches Sterling Oracle.</li>
+          </ul>
+
+          <p><strong>2. Externalize reservations</strong></p>
+          <ul>
+            <li>Cart-level holds in Redis (see SD-08).</li>
+            <li>Sterling YFS_INVENTORY_DEMAND only sees committed orders → typically 5-10× lower insert rate.</li>
+            <li>Frees up DEMAND-table buffer cache and reduces redo log volume.</li>
+          </ul>
+
+          <p><strong>3. YFS_TASK_Q hot-spotting</strong></p>
+          <ul>
+            <li>YFS_TASK_Q is shared by all task-queue agents. Concurrent <code>SELECT ... FOR UPDATE SKIP LOCKED</code> from many agents = serialization.</li>
+            <li>Mitigations:
+              <ul>
+                <li>Narrow agent criteria so each picks fewer rows (less lock contention).</li>
+                <li>Increase agent count + reduce per-agent batch size.</li>
+                <li>List partition YFS_TASK_Q by <code>TASKQ_TYPE</code> — agents touch only their partition.</li>
+                <li>Use <code>LockID</code>-based pessimistic locking strategy.</li>
+                <li>Consider EOF (End-of-Feed) pattern: separate priority lanes for SLA-critical tasks.</li>
+              </ul>
+            </li>
+            <li>Sterling 10.x has improvements here vs 9.3 — upgrade if you can.</li>
+          </ul>
+
+          <p><strong>4. Bulk APIs</strong></p>
+          <ul>
+            <li>Sterling APIs accept multi-order payloads: <code>multiApi</code> wrapping multiple changeOrder calls in one transaction.</li>
+            <li>Reduces round-trips and per-call session overhead.</li>
+            <li>Carefully bound batch size (50–200) to avoid long-running transactions.</li>
+          </ul>
+
+          <p><strong>5. Archive cold orders aggressively</strong></p>
+          <ul>
+            <li>Sterling's purge agent (PurgeOrder) is your friend — run it daily.</li>
+            <li>Archive to a separate schema/database after 90 days; query-redirect for historical lookups.</li>
+            <li>Smaller hot tables = better buffer cache hit + faster query plans.</li>
+            <li>Range partition YFS_ORDER_HEADER by month — partition prune helps queries naturally.</li>
+          </ul>
+
+          <p><strong>6. Oracle-level tuning</strong></p>
+          <ul>
+            <li>Maintain optimizer stats freshness on hot tables (gather every few hours during peak).</li>
+            <li>Index review — Sterling ships generic indexes; profile your workload and add covering indexes.</li>
+            <li>Adaptive cursor sharing for skewed data.</li>
+            <li>Resource Manager to throttle reporting queries during OLTP peak.</li>
+            <li>Consider Oracle RAC for horizontal scale; Sterling supports it.</li>
+          </ul>
+
+          <h4>Quantifying the impact (typical numbers from a tier-1 retailer)</h4>
+          <pre><code>Baseline (vanilla Sterling, 100K orders/day):
+  AWR top wait    : DEMAND buffer busy (32%), TASK_Q lock (24%), HEADER row lock (18%)
+  Peak DB CPU     : 85%
+  P99 changeOrder : 800ms
+
+After CQRS + externalized reservations:
+  AWR top wait    : TASK_Q lock (38%), HEADER row lock (22%)
+  Peak DB CPU     : 55%
+  P99 changeOrder : 280ms
+
+After TASK_Q partitioning + bulk APIs:
+  AWR top wait    : HEADER row lock (28%) — natural ceiling
+  Peak DB CPU     : 35%
+  P99 changeOrder : 140ms</code></pre>
+
+          <h4>Common follow-ups</h4>
+          <ul>
+            <li><em>"What about Sterling's own connection pool?"</em> → tune om-app pool size to match Oracle session limit; monitor pool exhaustion separately</li>
+            <li><em>"What if upgrade isn't on the table?"</em> → vector 1, 2, 4, 5 are independent of version; vector 3 has more options on 10.x</li>
+            <li><em>"How do you measure success?"</em> → AWR baseline diff; latency histograms; Sterling agent backlog (TASK_Q depth) trend</li>
+            <li><em>"Where do you start with limited budget?"</em> → externalize reservations first — single biggest contention killer with localized blast radius</li>
+          </ul>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== INTERVIEW CHEAT SHEET ============== -->
+    <section class="section" id="cheat">
+      <div class="section-header">
+        <span class="section-num">★</span>
+        <h2>Interview Cheat Sheet — Director / Principal Architect</h2>
+      </div>
+      <div class="content">
+
+        <h3>Top 5 clarifying questions to ask before drawing</h3>
+        <ol>
+          <li><strong>"What's the order volume — peak vs average?"</strong> 10K/day vs 1M/day completely changes the architecture.</li>
+          <li><strong>"Sterling 9.x or 10.x? On-prem WAS or OpenShift?"</strong> Determines containerization options and agent scaling levers.</li>
+          <li><strong>"How many channels — web only, or also marketplaces, stores, B2B?"</strong> Multi-channel changes the orchestration story.</li>
+          <li><strong>"What's the brand's tolerance for oversell vs lost-sale?"</strong> Drives the conservatism of availability and reservations.</li>
+          <li><strong>"What's the team's modernization budget — 6 months tactical or 18-month strategic?"</strong> Strangler Fig vs rip-and-replace decision.</li>
+        </ol>
+
+        <h3>Key trade-offs to verbalize proactively</h3>
+        <div class="pillar-grid">
+          <div class="pillar">
+            <h5>Consistency vs availability</h5>
+            <p>Reservations: strong. Availability reads: eventual. Be explicit about which is which and why.</p>
+          </div>
+          <div class="pillar">
+            <h5>Sterling vs microservices</h5>
+            <p>Sterling for state + audit; microservices for scale + UX. Don't fight Sterling; ring it.</p>
+          </div>
+          <div class="pillar">
+            <h5>Choreography vs orchestration</h5>
+            <p>Kafka events for fan-out; Temporal for stateful workflows. Pure choreography breaks beyond 4 steps.</p>
+          </div>
+          <div class="pillar">
+            <h5>Real-time vs batch</h5>
+            <p>Customer-facing = real-time (sub-second). Reconciliation, settlement, analytics = batch/streaming.</p>
+          </div>
+          <div class="pillar">
+            <h5>Build vs Buy</h5>
+            <p>Build differentiating UX; buy commodity (tax, fraud, address). Sterling itself is "buy."</p>
+          </div>
+          <div class="pillar">
+            <h5>Cost vs performance</h5>
+            <p>3-tier cache is cheaper than scaling Oracle. Ship-from-store is operational cost vs delivery speed.</p>
+          </div>
+        </div>
+
+        <h3>"Wow" moments — show principal-level depth</h3>
+        <ul>
+          <li><strong>YFS_TASK_Q partitioning</strong>: Knowing this is a hot table and what to do about it signals you've operated Sterling, not just designed around it.</li>
+          <li><strong>RTAM vs availability service distinction</strong>: Most people confuse Sterling's real-time inventory APIs with the availability service. Drawing the layer separation cleanly is principal-level.</li>
+          <li><strong>Sourcing cost function math</strong>: Showing the multi-objective optimization with weights and constraints (not just "Drools") signals you've actually architected SFS at scale.</li>
+          <li><strong>Reservation-aware PDP display</strong>: Many architects forget L1 (the customer-facing display) when discussing oversell. Mentioning safety buffers + active reservation subtraction is sharp.</li>
+          <li><strong>Sterling AWR analysis</strong>: Tying contention mitigation to specific Oracle wait events shows operational depth.</li>
+        </ul>
+
+        <h3>Common failure modes interviewers probe for</h3>
+        <ul>
+          <li><strong>"Big bang" replacement plans</strong> — they'll push back hard. Defend Strangler Fig.</li>
+          <li><strong>Hand-waving "use Kafka"</strong> — they'll ask partition key, ordering, idempotency, DLQ. Have answers.</li>
+          <li><strong>Ignoring stores</strong> — modern OMS is store-aware. If your design treats inventory as just DCs, you've failed.</li>
+          <li><strong>Forgetting returns</strong> — 25–35% of online retail. A complete OMS architecture must address reverse logistics.</li>
+          <li><strong>No DR / no observability</strong> — Director-level role, you must talk about MTTR, SLI/SLO, runbooks, chaos.</li>
+          <li><strong>Only happy path</strong> — interviewers love asking "what happens when X fails?" Pre-empt with failure modes.</li>
+        </ul>
+
+        <h3>Questions to ask the interviewer at the end</h3>
+        <ol>
+          <li>"What's the current Sterling pain point that's driving this hire — performance, modernization velocity, or cost?"</li>
+          <li>"How is the Sterling platform team structured today, and how does it interact with the channel/product teams?"</li>
+          <li>"What's the next 2-year roadmap for the OMS platform — and where does this role contribute?"</li>
+        </ol>
+
+        <div class="callout callout-success" style="margin-top:24px;">
+          <div class="callout-title">Final principle</div>
+          <p style="font-size:13.5px;">At Architect-level interviews, depth beats breadth. Pick 2–3 areas you can go 5 levels deep in (e.g., reservations, availability scaling, modernization patterns) and steer probing questions there. <strong>Don't claim expertise you don't have</strong> — interviewers respect "I'd need to dig into that; here's how I'd approach it" far more than confident hand-waving.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#30363d',
+      lineColor: '#58a6ff',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#1c2128',
+      fontFamily: 'IBM Plex Sans, sans-serif'
+    },
+    flowchart: { curve: 'basis', padding: 12 },
+    sequence: { actorMargin: 50, messageMargin: 38 }
+  });
+
+  document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+
+  function goTo(ev, id) {
+    ev.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    ev.currentTarget.classList.add('active');
+  }
+
+  function toggleQA(headerEl) {
+    const answer = headerEl.nextElementSibling;
+    const toggle = headerEl.querySelector('.qa-toggle');
+    answer.classList.toggle('open');
+    toggle.textContent = answer.classList.contains('open') ? '−' : '+';
+  }
+
+  // Scroll spy
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navItems.forEach(n => {
+          const onclick = n.getAttribute('onclick') || '';
+          if (onclick.includes(`'${id}'`)) {
+            navItems.forEach(x => x.classList.remove('active'));
+            n.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '-20% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

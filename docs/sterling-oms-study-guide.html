@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IBM Sterling OMS — Architect Study Guide</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0d2b55;--blue:#1565c0;--accent:#f5a623;--teal:#00838f;
+  --green:#2e7d32;--red:#c62828;--purple:#6a1b9a;
+  --bg:#f0f4f8;--card:#ffffff;--border:#cfd8e8;
+  --text:#1a1a2e;--muted:#546e7a;--code-bg:#e8edf7;
+  --sidebar-w:270px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;display:flex;min-height:100vh;}
+
+/* ─── SIDEBAR ──────────────────────────────────────────── */
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--navy);color:#ecf0f8;
+  position:fixed;top:0;left:0;height:100vh;
+  overflow-y:auto;z-index:200;
+  display:flex;flex-direction:column;
+  transition:transform .3s;
+}
+#sidebar-logo{
+  padding:20px 18px 14px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+#sidebar-logo h1{font-size:.95rem;font-weight:800;color:#fff;line-height:1.3;}
+#sidebar-logo p{font-size:.72rem;color:#90a4c8;margin-top:4px;}
+#sidebar nav{flex:1;padding:10px 0 30px;}
+#sidebar nav a{
+  display:block;padding:7px 18px;font-size:.8rem;color:#b0c4de;
+  text-decoration:none;border-left:3px solid transparent;
+  transition:all .2s;line-height:1.3;
+}
+#sidebar nav a:hover,#sidebar nav a.active{
+  color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--accent);
+}
+#sidebar nav .nav-group{
+  font-size:.67rem;font-weight:700;letter-spacing:1px;
+  color:#607d9a;padding:14px 18px 4px;text-transform:uppercase;
+}
+#sidebar-toggle{
+  display:none;position:fixed;top:12px;left:12px;z-index:300;
+  background:var(--navy);color:#fff;border:none;border-radius:6px;
+  padding:8px 12px;font-size:1.1rem;cursor:pointer;
+}
+
+/* ─── MAIN CONTENT ─────────────────────────────────────── */
+#main{margin-left:var(--sidebar-w);flex:1;min-width:0;}
+
+/* ─── TOP BAR ──────────────────────────────────────────── */
+#topbar{
+  background:var(--navy);color:#fff;
+  padding:14px 32px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+#topbar h2{font-size:1rem;font-weight:700;flex:1;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.15);color:#dde;}
+
+/* ─── HERO ─────────────────────────────────────────────── */
+.hero{
+  background:linear-gradient(135deg,var(--navy) 0%,#1a4a8a 60%,#1565c0 100%);
+  color:#fff;padding:48px 40px 40px;
+}
+.hero h1{font-size:2.1rem;font-weight:800;margin-bottom:10px;}
+.hero p{opacity:.85;max-width:680px;font-size:1rem;}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
+.hero-badges span{background:rgba(255,255,255,.18);padding:4px 14px;border-radius:20px;font-size:.78rem;font-weight:600;}
+
+/* ─── CONTENT WRAPPER ──────────────────────────────────── */
+.content{padding:32px 40px 60px;}
+
+/* ─── SECTION ──────────────────────────────────────────── */
+.section{margin-bottom:44px;scroll-margin-top:64px;}
+.section-header{
+  display:flex;align-items:center;gap:12px;
+  background:var(--navy);color:#fff;
+  padding:13px 20px;border-radius:8px 8px 0 0;
+  font-size:1rem;font-weight:700;
+}
+.section-header .icon{font-size:1.25rem;}
+.section-body{
+  background:var(--card);border:1px solid var(--border);
+  border-top:none;border-radius:0 0 8px 8px;padding:26px 28px;
+}
+
+/* ─── HEADINGS ─────────────────────────────────────────── */
+h3{color:var(--blue);font-size:.95rem;font-weight:700;
+   margin:22px 0 8px;padding-left:10px;
+   border-left:4px solid var(--accent);}
+h4{color:var(--navy);font-size:.88rem;font-weight:700;margin:12px 0 4px;}
+p{margin:6px 0 10px;}
+ul,ol{margin:6px 0 12px 22px;}
+li{margin:3px 0;}
+
+/* ─── CODE ─────────────────────────────────────────────── */
+code{background:var(--code-bg);color:#1a3a6e;padding:2px 6px;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:.83rem;}
+pre{background:#1e2a3a;color:#c8d8f0;padding:16px 18px;border-radius:6px;overflow-x:auto;font-size:.82rem;font-family:Consolas,monospace;margin:12px 0;line-height:1.55;}
+pre .cm{color:#5c7a5c;} pre .kw{color:#82aaff;} pre .st{color:#c3e88d;}
+
+/* ─── TABLES ────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;margin:12px 0;}
+table{width:100%;border-collapse:collapse;font-size:.85rem;}
+th{background:var(--navy);color:#fff;padding:9px 13px;text-align:left;font-weight:600;}
+td{padding:7px 13px;border-bottom:1px solid var(--border);}
+tr:nth-child(even) td{background:#f5f7fb;}
+tr:hover td{background:#eef2ff;}
+
+/* ─── CARDS ─────────────────────────────────────────────── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:12px 0;}
+.card{background:#f0f5ff;border:1px solid var(--border);border-radius:8px;padding:16px;}
+.card h4{color:var(--navy);margin-bottom:6px;font-size:.88rem;}
+.card p{font-size:.83rem;color:var(--muted);}
+
+/* ─── CALLOUTS ──────────────────────────────────────────── */
+.tip,.warn,.info,.danger,.note{
+  border-radius:6px;padding:12px 16px;margin:14px 0;
+  border-left:5px solid;font-size:.88rem;
+}
+.tip{background:#e8f5e9;border-color:var(--green);}
+.warn{background:#fff8e1;border-color:#f9a825;}
+.info{background:#e3f2fd;border-color:var(--blue);}
+.danger{background:#ffebee;border-color:var(--red);}
+.note{background:#f3e5f5;border-color:var(--purple);}
+.tip strong,.warn strong,.info strong,.danger strong,.note strong{
+  display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;
+}
+.tip strong{color:var(--green);}
+.warn strong{color:#e65100;}
+.info strong{color:var(--blue);}
+.danger strong{color:var(--red);}
+.note strong{color:var(--purple);}
+
+/* ─── FLOW DIAGRAM ──────────────────────────────────────── */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:14px 0;}
+.fbox{background:var(--navy);color:#fff;padding:6px 13px;border-radius:6px;font-size:.78rem;font-weight:600;white-space:nowrap;}
+.fbox.green{background:var(--green);}
+.fbox.teal{background:var(--teal);}
+.fbox.accent{background:#b05c00;}
+.farrow{color:var(--accent);font-size:1.2rem;font-weight:700;}
+
+/* ─── COLLAPSIBLE (ADR / Q&A) ───────────────────────────── */
+details{border:1px solid var(--border);border-radius:6px;margin:8px 0;overflow:hidden;}
+details[open]{border-color:var(--blue);}
+summary{
+  background:var(--navy);color:#fff;padding:11px 16px;
+  cursor:pointer;font-size:.88rem;font-weight:600;
+  list-style:none;display:flex;justify-content:space-between;align-items:center;
+  user-select:none;
+}
+summary::-webkit-details-marker{display:none;}
+summary::after{content:'▼';font-size:.75rem;opacity:.7;transition:transform .2s;}
+details[open] summary::after{transform:rotate(180deg);}
+summary:hover{background:#1a4070;}
+.details-body{padding:14px 18px;font-size:.88rem;background:#fafcff;}
+details.warn-block summary{background:#7a4000;}
+details.green-block summary{background:var(--green);}
+details.teal-block summary{background:var(--teal);}
+
+/* ─── STATUS PILL ────────────────────────────────────────── */
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:700;}
+.pill-blue{background:#bbdefb;color:#0d47a1;}
+.pill-green{background:#c8e6c9;color:#1b5e20;}
+.pill-orange{background:#ffe0b2;color:#bf360c;}
+.pill-red{background:#ffcdd2;color:#b71c1c;}
+.pill-purple{background:#e1bee7;color:#4a148c;}
+
+/* ─── MERMAID ────────────────────────────────────────────── */
+.mermaid{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px;margin:14px 0;overflow-x:auto;text-align:center;}
+
+/* ─── CHEAT SHEET GRID ───────────────────────────────────── */
+.cheat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;}
+.cheat-card{background:#f0f5ff;border:1px solid var(--border);border-radius:8px;padding:14px;}
+.cheat-card h4{font-size:.82rem;color:var(--navy);margin-bottom:6px;}
+.cheat-card ul{font-size:.8rem;margin-left:16px;}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);}
+  #sidebar.open{transform:translateX(0);}
+  #sidebar-toggle{display:block;}
+  #main{margin-left:0;}
+  .content{padding:24px 18px 50px;}
+  .hero{padding:32px 20px 28px;}
+  .hero h1{font-size:1.5rem;}
+  .cheat-grid{grid-template-columns:1fr;}
+  #topbar{padding:10px 18px;}
+}
+@media(max-width:500px){.card-grid{grid-template-columns:1fr;}}
+
+/* ─── PRINT ──────────────────────────────────────────────── */
+@media print{
+  #sidebar,#sidebar-toggle,#topbar{display:none;}
+  #main{margin-left:0;}
+  .section-body{break-inside:avoid;}
+  details{break-inside:avoid;}
+  details[open] .details-body{display:block!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR TOGGLE (mobile) -->
+<button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div id="sidebar-logo">
+    <h1>IBM Sterling OMS</h1>
+    <p>Architect Interview Study Guide</p>
+  </div>
+  <nav id="sidenav">
+    <div class="nav-group">Foundations</div>
+    <a href="#s1">1. Overview &amp; Modules</a>
+    <a href="#s2">2. Technical Architecture</a>
+    <a href="#s3">3. Order Lifecycle</a>
+    <div class="nav-group">Core Domains</div>
+    <a href="#s4">4. Inventory Management</a>
+    <a href="#s5">5. Sourcing &amp; Scheduling</a>
+    <a href="#s6">6. Pipelines &amp; Process Model</a>
+    <div class="nav-group">Development</div>
+    <a href="#s7">7. APIs &amp; Service Framework</a>
+    <a href="#s8">8. Agents &amp; Integration</a>
+    <a href="#s9">9. Extensibility</a>
+    <div class="nav-group">Operations</div>
+    <a href="#s10">10. Configuration</a>
+    <a href="#s11">11. Deployment — Containers</a>
+    <a href="#s12">12. OMOC / SaaS Cloud</a>
+    <a href="#s13">13. Performance &amp; Tuning</a>
+    <a href="#s14">14. Security</a>
+    <div class="nav-group">Interview Prep</div>
+    <a href="#s15">15. Q&amp;A Cheat Sheet</a>
+    <a href="#s16">16. Architecture Decision Records</a>
+  </nav>
+</aside>
+
+<!-- ═══ MAIN ════════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <h2>IBM Sterling OMS — Architect Interview Study Guide</h2>
+    <span class="badge">v9.x / v10.x</span>
+    <span class="badge">OMOC</span>
+    <span class="badge">OpenShift</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>IBM Sterling OMS</h1>
+    <p>A practitioner-depth study guide covering concepts, configuration, extensibility, containerized deployment, and architecture decision patterns — aligned with hands-on architect-level interviews.</p>
+    <div class="hero-badges">
+      <span>📦 DOM / Fulfillment</span>
+      <span>🔄 Order Pipelines</span>
+      <span>📊 GIV / Inventory</span>
+      <span>🤖 Agents &amp; Integration</span>
+      <span>🐳 OpenShift Containers</span>
+      <span>☁️ OMOC SaaS</span>
+      <span>🔌 APIs &amp; Extensibility</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S1: OVERVIEW -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s1">
+    <div class="section-header"><span class="icon">📦</span> 1. Overview &amp; Core Modules</div>
+    <div class="section-body">
+
+      <p>IBM Sterling Order Management System (OMS) is an enterprise omnichannel order orchestration platform. It acts as the central hub connecting e-commerce, stores, call centers, warehouses, carriers, ERP, and payment systems — providing a single view of orders, inventory, and fulfillment across the supply chain.</p>
+
+      <h3>What Sterling OMS Solves</h3>
+      <div class="card-grid">
+        <div class="card"><h4>📡 Order Brokering</h4><p>Receives orders from all channels (web, store, call center, marketplace, EDI) into a single repository.</p></div>
+        <div class="card"><h4>📊 Inventory Visibility</h4><p>Unified real-time ATP view across warehouses, stores, and vendors via the GIV module and RTAM.</p></div>
+        <div class="card"><h4>🎯 Intelligent Sourcing</h4><p>DOM engine routes orders to the optimal fulfillment node based on rules, cost, and availability.</p></div>
+        <div class="card"><h4>⚙️ Workflow Orchestration</h4><p>Configurable pipelines drive the complete lifecycle — creation, scheduling, release, ship, return, settle.</p></div>
+        <div class="card"><h4>🔁 Omnichannel Returns</h4><p>Return anywhere, cross-channel disposition, refund, and exchange orchestration.</p></div>
+        <div class="card"><h4>🔗 Enterprise Integration</h4><p>Native connectors and APIs for ERP, WMS, POS, payment, logistics, and eCommerce platforms.</p></div>
+      </div>
+
+      <h3>Omnichannel Fulfillment Scenarios</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Scenario</th><th>Abbreviation</th><th>Description</th></tr>
+        <tr><td>Buy Online, Pick Up In Store</td><td><span class="pill pill-blue">BOPIS</span></td><td>Order placed online, collected at physical store</td></tr>
+        <tr><td>Ship From Store</td><td><span class="pill pill-green">SFS</span></td><td>Store acts as a fulfillment node for direct-to-customer shipping</td></tr>
+        <tr><td>Drop Ship</td><td><span class="pill pill-orange">DS</span></td><td>Vendor ships directly to customer on retailer's behalf</td></tr>
+        <tr><td>Endless Aisle / Save-the-Sale</td><td><span class="pill pill-purple">STS</span></td><td>Associate finds item at another location when local stock is zero</td></tr>
+        <tr><td>Buy Online, Ship to Store, Pickup</td><td><span class="pill pill-blue">BOSSIP</span></td><td>Order ships to a store for customer pickup</td></tr>
+        <tr><td>Return Anywhere</td><td><span class="pill pill-red">RA</span></td><td>Cross-channel returns regardless of purchase channel</td></tr>
+      </table></div>
+
+      <h3>Core Modules</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Module</th><th>Key Capability</th></tr>
+        <tr><td><strong>Distributed Order Management (DOM)</strong></td><td>Order orchestration, sourcing engine, fulfillment workflows, returns, settlement</td></tr>
+        <tr><td><strong>Global Inventory Visibility (GIV)</strong></td><td>Real-time ATP across all nodes, RTAM-backed, supply/demand modeling</td></tr>
+        <tr><td><strong>Sterling Call Center</strong></td><td>CSR-facing UI for order create/modify/exception; reduces call handling time</td></tr>
+        <tr><td><strong>Sterling Store Engagement</strong></td><td>Mobile app for associates: BOPIS fulfillment, SFS, line-busting, save-the-sale</td></tr>
+        <tr><td><strong>Delivery &amp; Service Scheduling</strong></td><td>Schedule delivery, installation, and add-on services at time of sale</td></tr>
+        <tr><td><strong>Drop Ship</strong></td><td>Vendor PO creation, vendor communication, shipment confirmation automation</td></tr>
+      </table></div>
+
+      <h3>Key Terminology Glossary</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Term</th><th>Definition</th></tr>
+        <tr><td><code>Organization</code></td><td>Top-level entity — Hub, Enterprise, Seller, Buyer, Node, or Carrier</td></tr>
+        <tr><td><code>Document Type</code></td><td>Category of business process (0001 = Sales Order, Return, PO, Transfer)</td></tr>
+        <tr><td><code>Pipeline</code></td><td>Ordered sequence of statuses defining a document's lifecycle</td></tr>
+        <tr><td><code>Ship Node</code></td><td>Physical fulfillment location — warehouse, store, or vendor</td></tr>
+        <tr><td><code>Distribution Group</code></td><td>Logical grouping of ship nodes used in sourcing rule evaluation</td></tr>
+        <tr><td><code>Fulfillment Type</code></td><td>Order-line attribute driving which sourcing rule applies (SHIP, PICKUP, DROPSHIP)</td></tr>
+        <tr><td><code>YFS_TASK_Q</code></td><td>Database table driving async agent processing; one row = one unit of work</td></tr>
+        <tr><td><code>User Exit</code></td><td>Custom Java extension point injected at predefined transaction hooks</td></tr>
+        <tr><td><code>RTAM</code></td><td>Real-Time Availability Monitor — near-real-time inventory ATP tracking</td></tr>
+        <tr><td><code>Dirty Node</code></td><td>Ship node with zero ATP for an item; excluded from sourcing until cleared</td></tr>
+        <tr><td><code>Hub Rule</code></td><td>Pipeline determination rule evaluated at document creation time</td></tr>
+        <tr><td><code>CDT</code></td><td>Configuration Deployment Tool — promotes config across OMOC environments</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S2: ARCHITECTURE -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s2">
+    <div class="section-header"><span class="icon">🏗️</span> 2. Technical Architecture</div>
+    <div class="section-body">
+
+      <h3>Container Images — The Three Pillars</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Image</th><th>Role</th><th>Traffic Pattern</th><th>Embedded Runtime</th></tr>
+        <tr><td><code>om-app</code></td><td>Application / API server</td><td>Synchronous HTTP/REST</td><td>IBM WebSphere Liberty</td></tr>
+        <tr><td><code>om-agent</code></td><td>Agent + Integration server</td><td>Asynchronous / JMS</td><td>JVM + MQ client</td></tr>
+        <tr><td><code>om-base</code></td><td>Customization build image</td><td>CI/CD / S2I pipeline</td><td>Build tools + base libs</td></tr>
+      </table></div>
+
+      <h3>High-Level Architecture Diagram</h3>
+      <div class="mermaid">
+graph TB
+  subgraph Channels["🌐  CHANNELS"]
+    WEB["eCommerce"]
+    STORE["Store POS"]
+    CC["Call Center"]
+    B2B["B2B / EDI"]
+  end
+  subgraph OMS_Cluster["⚙️  OpenShift Cluster — Sterling OMS"]
+    APP["om-app pods\nWebSphere Liberty\nSync API Traffic"]
+    AGENT["om-agent pods\nAsync Agents +\nIntegration Server"]
+  end
+  subgraph Data_Layer["🗄️  Data & Messaging"]
+    DB[("DB2 / Oracle\n/ PostgreSQL")]
+    MQ["IBM MQ\nJMS Queues"]
+  end
+  subgraph Fulfillment["📦  FULFILLMENT NODES"]
+    WH["Warehouse / DC"]
+    STR["Ship-from-Store"]
+    VND["Vendor Drop Ship"]
+  end
+
+  WEB -->|REST / SOAP| APP
+  STORE -->|REST / SOAP| APP
+  CC -->|REST / SOAP| APP
+  B2B -->|REST / SOAP| APP
+  APP <-->|JDBC| DB
+  APP <-->|JMS| MQ
+  MQ <--> AGENT
+  AGENT <-->|JDBC| DB
+  AGENT -->|Release / PO| WH
+  AGENT -->|Release / PO| STR
+  AGENT -->|Release / PO| VND
+
+  style WEB fill:#1565c0,color:#fff,stroke:#0d2b55
+  style STORE fill:#1565c0,color:#fff,stroke:#0d2b55
+  style CC fill:#1565c0,color:#fff,stroke:#0d2b55
+  style B2B fill:#1565c0,color:#fff,stroke:#0d2b55
+  style APP fill:#0d2b55,color:#fff,stroke:#f5a623,stroke-width:2px
+  style AGENT fill:#00838f,color:#fff,stroke:#f5a623,stroke-width:2px
+  style DB fill:#2e7d32,color:#fff,stroke:#1b5e20
+  style MQ fill:#6a1b9a,color:#fff,stroke:#4a148c
+  style WH fill:#e65100,color:#fff,stroke:#bf360c
+  style STR fill:#e65100,color:#fff,stroke:#bf360c
+  style VND fill:#e65100,color:#fff,stroke:#bf360c
+      </div>
+
+      <h3>Agent Server vs. Integration Server</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Attribute</th><th>Agent Server</th><th>Integration Server</th></tr>
+        <tr><td><strong>Trigger</strong></td><td>Polls <code>YFS_TASK_Q</code> on schedule</td><td>Listens on JMS queue (MQ)</td></tr>
+        <tr><td><strong>Direction</strong></td><td>Internal — OMS drives fulfillment</td><td>Inbound — external systems push to OMS</td></tr>
+        <tr><td><strong>Processing</strong></td><td><code>getJobs()</code> → <code>executeJob()</code></td><td>Consume JMS msg → invoke service</td></tr>
+        <tr><td><strong>Examples</strong></td><td>ScheduleOrder, ReleaseOrder, PurgeOrder</td><td>Order creation feed, inventory feed, EDI</td></tr>
+        <tr><td><strong>Threading</strong></td><td>Multi-instance, multi-thread</td><td>Multi-instance, multi-thread</td></tr>
+      </table></div>
+
+      <h3>Supported Databases</h3>
+      <p><span class="pill pill-blue">IBM Db2</span>&nbsp;<span class="pill pill-green">Oracle Database</span>&nbsp;<span class="pill pill-orange">PostgreSQL</span> — PostgreSQL is recommended for modern cloud deployments (Azure, AWS). Sterling OMS 10.x added first-class PostgreSQL support.</p>
+
+      <h3>Supported Messaging</h3>
+      <p><span class="pill pill-blue">IBM MQ</span> (primary, JMS-compliant) &nbsp;·&nbsp; <span class="pill pill-orange">Apache Kafka</span> (modern alternative) &nbsp;·&nbsp; <span class="pill pill-purple">ActiveMQ</span> (alternate JMS broker)</p>
+
+      <div class="info"><strong>Design Principle</strong> Sterling OMS separates synchronous API traffic (om-app) from asynchronous agent workloads (om-agent). This allows each tier to scale independently — add more om-app replicas for API throughput, add more om-agent pods for batch agent concurrency.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S3: ORDER LIFECYCLE -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s3">
+    <div class="section-header"><span class="icon">🔄</span> 3. Order Lifecycle</div>
+    <div class="section-body">
+
+      <h3>Standard Sales Order Pipeline Flow</h3>
+      <div class="mermaid">
+flowchart LR
+  A([Created\n1100]):::blue --> B([Ordered\n1200]):::blue
+  B --> C([Scheduled\n3200]):::green
+  C --> D([Released\n3500]):::orange
+  D --> E([Sent to Node\n3700]):::orange
+  E --> F([Shipped\n9000]):::teal
+  F --> G([Delivered\n9300]):::teal
+  G --> H([Invoiced\nSettled]):::purple
+
+  classDef blue fill:#1565c0,color:#fff,stroke:none
+  classDef green fill:#2e7d32,color:#fff,stroke:none
+  classDef orange fill:#e65100,color:#fff,stroke:none
+  classDef teal fill:#00838f,color:#fff,stroke:none
+  classDef purple fill:#6a1b9a,color:#fff,stroke:none
+      </div>
+
+      <h3>Status Reference</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Status</th><th>Code</th><th>Meaning</th><th>Trigger</th></tr>
+        <tr><td>Created</td><td>1100</td><td>Order captured; awaiting scheduling</td><td><code>createOrder</code> API</td></tr>
+        <tr><td>Ordered</td><td>1200</td><td>Order validated and confirmed</td><td>Pipeline service</td></tr>
+        <tr><td>Scheduled</td><td>3200</td><td>Soft-allocated to ship node</td><td>ScheduleOrder agent</td></tr>
+        <tr><td>Released</td><td>3500</td><td>Hard-allocated; demand sent to node</td><td>ReleaseOrder agent</td></tr>
+        <tr><td>Sent to Node</td><td>3700</td><td>Release transmitted to fulfillment node</td><td>Integration Server</td></tr>
+        <tr><td>Shipped</td><td>9000</td><td>Node confirmed shipment</td><td><code>confirmShipment</code> API</td></tr>
+        <tr><td>Delivered</td><td>9300</td><td>Customer received order</td><td><code>confirmDelivery</code> API</td></tr>
+        <tr><td>Invoiced</td><td>—</td><td>Payment settled</td><td><code>createInvoice</code> API</td></tr>
+      </table></div>
+
+      <h3>⚡ Schedule vs. Release — The Critical Distinction</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th></th><th>Schedule</th><th>Release</th></tr>
+        <tr><td><strong>Allocation type</strong></td><td><span class="pill pill-orange">Soft</span></td><td><span class="pill pill-red">Hard</span></td></tr>
+        <tr><td><strong>Inventory state</strong></td><td>Tentatively committed; can be reallocated</td><td>Permanently assigned; cannot be reallocated</td></tr>
+        <tr><td><strong>What happens</strong></td><td>Sourcing engine picks the node; TASK_Q entry created for ReleaseOrder</td><td>Demand sent to node; warehouse begins pick/pack</td></tr>
+        <tr><td><strong>Reversal</strong></td><td>Possible via IBA or unschedule</td><td>Requires cancel/modification workflow</td></tr>
+        <tr><td><strong>Agent</strong></td><td>ScheduleOrder</td><td>ReleaseOrder</td></tr>
+      </table></div>
+
+      <h3>Order Types</h3>
+      <p>
+        <span class="pill pill-blue">Sales Order (0001)</span> — web, phone, store &nbsp;·&nbsp;
+        <span class="pill pill-green">Return Order</span> — cross-channel returns &nbsp;·&nbsp;
+        <span class="pill pill-orange">Purchase Order</span> — procurement / drop-ship &nbsp;·&nbsp;
+        <span class="pill pill-purple">Transfer Order</span> — inter-node movement &nbsp;·&nbsp;
+        <span class="pill pill-red">Work Order</span> — service / installation
+      </p>
+
+      <h3>Order Modification Rules</h3>
+      <p>Control which attributes can be changed and at which pipeline status. Evaluated automatically by the <code>changeOrder</code> API. Example: shipping address locked after Release. Configured under <em>DOM → Document Specific → Sales Order → Order Modification Rules</em>.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S4: INVENTORY -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s4">
+    <div class="section-header"><span class="icon">📊</span> 4. Inventory Management</div>
+    <div class="section-body">
+
+      <h3>Supply &amp; Demand Model</h3>
+      <p>ATP (Available to Promise) = Total Supply − Total Demand. Sterling OMS tracks both sides continuously.</p>
+      <div class="tbl-wrap"><table>
+        <tr><th>Supply Types</th><th>Demand Types</th></tr>
+        <tr><td><code>ONHAND</code> — Physical stock at node</td><td><code>SOFT_PROMISED</code> — Scheduled orders</td></tr>
+        <tr><td><code>INTRANSIT</code> — Goods moving to node</td><td><code>HARD_PROMISED</code> — Released orders</td></tr>
+        <tr><td><code>PROMISED</code> — Committed via PO</td><td><code>RESERVED</code> — Manually reserved qty</td></tr>
+        <tr><td><code>OPEN_PO</code> — Open purchase order</td><td></td></tr>
+      </table></div>
+
+      <h3>RTAM — Real-Time Availability Monitor</h3>
+      <p>RTAM is a <strong>time-triggered transaction</strong> that monitors inventory availability for items and publishes changes by raising the <code>REALTIME_AVAILABILITY_CHANGE_LIST</code> event. It is the bridge between Sterling OMS's inventory state and downstream consumers — e-commerce storefronts, mobile/in-store apps, planning systems, and external caches. Examples of indicators it powers: <em>In Stock, Low, Limited, Backorder/Pre-order, Out of Stock</em>.</p>
+
+      <div class="info"><strong>Source Reference</strong> IBM Sterling OMS 9.5 documentation — RTAM and inventory availability monitoring. RTAM publishes via <code>REALTIME_AVAILABILITY_CHANGE_LIST</code> event; runs as a time-triggered transaction; drives storefront inventory indicators without per-request OMS calls.</div>
+
+      <h4>The Three Operating Modes</h4>
+      <div class="card-grid">
+        <div class="card" style="background:#e3f2fd;border-left:4px solid var(--blue);">
+          <h4>🔄 Activity-based Mode</h4>
+          <p><strong>Near real-time.</strong> Tracks inventory changes as they occur. Reads from <code>YFS_INVENTORY_ACTIVITY</code> and publishes only items whose availability has changed. Raises <code>REALTIME_AVAILABILITY_CHANGE_LIST</code> when thresholds cross.</p>
+          <p style="font-size:.78rem;color:var(--muted);margin-top:6px;"><em>Not strictly real-time</em> — changes flow via a DB table, so think of it as <em>near</em> real-time.</p>
+        </div>
+        <div class="card" style="background:#e8f5e9;border-left:4px solid var(--green);">
+          <h4>⚡ Quick Sync Mode</h4>
+          <p><strong>Most-recent snapshot.</strong> Sends only the latest recorded availability. If level went In-Stock → Low → In-Stock, only the final In-Stock is published. Includes on-hand <em>and</em> future availability — useful for feeding planning &amp; promotion systems.</p>
+        </div>
+        <div class="card" style="background:#f3e5f5;border-left:4px solid var(--purple);">
+          <h4>🌙 Full Sync Mode</h4>
+          <p><strong>Scheduled, typically nightly.</strong> Publishes availability for <em>all</em> items, regardless of change. Used for first-time load when inventory hasn't been seeded via APIs. Procurement evaluation kicks in here when nodes fall below threshold.</p>
+        </div>
+      </div>
+
+      <h4>End-to-End RTAM Architecture</h4>
+      <p>The diagram below traces an inventory change from source event to downstream consumer — covering all three modes, the calculation engine (delivery method, procurement, thresholds), velocity-based activity scheduling, and publishing pathways.</p>
+
+      <div class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': { 'fontFamily':'Segoe UI, Arial, sans-serif', 'fontSize':'14px' }}}%%
+flowchart TB
+    %% =========== TRIGGERS ===========
+    subgraph TRIG["⚡ Triggers &amp; Inventory Activity"]
+        direction TB
+        INV_CHG["Inventory Changes<br/>Supply / Demand events"]
+        ACT_TBL[("YFS_INVENTORY_ACTIVITY<br/>activity records")]
+        SCHED["Scheduled Job<br/>time-triggered"]
+        API_TRIG["createInventoryActivity API<br/>forces re-monitoring"]
+        INV_CHG --&gt; ACT_TBL
+        API_TRIG --&gt; ACT_TBL
+    end
+
+    %% =========== RTAM CORE ===========
+    subgraph RTAM_CORE["🛠️ RTAM — Time-Triggered Transaction"]
+        direction TB
+        RTAM["Real-time Availability Monitor<br/>monitorItemAvailability"]
+        subgraph MODES["Three Operating Modes"]
+            direction LR
+            M1["<b>Activity-based</b><br/>Near real-time<br/>Reads YFS_INVENTORY_ACTIVITY"]
+            M2["<b>Quick Sync</b><br/>Most-recent snapshot<br/>In-Stock → Low → In-Stock<br/>publishes only In-Stock"]
+            M3["<b>Full Sync</b><br/>Scheduled nightly<br/>Publishes ALL items<br/>First-time load"]
+        end
+        RTAM --- MODES
+    end
+
+    TRIG --&gt; RTAM_CORE
+    SCHED --&gt; M3
+
+    %% =========== CALCULATION ===========
+    subgraph CALC["📊 Availability Calculation"]
+        direction TB
+        FORMULA["<b>Core Formula</b><br/>Supply − Demand − Safety Factor<br/>= Availability"]
+
+        subgraph DM["By Delivery Method — SHP / PICK / DEL"]
+            direction LR
+            DM_SF["<b>Safety Factor</b><br/>per delivery method<br/>Fallback: item → supply type<br/>→ node type → classification"]
+            DM_CAP["<b>Capacity</b><br/>per delivery method<br/>SHP depleted → 0 SHP avail<br/>but actual inventory for PICK"]
+        end
+
+        subgraph THRESH["Alert Thresholds"]
+            direction TB
+            T_LEVELS["<b>3 Levels</b><br/>Level 3 High / Level 2 Medium / Level 1 Low"]
+            ON_HAND["onhand &gt; low<br/>→ REALTIME_ONHAND alert"]
+            FUTURE["onhand &lt; low<br/>→ REALTIME_FUTURE_MAX alert<br/>FutureAvailableQuantity<br/>FirstFutureAvailableDate"]
+            T_LEVELS --&gt; ON_HAND
+            T_LEVELS --&gt; FUTURE
+        end
+
+        subgraph PROC["Procured Inventory"]
+            direction TB
+            PROC_TRIG["Node availability &lt; threshold<br/>1, 2, or 3"]
+            PROC_RULES["Read procurement sourcing rules<br/>by fulfillment type"]
+            PROC_NODES["Monitor procurement nodes<br/>across all sourcing rules"]
+            PROC_PUB["<b>Publish</b><br/>• Procured Quantity<br/>• Procurement Lead Time<br/>does NOT affect future thresholds"]
+            PROC_TRIG --&gt; PROC_RULES --&gt; PROC_NODES --&gt; PROC_PUB
+        end
+
+        FORMULA --&gt; DM
+        FORMULA --&gt; THRESH
+        THRESH --&gt; PROC
+    end
+
+    RTAM_CORE --&gt; CALC
+
+    %% =========== NODES &amp; DGS ===========
+    subgraph NODES_SG["🏪 Node &amp; Distribution Group Monitoring"]
+        direction TB
+        DG_TOTAL["<b>Total Availability across Nodes</b><br/>Default DG of inventory org"]
+        DG_INDIV["<b>Individual Node Availability</b><br/>All nodes in specified DG"]
+
+        subgraph DG_PRIO["Distribution Group Priority — OPEN_ORDER demand"]
+            direction TB
+            DG1["<b>DG1 — Priority 1</b><br/>Warehouses<br/>Consumed first"]
+            DG2["<b>DG2 — Priority 2</b><br/>Stores<br/>Consumed when DG1 exhausted"]
+            DG_NOTE["⚙ Configured via Priority attribute<br/>on DIST_GRP_LVL_MONITOR common code"]
+            DG1 --&gt; DG2 --&gt; DG_NOTE
+        end
+    end
+
+    CALC --&gt; NODES_SG
+
+    %% =========== VELOCITY ===========
+    subgraph VEL["⏱️ Velocity &amp; Activity Processing — Activity-based mode"]
+        direction TB
+        NET["After monitorItemAvailability:<br/>Compute net availability change"]
+        NET_ZERO{"<b>Net change = 0?</b><br/>SCHEDULED → ALLOCATED<br/>or shipment confirm"}
+        SKIP["✗ No activity record created<br/>same availability picture"]
+        CREATE["✓ Create activity record<br/>Populate NEXT_PROCESSING_TS<br/>based on alert level + on-hand qty"]
+        VELOCITY["<b>Velocity-based scheduling</b><br/>Predicts next threshold crossing"]
+        SORT["Process activities expiring in next X min<br/>sorted by NEXT_PROCESSING_TS<br/>default X = 0"]
+        BELOW["<b>AlwaysRaiseBeyondLevel</b> set?<br/>→ Below-threshold processed sooner"]
+        DEDUP["⚠ Dedup: same item-node combo<br/>already in YFS_INVENTORY_ACTIVITY<br/>→ no new activity created"]
+        NET --&gt; NET_ZERO
+        NET_ZERO --&gt;|Yes| SKIP
+        NET_ZERO --&gt;|No| CREATE
+        CREATE --&gt; VELOCITY --&gt; SORT --&gt; BELOW
+        CREATE -.-&gt; DEDUP
+    end
+
+    M1 --&gt; VEL
+
+    %% =========== PUBLISHING ===========
+    subgraph PUB["📡 Real-Time Publishing Modes — Activity-based"]
+        direction LR
+        P1["<b>All changes</b><br/>RaiseEventsOnAvailabilityChanges = Y"]
+        P2["<b>Below-threshold + between</b><br/>AlwaysRaiseBeyondLevel = 1, 2, or 3<br/>e.g. 3 = 'only 5 left' below Limited"]
+        P3["<b>Between-threshold only</b><br/>default behavior"]
+    end
+
+    VEL --&gt; PUB
+
+    %% =========== EVENT ===========
+    subgraph EVENT["📢 Event Publishing"]
+        direction LR
+        EV["<b>REALTIME_AVAILABILITY_CHANGE_LIST</b><br/>Event raised by RTAM"]
+        ALERTS["<b>Alert Types</b><br/>• REALTIME_ONHAND<br/>• REALTIME_FUTURE_MAX"]
+    end
+
+    PUB --&gt; EVENT
+    NODES_SG --&gt; EVENT
+    PROC_PUB --&gt; EVENT
+
+    %% =========== CONSUMERS ===========
+    subgraph CONS["🌐 Downstream Consumers"]
+        direction LR
+        WEB["<b>E-commerce / Storefront</b><br/>In Stock, Low, Limited,<br/>Backorder, Out of Stock"]
+        MOBILE["<b>Mobile / In-Store Apps</b><br/>by delivery method<br/>SHP / PICK / DEL"]
+        PLAN["<b>Planning &amp; Promotion</b><br/>via Quick Sync mode"]
+        EXT["<b>External Caches / CDNs</b><br/>inventory snapshots"]
+    end
+
+    EVENT --&gt; CONS
+
+    %% =========== STYLING — every node explicitly classed ===========
+    classDef trigger    fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#1a1a2e
+    classDef tableNode  fill:#37474f,stroke:#263238,stroke-width:2px,color:#ffffff
+    classDef rtamCore   fill:#0d2b55,stroke:#0d2b55,stroke-width:3px,color:#ffffff
+    classDef modeBox    fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    classDef formula    fill:#2e7d32,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    classDef calcInfo   fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#0d2b55
+    classDef alertHi    fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#0d2b55
+    classDef alertHdr   fill:#e65100,stroke:#bf360c,stroke-width:2px,color:#ffffff
+    classDef procInfo   fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#0d2b55
+    classDef procPub    fill:#6a1b9a,stroke:#4a148c,stroke-width:2px,color:#ffffff
+    classDef nodeInfo   fill:#b3e5fc,stroke:#0277bd,stroke-width:2px,color:#0d2b55
+    classDef dgPrio1    fill:#1565c0,stroke:#0d47a1,stroke-width:2px,color:#ffffff
+    classDef dgPrio2    fill:#42a5f5,stroke:#1565c0,stroke-width:2px,color:#ffffff
+    classDef warnNode   fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#1a1a2e
+    classDef velStep    fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d2b55
+    classDef velDecide  fill:#fff8e1,stroke:#f9a825,stroke-width:3px,color:#1a1a2e
+    classDef velSkip    fill:#ffcdd2,stroke:#c62828,stroke-width:2px,color:#1a1a2e
+    classDef velCreate  fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#0d2b55
+    classDef pubMode    fill:#b2dfdb,stroke:#00695c,stroke-width:2px,color:#0d2b55
+    classDef eventBox   fill:#c62828,stroke:#8e0000,stroke-width:3px,color:#ffffff
+    classDef consumer   fill:#00838f,stroke:#005662,stroke-width:2px,color:#ffffff
+
+    %% Triggers subgraph
+    class INV_CHG,SCHED,API_TRIG trigger
+    class ACT_TBL tableNode
+
+    %% RTAM Core
+    class RTAM rtamCore
+    class M1,M2,M3 modeBox
+
+    %% Calculation
+    class FORMULA formula
+    class DM_SF,DM_CAP calcInfo
+    class T_LEVELS alertHdr
+    class ON_HAND,FUTURE alertHi
+    class PROC_TRIG,PROC_RULES,PROC_NODES procInfo
+    class PROC_PUB procPub
+
+    %% Nodes &amp; DGs
+    class DG_TOTAL,DG_INDIV nodeInfo
+    class DG1 dgPrio1
+    class DG2 dgPrio2
+    class DG_NOTE warnNode
+
+    %% Velocity
+    class NET velStep
+    class NET_ZERO velDecide
+    class SKIP velSkip
+    class CREATE velCreate
+    class VELOCITY,SORT,BELOW velStep
+    class DEDUP warnNode
+
+    %% Publishing
+    class P1,P2,P3 pubMode
+
+    %% Event
+    class EV,ALERTS eventBox
+
+    %% Consumers
+    class WEB,MOBILE,PLAN,EXT consumer
+      </div>
+
+      <h4>Publishing Availability by Delivery Method</h4>
+      <p>RTAM can publish per delivery method (SHP / PICK / DEL). Two factors drive the calculation: <strong>safety factor</strong> and <strong>capacity</strong>.</p>
+
+      <details>
+        <summary>📐 Safety Factor per Delivery Method (with fallback chain)</summary>
+        <div class="details-body">
+          <p>Safety factors are configured per delivery method. RTAM uses:</p>
+          <pre><span class="kw">availability</span> = supply − demand − <span class="kw">safety_factor</span>(delivery_method)</pre>
+          <p><strong>Worked Example</strong> — Item 1 at Store 1 (Supply=10, Demand=3):</p>
+          <div class="tbl-wrap"><table>
+            <tr><th>Delivery Method</th><th>Supply</th><th>Demand</th><th>Safety Factor</th><th>Published Availability</th></tr>
+            <tr><td>SHP</td><td>10</td><td>3</td><td>1</td><td><strong>6</strong></td></tr>
+            <tr><td>PICK</td><td>10</td><td>3</td><td>3</td><td><strong>4</strong></td></tr>
+          </table></div>
+          <p><strong>Fallback chain</strong> if no safety factor is defined for the delivery method:</p>
+          <ol>
+            <li>Item-level safety factor</li>
+            <li>Supply type</li>
+            <li>Node type</li>
+            <li>Item classification attributes</li>
+            <li>Item-node definition</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>📦 Capacity per Delivery Method</summary>
+        <div class="details-body">
+          <p>Capacity is also defined per delivery method and can short-circuit availability.</p>
+          <p><em>Example:</em> If SHP capacity is depleted for the next 20 days but PICK capacity is available, and RTAM is configured to look within 10 days, RTAM publishes <strong>0 availability for SHP</strong> but actual inventory for PICK.</p>
+          <p><strong>Configuration:</strong> Use the <code>manageInventoryMonitorRule</code> API.</p>
+        </div>
+      </details>
+
+      <h4>Publishing Availability for Procured Inventory</h4>
+      <p>When a node's inventory falls below a configured threshold, RTAM can compute availability from associated <strong>procurement nodes</strong> and publish that as procured inventory.</p>
+
+      <div class="warn"><strong>Important Nuance</strong> Procured quantities <strong>do NOT</strong> affect future-available thresholds or alert levels. They are published <em>alongside</em> — not folded into — the alert calculation.</div>
+
+      <p>Possible procurement threshold values: <code>1</code>, <code>2</code>, or <code>3</code>. Example: with threshold = <code>2</code> and the level-2 alert at 10 items, RTAM starts considering procurements when the node's available quantity falls below 10.</p>
+
+      <details>
+        <summary>📊 Worked Example: Full Sync with Procurement</summary>
+        <div class="details-body">
+          <p><strong>Setup:</strong></p>
+          <ul>
+            <li>RTAM runs in Full Sync mode on 2015-11-01</li>
+            <li>SN1 can procure inventory from PN1 and PN2</li>
+            <li>On-hand: SN1 = 10, PN1 = 40, PN2 = 20</li>
+            <li>Thresholds: low = 0, medium = 1, high = 5</li>
+            <li>Procurement considered after on-hand falls below high threshold</li>
+            <li>Inventory at SN1 is then adjusted to 4 items</li>
+          </ul>
+          <p><strong>RTAM publishes for SN1:</strong></p>
+          <div class="tbl-wrap"><table>
+            <tr><th>Alert Level</th><th>Alert Qty</th><th>On-hand Available</th><th>Future Available</th><th>First Future Date</th><th>Procured Qty</th><th>Procurement Lead Time</th></tr>
+            <tr><td>1</td><td>5</td><td>4</td><td>0</td><td>2500-01-01</td><td>60</td><td>7 hours</td></tr>
+          </table></div>
+        </div>
+      </details>
+
+      <h4>Real-Time Publishing Modes (Activity-based)</h4>
+      <p>Within Activity-based mode, three sub-modes control <em>when</em> the <code>REALTIME_AVAILABILITY_CHANGE_LIST</code> event is raised:</p>
+      <div class="tbl-wrap"><table>
+        <tr><th>Sub-mode</th><th>Configuration</th><th>Behavior</th></tr>
+        <tr><td><strong>All changes</strong></td><td><code>RaiseEventsOnAvailabilityChanges = Y</code></td><td>Every supply/demand change triggers an event</td></tr>
+        <tr><td><strong>Below threshold + between</strong></td><td><code>AlwaysRaiseBeyondLevel = 1 | 2 | 3</code></td><td>Publishes "only 5 left", "only 4 left", etc., once inventory drops below the chosen level (3 = below Limited)</td></tr>
+        <tr><td><strong>Between thresholds only</strong></td><td>Default</td><td>Event raised only when crossing a threshold boundary</td></tr>
+      </table></div>
+
+      <div class="warn"><strong>Gotcha</strong> Changing a threshold on a monitoring rule does NOT cause RTAM to re-monitor an item until the next activity occurs. To force monitoring after a rule change, call <code>createInventoryActivity</code>.</div>
+
+      <h4>Velocity Calculation &amp; When an Activity Is Processed</h4>
+      <p>RTAM determines when an activity in <code>YFS_INVENTORY_ACTIVITY</code> must be processed based on the item's <strong>calculated velocity</strong> — a prediction of when the next threshold crossing will occur.</p>
+
+      <p><strong>The flow per <code>monitorItemAvailability</code> call:</strong></p>
+      <div class="flow">
+        <span class="fbox">Compute net change</span>
+        <span class="farrow">→</span>
+        <span class="fbox accent">Net = 0? Skip</span>
+        <span class="farrow">→</span>
+        <span class="fbox green">Else: create activity</span>
+        <span class="farrow">→</span>
+        <span class="fbox teal">Populate NEXT_PROCESSING_TS</span>
+        <span class="farrow">→</span>
+        <span class="fbox">Process &amp; sort</span>
+      </div>
+
+      <ol>
+        <li>Compute net availability change after <code>monitorItemAvailability</code></li>
+        <li>If net change = 0 → <strong>no activity record is created</strong>
+          <ul>
+            <li>Example: scheduled order release decrements <code>SCHEDULED</code>, increments <code>ALLOCATED</code> → net 0 at the node</li>
+            <li>Example: shipment confirmation reduces both demand (<code>ALLOCATED</code>) and supply (<code>ONHAND</code>) → net 0</li>
+          </ul>
+        </li>
+        <li>If net change ≠ 0 → create activity record and populate <code>NEXT_PROCESSING_TS</code> (computed from alert level + current on-hand quantity)</li>
+        <li>When RTAM runs, it processes only activities expiring in the next <code>X</code> minutes (default <code>X = 0</code>), sorted by <code>NEXT_PROCESSING_TS</code></li>
+        <li>If <code>AlwaysRaiseBeyondLevel</code> is set for a velocity item → below-threshold activities are processed <strong>sooner</strong> than above-threshold activities</li>
+      </ol>
+
+      <div class="info"><strong>Dedup Rule</strong> If an activity for the same <em>item-node</em> combination already exists in <code>YFS_INVENTORY_ACTIVITY</code>, a new one is NOT created — even if net change is non-zero. Prevents activity-table bloat under high-churn workloads.</div>
+
+      <h4>Monitoring Nodes &amp; Distribution Groups</h4>
+      <p>RTAM can be configured to monitor:</p>
+      <ul>
+        <li><strong>Total availability across nodes</strong> → monitors all nodes in the <em>default</em> distribution group of the inventory organization</li>
+        <li><strong>Individual node availability</strong> → monitors all nodes in a <em>specified</em> distribution group</li>
+      </ul>
+
+      <h4>Distribution Group Priority Levels (OPEN_ORDER demand)</h4>
+      <p>Distribution group priority defines the sequence in which OPEN_ORDER demand is placed against distribution groups. Demand is consumed against the highest-priority DG until exhausted, then flows to the next priority. <strong>Only DGs with a priority are considered for OPEN_ORDER demand.</strong></p>
+      <p><strong>Configuration:</strong> Create a <em>Priority</em> attribute on the <code>DIST_GRP_LVL_MONITOR</code> common code.</p>
+
+      <details>
+        <summary>🧮 Worked Example: Model Items + Priority DGs</summary>
+        <div class="details-body">
+          <p>Model item "Cup" with child items Red, Blue, Green:</p>
+          <div class="tbl-wrap"><table>
+            <tr><th>Distribution Group</th><th>Red Cup</th><th>Blue Cup</th><th>Green Cup</th><th>Cup (model total)</th></tr>
+            <tr><td>DG1 (Priority 1)</td><td>2</td><td>2</td><td>3</td><td>7</td></tr>
+            <tr><td>DG2 (Priority 2)</td><td>5</td><td>5</td><td>2</td><td>12</td></tr>
+          </table></div>
+          <p>For an OPEN_ORDER of <strong>3 red + 1 blue + 5 green = 9 cups</strong>, RTAM sums the model total and consumes against DG1 (higher priority) first:</p>
+          <div class="tbl-wrap"><table>
+            <tr><th>Priority Level</th><th>DG</th><th>Resulting OnHand</th></tr>
+            <tr><td>1</td><td>DG1</td><td>7 − 7 = 0</td></tr>
+            <tr><td>2</td><td>DG2</td><td>12 − 2 = 10</td></tr>
+          </table></div>
+          <div class="note"><strong>Note</strong> RTAM bases its calculation on the <em>model total</em>, not individual child quantities. If RTAM considered child items individually, the inventory picture would be different.</div>
+        </div>
+      </details>
+
+      <h4>RTAM — Architect Cheat Sheet</h4>
+      <div class="cheat-grid">
+        <div class="cheat-card">
+          <h4>🎯 Must Be Fluent In</h4>
+          <ul>
+            <li>The <strong>3 modes</strong> — Activity-based / Quick Sync / Full Sync — and when each is used</li>
+            <li>Core formula: <code>Supply − Demand − Safety Factor = Availability</code></li>
+            <li>RTAM publishes <code>REALTIME_AVAILABILITY_CHANGE_LIST</code></li>
+            <li>Two alert types: <code>REALTIME_ONHAND</code> (above low) / <code>REALTIME_FUTURE_MAX</code> (below low)</li>
+            <li>Safety factor fallback: delivery method → item → supply type → node type → classification → item-node</li>
+            <li>Procured qty does NOT affect future thresholds or alert levels</li>
+            <li>Net-zero optimization (SCHEDULED → ALLOCATED creates no activity)</li>
+            <li>Item-node dedup prevents activity-table bloat</li>
+            <li><code>AlwaysRaiseBeyondLevel</code> reprioritizes below-threshold activities</li>
+            <li>Threshold rule changes need <code>createInventoryActivity</code> to be picked up</li>
+          </ul>
+        </div>
+        <div class="cheat-card">
+          <h4>📞 Likely Architect-Level Questions</h4>
+          <ul>
+            <li><strong>Scale on Black Friday:</strong> 50M items × 1000 nodes — discuss Full Sync timing windows, Activity-based dedup, NEXT_PROCESSING_TS-based throttling</li>
+            <li><strong>Why isn't RTAM strictly real-time?</strong> DB-table-mediated; talk acceptable staleness for storefront indicators</li>
+            <li><strong>Re-architect with Kafka + Debezium:</strong> CDC on YFS_INVENTORY_ACTIVITY → idempotent consumers → Kafka Streams for threshold detection → sink to Elasticsearch/Redis for storefront reads</li>
+            <li><strong>Bundle items:</strong> If components ship independently, RTAM publishes inventory per component, not for the bundle</li>
+            <li><strong>Future inventory %:</strong> Used at retrieval time when computing availability</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tip"><strong>Interview Tip</strong> When asked "how does OMS provide real-time inventory availability?" — the canonical answer is RTAM + GIV. RTAM raises the <code>REALTIME_AVAILABILITY_CHANGE_LIST</code> event on supply/demand changes; GIV is the unified ATP view it powers. Pair this with the 3-mode distinction and the safety factor fallback chain to demonstrate practitioner depth.</div>
+
+      <h3>Dirty Node</h3>
+      <p>When a ship node has zero ATP for an item, the <strong>item-node combination is flagged as a dirty node</strong> and excluded from sourcing engine evaluation. It remains excluded until:</p>
+      <ul>
+        <li>A positive inventory supply arrives via <code>adjustInventory</code> API, <strong>OR</strong></li>
+        <li>The hold is manually cleared via <code>InventoryNodeControl</code> API</li>
+      </ul>
+
+      <h3>EOF Message Pattern</h3>
+      <p>For bulk inventory feeds from external systems, Sterling OMS uses grouped message batches. All messages in a batch share the same <code>YantraMessageGroupID</code>. The external system sends an <strong>End of Feed (EOF)</strong> message with the same group ID after the last batch record. The Integration Server validates batch completeness before finalising the feed.</p>
+
+      <h3>Inventory-Based Allocation (IBA)</h3>
+      <p>Overrides FIFO scheduling to reallocate soft-allocated inventory from a lower-priority order to a higher-priority (VIP/B2B) customer. Useful for pre-order and limited-quantity release scenarios.</p>
+
+      <h3>Key Inventory APIs</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>API</th><th>Purpose</th></tr>
+        <tr><td><code>adjustInventory</code></td><td>Adjust supply quantity at a node</td></tr>
+        <tr><td><code>getInventorySupplyDetails</code></td><td>Query supply breakdown at a node</td></tr>
+        <tr><td><code>InventoryNodeControl</code></td><td>Manually clear dirty node state</td></tr>
+        <tr><td><code>LoadInventoryMismatch</code></td><td>Handle EOF / mismatch reconciliation</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S5: SOURCING -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s5">
+    <div class="section-header"><span class="icon">🎯</span> 5. Sourcing &amp; Scheduling</div>
+    <div class="section-body">
+
+      <h3>Sourcing Engine Flow</h3>
+      <div class="mermaid">
+flowchart TD
+  A["Order Line\nFulfillmentType = SHIP"] --> B["Lookup Sourcing Rule\nfor SHIP"]
+  B --> C["Evaluate Distribution Group\nAll-US-Warehouses"]
+  C --> D{"Inventory\nAvailable?"}
+  D -->|Yes| E["Apply Scheduling Rule\nMin Cost / Single Node"]
+  D -->|No| F{"Procure When\nNot Available?"}
+  F -->|Yes| G["Create Chain Order\nto Vendor / DC"]
+  F -->|No| H["Backorder / Alert"]
+  E --> I["Node Selected\nOrder Scheduled"]
+
+  style A fill:#1565c0,color:#fff,stroke:#0d2b55
+  style B fill:#1565c0,color:#fff,stroke:#0d2b55
+  style C fill:#1565c0,color:#fff,stroke:#0d2b55
+  style D fill:#e65100,color:#fff,stroke:#bf360c
+  style E fill:#0d2b55,color:#fff,stroke:#f5a623
+  style F fill:#e65100,color:#fff,stroke:#bf360c
+  style G fill:#6a1b9a,color:#fff,stroke:#4a148c
+  style H fill:#c62828,color:#fff,stroke:#b71c1c
+  style I fill:#2e7d32,color:#fff,stroke:#1b5e20
+      </div>
+
+      <h3>Sourcing Rule Components</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Component</th><th>Purpose</th><th>Config Path</th></tr>
+        <tr><td>Fulfillment Type</td><td>Line-level attribute selecting the sourcing rule</td><td>Order line attribute</td></tr>
+        <tr><td>Sourcing Rule</td><td>Maps fulfillment type → distribution group</td><td>DOM → Sourcing → Rules</td></tr>
+        <tr><td>Distribution Group</td><td>Logical set of eligible ship nodes</td><td>DOM → Nodes → Distribution Groups</td></tr>
+        <tr><td>Scheduling Rule</td><td>Optimization: min cost, min shipments, single node</td><td>DOM → Sourcing → Scheduling Rules</td></tr>
+        <tr><td>Fulfillment Rule</td><td>Line-split, backorder, partial fulfillment behaviour</td><td>DOM → Document Specific → Fulfillment</td></tr>
+      </table></div>
+
+      <h3>Line Type vs. Fulfillment Type</h3>
+      <div class="warn"><strong>Frequently Confused</strong>
+        <strong>Fulfillment Type</strong> drives sourcing — it selects which distribution group and sourcing rule apply to the line. Example: SHIP, BOPIS, DROPSHIP.<br/>
+        <strong>Line Type</strong> is a classification attribute used to build pipeline conditions and pass metadata to downstream systems. It does NOT directly control where an order is fulfilled from.
+      </div>
+
+      <h3>Hub Rule — Pipeline Determination</h3>
+      <p>A Hub Rule determines which pipeline a document follows at the moment of creation. It evaluates conditions and routes to the correct pipeline.</p>
+      <div class="danger"><strong>Critical Constraint</strong> Only attributes available at order creation time can be used in Hub Rule conditions. Attributes populated later in the flow are NOT accessible during pipeline determination. This is a common architect-level design trap.</div>
+
+      <h3>EarliestScheduleDate Pattern</h3>
+      <p>Set <code>EarliestScheduleDate</code> on the order header to delay scheduling. The ScheduleOrder agent respects the <code>AVAILABLE_DATE</code> in <code>YFS_TASK_Q</code> and will not process the order before that timestamp. Common uses: fraud hold windows, pre-order management, B2B confirmation delays.</p>
+
+      <h3>Procurement / Drop-Ship Flow</h3>
+      <div class="flow">
+        <div class="fbox">Schedule</div><div class="farrow">→</div>
+        <div class="fbox accent">No Inventory</div><div class="farrow">→</div>
+        <div class="fbox">Procure When Not Available</div><div class="farrow">→</div>
+        <div class="fbox teal">Awaiting Chain Order Create</div><div class="farrow">→</div>
+        <div class="fbox">createChainOrder API</div><div class="farrow">→</div>
+        <div class="fbox green">PO to Vendor</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S6: PIPELINES -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s6">
+    <div class="section-header"><span class="icon">⚙️</span> 6. Pipelines &amp; Process Modeling</div>
+    <div class="section-body">
+
+      <h3>Process Modeling Components</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Component</th><th>Role</th><th>Analogy</th></tr>
+        <tr><td><strong>Pipeline</strong></td><td>Ordered sequence of statuses for a document type</td><td>The railway track</td></tr>
+        <tr><td><strong>Status</strong></td><td>Specific point in the lifecycle (e.g., Scheduled)</td><td>A station</td></tr>
+        <tr><td><strong>Transaction</strong></td><td>Business action causing a status transition</td><td>The train journey between stations</td></tr>
+        <tr><td><strong>Service</strong></td><td>Business logic unit invoked within a transaction</td><td>Work done on the train</td></tr>
+        <tr><td><strong>Event</strong></td><td>Fired when a status is reached</td><td>Station arrival announcement</td></tr>
+        <tr><td><strong>Action</strong></td><td>Code invoked in response to an event</td><td>Passenger alighting at announcement</td></tr>
+        <tr><td><strong>Condition</strong></td><td>Boolean expression for conditional branching</td><td>Track switch</td></tr>
+        <tr><td><strong>User Exit</strong></td><td>Custom Java hook within a transaction</td><td>A custom cargo handler on the train</td></tr>
+      </table></div>
+
+      <h3>Service Types</h3>
+      <div class="card-grid">
+        <div class="card"><h4>🔌 API Service</h4><p>Invokes a Sterling OMS API as part of a workflow. Example: call <code>scheduleOrder</code> from a pipeline transaction.</p></div>
+        <div class="card"><h4>☕ Java Service</h4><p>Custom Java class with business logic. Implements a specific interface registered in the configuration.</p></div>
+        <div class="card"><h4>🔗 Composite Service</h4><p>Chains multiple services (API or Java) into a sequential or parallel execution flow.</p></div>
+        <div class="card"><h4>🔀 Condition Service</h4><p>Returns a boolean result used for conditional branching in pipelines.</p></div>
+      </div>
+
+      <h3>Synchronous vs. Asynchronous Services</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th></th><th>Synchronous</th><th>Asynchronous</th></tr>
+        <tr><td><strong>Caller</strong></td><td>Waits for response</td><td>Does not wait; continues immediately</td></tr>
+        <tr><td><strong>Use Case</strong></td><td>Validation, real-time enrichment, payment auth</td><td>Notifications, heavy integrations, purge</td></tr>
+        <tr><td><strong>Transport</strong></td><td>In-process Java call</td><td>JMS message on MQ queue</td></tr>
+      </table></div>
+
+      <h3>User Exit Pattern</h3>
+      <pre>public class CustomOrderCreationUE
+    implements YFSExtnOrderCreationUE {
+
+  <span class="cm">// Called at order creation transaction hook</span>
+  public Document createOrderUE(
+      YFSEnvironment env, Document inDoc)
+      <span class="kw">throws</span> YFSException {
+
+    <span class="cm">// Custom validation or enrichment logic</span>
+    String orderType = inDoc.getDocumentElement()
+        .getAttribute(<span class="st">"OrderType"</span>);
+
+    <span class="kw">if</span> (!isValidOrderType(orderType)) {
+      <span class="kw">throw new</span> YFSException(<span class="st">"INVALID_ORDER_TYPE"</span>);
+    }
+    <span class="kw">return</span> inDoc;
+  }
+}</pre>
+      <div class="tip"><strong>Best Practice</strong> Always implement business logic through User Exits and Service Framework extensions — never modify base product code. This is the only way to remain upgrade-safe across Sterling OMS releases.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S7: APIs -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s7">
+    <div class="section-header"><span class="icon">🔌</span> 7. APIs &amp; Service Framework</div>
+    <div class="section-body">
+
+      <h3>API Types</h3>
+      <p><span class="pill pill-blue">Select</span> — Single record by key &nbsp;·&nbsp; <span class="pill pill-green">List</span> — Search multiple records &nbsp;·&nbsp; <span class="pill pill-orange">Update/Create</span> — Modify or create entities</p>
+
+      <h3>Essential API Reference</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>API</th><th>Type</th><th>Purpose</th></tr>
+        <tr><td><code>createOrder</code></td><td>Create</td><td>Create any document type (Sales, Return, PO, Transfer)</td></tr>
+        <tr><td><code>changeOrder</code></td><td>Update</td><td>Modify existing order; subject to Order Modification Rules</td></tr>
+        <tr><td><code>getOrderDetails</code></td><td>Select</td><td>Full order with lines, statuses, holds, payment</td></tr>
+        <tr><td><code>getOrderList</code></td><td>List</td><td>Search orders by criteria; supports ComplexQuery</td></tr>
+        <tr><td><code>scheduleOrder</code></td><td>Update</td><td>Manually trigger scheduling (soft allocation)</td></tr>
+        <tr><td><code>releaseOrder</code></td><td>Update</td><td>Manually trigger release (hard allocation)</td></tr>
+        <tr><td><code>confirmShipment</code></td><td>Update</td><td>Node confirms goods shipped; moves to status 9000</td></tr>
+        <tr><td><code>createInvoice</code></td><td>Create</td><td>Generate settlement invoice; trigger payment capture</td></tr>
+        <tr><td><code>manageTaskQ</code></td><td>Update</td><td>Remove / manage entries in YFS_TASK_Q</td></tr>
+        <tr><td><code>registerTaskComplete</code></td><td>Update</td><td>Mark task_q entry complete after manual schedule/release</td></tr>
+        <tr><td><code>adjustInventory</code></td><td>Update</td><td>Modify supply quantity at a node</td></tr>
+        <tr><td><code>createChainOrder</code></td><td>Create</td><td>Create procurement/drop-ship PO from sales order</td></tr>
+      </table></div>
+
+      <h3>Complex Query Example</h3>
+      <pre><span class="cm">&lt;!-- Filter orders by multiple status values --&gt;</span>
+&lt;Order&gt;
+  &lt;ComplexQuery&gt;
+    &lt;Or&gt;
+      &lt;Exp Name=<span class="st">"Status"</span> Value=<span class="st">"3200"</span>/&gt;
+      &lt;Exp Name=<span class="st">"Status"</span> Value=<span class="st">"3500"</span>/&gt;
+    &lt;/Or&gt;
+    &lt;And&gt;
+      &lt;Exp Name=<span class="st">"DocumentType"</span> Value=<span class="st">"0001"</span>/&gt;
+    &lt;/And&gt;
+  &lt;/ComplexQuery&gt;
+&lt;/Order&gt;</pre>
+
+      <h3>Output Template — Performance Pattern</h3>
+      <pre><span class="cm">&lt;!-- Return only required fields — avoids massive XML payloads --&gt;</span>
+&lt;Order OrderHeaderKey=<span class="st">""</span> OrderNo=<span class="st">""</span> Status=<span class="st">""</span>&gt;
+  &lt;OrderLines&gt;
+    &lt;OrderLine OrderLineKey=<span class="st">""</span> ItemID=<span class="st">""</span> Quantity=<span class="st">""</span>&gt;
+      &lt;Item ItemID=<span class="st">""</span> UnitOfMeasure=<span class="st">""</span>/&gt;
+    &lt;/OrderLine&gt;
+  &lt;/OrderLines&gt;
+&lt;/Order&gt;</pre>
+      <div class="tip"><strong>Performance Rule</strong> Always define Output Templates for GET and List APIs in high-volume paths. The default response includes every field for every entity and can be 10–50x larger than what you need.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S8: AGENTS -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s8">
+    <div class="section-header"><span class="icon">🤖</span> 8. Agents &amp; Integration</div>
+    <div class="section-body">
+
+      <h3>Agent Processing Loop</h3>
+      <div class="flow">
+        <div class="fbox">Cron / Schedule</div><div class="farrow">→</div>
+        <div class="fbox">getJobs()\nfrom YFS_TASK_Q</div><div class="farrow">→</div>
+        <div class="fbox">executeJob()\nper task row</div><div class="farrow">→</div>
+        <div class="fbox teal">Invoke Service / API</div><div class="farrow">→</div>
+        <div class="fbox green">Update Status\n+ Remove Task Row</div>
+      </div>
+
+      <h3>Standard Agents Reference</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Agent</th><th>Function</th><th>Trigger</th></tr>
+        <tr><td><code>ScheduleOrder</code></td><td>Soft-allocates inventory; moves to Scheduled</td><td>YFS_TASK_Q (post-create)</td></tr>
+        <tr><td><code>ReleaseOrder</code></td><td>Hard-allocates; sends to fulfillment node</td><td>YFS_TASK_Q (post-schedule)</td></tr>
+        <tr><td><code>PrintDocuments</code></td><td>Triggers label, packing slip, invoice print</td><td>Pipeline event</td></tr>
+        <tr><td><code>PurgeOrder</code></td><td>Removes closed orders from active tables</td><td>Scheduled / nightly</td></tr>
+        <tr><td><code>AlertPurge</code></td><td>Cleans resolved system alerts</td><td>Scheduled</td></tr>
+        <tr><td><code>SendNotification</code></td><td>Customer email/SMS for order events</td><td>Pipeline event</td></tr>
+        <tr><td><code>CreateChainOrder</code></td><td>Cuts procurement / drop-ship POs</td><td>YFS_TASK_Q (awaiting chain)</td></tr>
+      </table></div>
+
+      <h3>YFS_TASK_Q — Deep Dive</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Column</th><th>Purpose</th></tr>
+        <tr><td><code>TASK_Q_KEY</code></td><td>Primary key</td></tr>
+        <tr><td><code>OWNER_KEY</code></td><td>FK to the entity being processed (e.g., OrderHeaderKey)</td></tr>
+        <tr><td><code>AVAILABLE_DATE</code></td><td>Earliest time this task is eligible for processing (EarliestScheduleDate maps here)</td></tr>
+        <tr><td><code>LOCKED_BY_SERVER</code></td><td>Agent server instance that has locked this task row</td></tr>
+        <tr><td><code>STATUS</code></td><td>1=Open, 2=Processing, 3=Complete</td></tr>
+      </table></div>
+      <div class="danger"><strong>Critical Operational Pitfall</strong> When a user manually triggers schedule or release from the UI, the YFS_TASK_Q entry is NOT automatically removed. You must call <code>registerTaskComplete</code> or <code>manageTaskQ</code> API to clean it up. Failure causes agents to reprocess already-handled orders.</div>
+
+      <h3>IBM MQ Configuration Best Practices</h3>
+      <ul>
+        <li>Enable JMS connection retries — minimum 3 retries for transient connectivity resilience</li>
+        <li>Enable multi-threaded PUTs for RTAM server — critical for inventory update throughput</li>
+        <li>Cache JMS bindings file — especially important with slow Persistent Volume I/O in containers</li>
+        <li>Enable agent bulk sender properties — batch multiple messages per PUT for throughput</li>
+        <li>Max message size on OMOC: 4 MB — design payloads accordingly</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S9: EXTENSIBILITY -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s9">
+    <div class="section-header"><span class="icon">🧩</span> 9. Extensibility &amp; Customization</div>
+    <div class="section-body">
+
+      <div class="danger"><strong>Cardinal Rule</strong> Never modify base product Java classes, XML configurations, or base database tables directly. All customizations must go through sanctioned extension frameworks to preserve upgrade compatibility.</div>
+
+      <h3>Extensibility Layers</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Layer</th><th>Mechanism</th><th>How</th></tr>
+        <tr><td>Database</td><td>Custom columns, hang-off tables, custom tables</td><td><code>Extensions.xml</code> + <code>Entities.jar</code></td></tr>
+        <tr><td>Business Object</td><td>Extensible attributes on Sterling objects</td><td>Entity Definition Framework via SBC</td></tr>
+        <tr><td>Business Logic</td><td>User Exits, custom Java/Composite services</td><td>Registered extension classes</td></tr>
+        <tr><td>API</td><td>Custom APIs, output template modification</td><td>Custom API XML + Java class</td></tr>
+        <tr><td>UI</td><td>Presentation Framework (9.x), React (10.x/OMOC)</td><td>JSP overrides, Web UI Framework, mashup widgets</td></tr>
+        <tr><td>Documents</td><td>Custom print templates</td><td>XSL/XSLT overrides for labels, invoices, slips</td></tr>
+      </table></div>
+
+      <h3>Custom Tables vs. Hang-Off Tables</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th></th><th>Custom Table</th><th>Hang-Off Table</th></tr>
+        <tr><td><strong>Relationship</strong></td><td>Independent; no FK to core tables</td><td>Many-to-one FK with a core table</td></tr>
+        <tr><td><strong>Use Case</strong></td><td>Entirely new data domain</td><td>Multiple extended rows per core entity</td></tr>
+        <tr><td><strong>Example</strong></td><td>Custom loyalty tracking table</td><td>Additional custom address lines per order</td></tr>
+      </table></div>
+
+      <h3>Extensions.xml — Database Extension Pattern</h3>
+      <pre><span class="cm">&lt;!-- Add custom column to YFS_ORDER_HEADER --&gt;</span>
+&lt;DBExtension tableName=<span class="st">"YFS_ORDER_HEADER"</span>&gt;
+  &lt;Column columnName=<span class="st">"EXTN_LOYALTY_POINTS"</span>
+          dataType=<span class="st">"NUMBER"</span> columnSize=<span class="st">"10"</span>
+          nullable=<span class="st">"Y"</span>/&gt;
+  &lt;Column columnName=<span class="st">"EXTN_FRAUD_SCORE"</span>
+          dataType=<span class="st">"VARCHAR2"</span> columnSize=<span class="st">"50"</span>
+          nullable=<span class="st">"Y"</span>/&gt;
+&lt;/DBExtension&gt;
+
+<span class="cm">&lt;!-- Hang-off table example --&gt;</span>
+&lt;DBExtension tableName=<span class="st">"YFS_ORDER_EXT_ATTR"</span>
+             parentTable=<span class="st">"YFS_ORDER_HEADER"</span>&gt;
+  &lt;Column columnName=<span class="st">"ATTR_NAME"</span> dataType=<span class="st">"VARCHAR2"</span> columnSize=<span class="st">"100"</span>/&gt;
+  &lt;Column columnName=<span class="st">"ATTR_VALUE"</span> dataType=<span class="st">"VARCHAR2"</span> columnSize=<span class="st">"500"</span>/&gt;
+&lt;/DBExtension&gt;</pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S10: CONFIGURATION -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s10">
+    <div class="section-header"><span class="icon">🛠️</span> 10. Configuration Guide</div>
+    <div class="section-body">
+
+      <h3>Organization Hierarchy</h3>
+      <div class="mermaid">
+graph TD
+  HUB["Hub Organization\nSystem Owner"]
+  ENT["Enterprise\nRetail Brand"]
+  SELLER["Seller / 3PL"]
+  BUYER["Buyer — B2B"]
+  DC["Node: DC / Warehouse"]
+  STORE["Node: Store"]
+  VENDOR["Node: Drop-Ship Vendor"]
+  CARRIER["Carrier Org"]
+
+  HUB --> ENT
+  ENT --> SELLER
+  ENT --> BUYER
+  ENT --> CARRIER
+  SELLER --> DC
+  SELLER --> STORE
+  SELLER --> VENDOR
+
+  style HUB fill:#0d2b55,color:#fff,stroke:#f5a623,stroke-width:2px
+  style ENT fill:#1565c0,color:#fff,stroke:#0d2b55
+  style SELLER fill:#1565c0,color:#fff,stroke:#0d2b55
+  style BUYER fill:#1565c0,color:#fff,stroke:#0d2b55
+  style CARRIER fill:#6a1b9a,color:#fff,stroke:#4a148c
+  style DC fill:#2e7d32,color:#fff,stroke:#1b5e20
+  style STORE fill:#2e7d32,color:#fff,stroke:#1b5e20
+  style VENDOR fill:#e65100,color:#fff,stroke:#bf360c
+      </div>
+
+      <h3>Configuration Checklist</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Area</th><th>Key Items</th><th>Nav Path</th></tr>
+        <tr><td>Participants</td><td>Org hierarchy, ship nodes (with address), carriers</td><td>Application Platform → Participants</td></tr>
+        <tr><td>Catalog / Items</td><td>Item master, UOM, catalog, pricing, item feed</td><td>Sterling Business Center</td></tr>
+        <tr><td>Inventory</td><td>Supply types, demand types, inventory audit</td><td>GIV → Configuration</td></tr>
+        <tr><td>Sourcing</td><td>Distribution groups, sourcing rules per fulfillment type</td><td>DOM → Sourcing</td></tr>
+        <tr><td>Scheduling</td><td>Scheduling rule, optimization, constraints</td><td>DOM → Sourcing → Scheduling Rules</td></tr>
+        <tr><td>Fulfillment</td><td>Fulfillment rules, line split, backorder</td><td>DOM → Document Specific → Fulfillment</td></tr>
+        <tr><td>Payment</td><td>Payment types, auth timing, settlement</td><td>DOM → Document Specific → Payment</td></tr>
+        <tr><td>Returns</td><td>Reason codes, disposition, refund triggers</td><td>DOM → Document Specific → Returns</td></tr>
+        <tr><td>Monitoring</td><td>Alert thresholds per pipeline status</td><td>DOM → Document Specific → Monitoring</td></tr>
+        <tr><td>Notifications</td><td>Email/SMS templates and trigger events</td><td>Application Platform → Notifications</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S11: DEPLOYMENT -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s11">
+    <div class="section-header"><span class="icon">🐳</span> 11. Deployment — Containers &amp; OpenShift</div>
+    <div class="section-body">
+
+      <h3>End-to-End Deployment Pipeline</h3>
+      <div class="mermaid">
+flowchart LR
+  A["Pull Images\nom-base / om-app\nom-agent\nfrom IBM Registry"] --> B["Load\nCustomizations\ninto om-base"]
+  B --> C["S2I Build\nCustomized\nom-app + om-agent"]
+  C --> D["Push to\nContainer Registry\nOCR / ECR / ACR"]
+  D --> E["Configure\nHelm values.yaml\nDB + MQ + profiles"]
+  E --> F["Deploy Helm Chart\nto OpenShift"]
+  F --> G["Load Factory\nSetup Data\nto DB"]
+  G --> H["OMS Running\non OpenShift"]
+
+  style A fill:#1565c0,color:#fff,stroke:#0d2b55
+  style B fill:#1565c0,color:#fff,stroke:#0d2b55
+  style C fill:#0d2b55,color:#fff,stroke:#f5a623
+  style D fill:#6a1b9a,color:#fff,stroke:#4a148c
+  style E fill:#0d2b55,color:#fff,stroke:#f5a623
+  style F fill:#00838f,color:#fff,stroke:#006064
+  style G fill:#e65100,color:#fff,stroke:#bf360c
+  style H fill:#2e7d32,color:#fff,stroke:#1b5e20
+      </div>
+
+      <h3>Helm Chart Key Parameters</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Parameter</th><th>Purpose</th><th>Example</th></tr>
+        <tr><td><code>replicaCount</code></td><td>om-app pod count</td><td><code>3</code></td></tr>
+        <tr><td><code>serverProfiles</code></td><td>CPU/memory groups per workload type</td><td>appserver, scheduleAgent, releaseAgent</td></tr>
+        <tr><td><code>image.repository</code></td><td>Container registry path</td><td><code>registry.company.io/sterling/om-app</code></td></tr>
+        <tr><td><code>database.host</code></td><td>DB connectivity</td><td>PostgreSQL flexible server FQDN</td></tr>
+        <tr><td><code>mq.queueManager</code></td><td>IBM MQ queue manager name</td><td><code>OMS.QM1</code></td></tr>
+        <tr><td><code>hpa.enabled</code></td><td>Horizontal Pod Autoscaler on/off</td><td><code>true</code></td></tr>
+      </table></div>
+
+      <h3>OpenShift Resources Overview</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Resource</th><th>Purpose</th></tr>
+        <tr><td>ConfigMaps</td><td>Liberty server overrides, <code>customer_overrides.properties</code>, log4j config, DB connectivity</td></tr>
+        <tr><td>Secrets</td><td>DB passwords, MQ passwords, keystore credentials, TLS certs</td></tr>
+        <tr><td>Routes</td><td>External HTTPS ingress into om-app pods</td></tr>
+        <tr><td>HPA</td><td>Autoscale om-app pods on CPU/memory metrics</td></tr>
+        <tr><td>NetworkPolicy</td><td>Restrict pod-to-pod communication to required paths</td></tr>
+        <tr><td>PersistentVolumeClaim</td><td>Shared log storage for om-app and om-agent pods</td></tr>
+      </table></div>
+
+      <h3>Cloud Platform Comparison</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Platform</th><th>OpenShift Option</th><th>Database</th><th>Notes</th></tr>
+        <tr><td>AWS</td><td>ROSA (Red Hat OpenShift Service on AWS)</td><td>RDS PostgreSQL / Db2 on EC2</td><td>MQ on EC2; S3 for log archival</td></tr>
+        <tr><td>Azure</td><td>ARO (Azure Red Hat OpenShift)</td><td>Azure DB for PostgreSQL (flexible)</td><td>Recommended by Microsoft + IBM for v10+</td></tr>
+        <tr><td>OCI</td><td>OKE / VM-based</td><td>Oracle DB on OCI / Db2</td><td>3x perf vs. on-prem; 99.95% SLA</td></tr>
+        <tr><td>IBM Cloud (OMOC)</td><td>Fully managed SaaS</td><td>IBM managed Db2</td><td>IBM handles all infra, upgrades, scaling</td></tr>
+      </table></div>
+
+      <div class="info"><strong>Minimum Requirements (OpenShift)</strong> At least 40 vCPU quota for worker nodes. Control plane is fixed (3 nodes recommended). Worker count and size depend on agent types and replica count. Always validate sizing with IBM's team before production go-live.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S12: OMOC -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s12">
+    <div class="section-header"><span class="icon">☁️</span> 12. Sterling OMS Cloud — OMOC</div>
+    <div class="section-body">
+
+      <h3>OMOC vs. Self-Managed Containers</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Aspect</th><th>OMOC (SaaS)</th><th>Self-Managed (OpenShift)</th></tr>
+        <tr><td>Infra management</td><td>IBM manages all</td><td>Customer manages</td></tr>
+        <tr><td>Application upgrades</td><td>Automatic by IBM</td><td>Customer-controlled schedule</td></tr>
+        <tr><td>Customization scope</td><td>Guardrail-constrained</td><td>Full access via extension frameworks</td></tr>
+        <tr><td>DB backups &amp; REORG</td><td>IBM managed</td><td>Customer managed (critical!)</td></tr>
+        <tr><td>Scaling</td><td>Auto-scaled by IBM</td><td>HPA + manual pre-scaling</td></tr>
+        <tr><td>Cost model</td><td>OpEx subscription</td><td>CapEx/OpEx infrastructure</td></tr>
+        <tr><td>Config promotion</td><td>CDT tool only</td><td>Helm + S2I pipeline</td></tr>
+      </table></div>
+
+      <h3>CDT — Configuration Deployment Tool</h3>
+      <p>Since OMOC restricts direct server access, the CDT is the only mechanism for migrating OMS configurations between environments. It exports and imports: pipelines, services, APIs, rules, user exits, UI modifications, and monitoring rules.</p>
+      <div class="flow">
+        <div class="fbox">DEV</div><div class="farrow">→ CDT export →</div>
+        <div class="fbox teal">TEST</div><div class="farrow">→ CDT export →</div>
+        <div class="fbox accent">STAGING</div><div class="farrow">→ CDT export →</div>
+        <div class="fbox green">PRODUCTION</div>
+      </div>
+
+      <h3>Cloud Guardrails</h3>
+      <ul>
+        <li>No direct modification of base product files or tables</li>
+        <li>Business logic via User Exits and service overrides only</li>
+        <li>Pipeline changes via override mechanism, not in-place edits</li>
+        <li>API extensions via registered extension classes</li>
+        <li>UI changes via approved Presentation Framework / React extension points</li>
+      </ul>
+
+      <h3>Hybrid Cloud Pattern</h3>
+      <p>Organizations can keep Sterling OMS on-premises while integrating cloud-native capabilities like <strong>IBM Sterling Intelligent Promising</strong> (AI-based fulfillment optimization). This "hybrid-by-design" strategy unlocks cloud benefits incrementally without a full migration.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S13: PERFORMANCE -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s13">
+    <div class="section-header"><span class="icon">📈</span> 13. Performance &amp; Tuning</div>
+    <div class="section-body">
+
+      <h3>Three Foundational Design Principles</h3>
+      <div class="card-grid">
+        <div class="card"><h4>↔️ Horizontal Scalability</h4><p>Scale out by adding pod replicas, not by upsizing individual pods. om-app and om-agent scale independently.</p></div>
+        <div class="card"><h4>⚡ Async Workload Management</h4><p>Heavy processing (scheduling, release, purge) delegated to agents so API servers remain responsive.</p></div>
+        <div class="card"><h4>🧩 Modular Services</h4><p>Workloads separated into independently scalable services — agent types can be isolated per serverProfile.</p></div>
+      </div>
+
+      <h3>Tuning Reference</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>Layer</th><th>Key Tuning Actions</th></tr>
+        <tr><td><strong>JVM (om-app)</strong></td><td>Set <code>-Xmx</code>/<code>-Xms</code> appropriately; use G1GC; monitor GC pause times</td></tr>
+        <tr><td><strong>Liberty Thread Pool</strong></td><td>Size executor threads to expected concurrency; monitor queue depth</td></tr>
+        <tr><td><strong>DB Connection Pool</strong></td><td>Pool size ≥ max concurrent threads; monitor wait times; set <code>max_connections</code> (PostgreSQL)</td></tr>
+        <tr><td><strong>Agent Threads</strong></td><td>Tune thread count per agent type using <code>serverProfiles</code>; profile before scaling</td></tr>
+        <tr><td><strong>Database</strong></td><td>Index high-frequency query paths; run REORG regularly (especially Db2); analyze slow queries</td></tr>
+        <tr><td><strong>APIs</strong></td><td>Always use Output Templates; use 100 item-node per payload for inventory APIs; cache auth tokens</td></tr>
+        <tr><td><strong>MQ</strong></td><td>Bulk sender batching; multi-threaded PUTs for RTAM; cache JMS bindings; min 3 retries</td></tr>
+        <tr><td><strong>Purge</strong></td><td>Run PurgeOrder and AlertPurge regularly to keep active table sizes small</td></tr>
+      </table></div>
+
+      <div class="danger"><strong>Anti-Pattern</strong> Adding more untuned agent instances to improve throughput almost always causes resource exhaustion and cascading failures — all agents share the same database and MQ. Profile first, then tune thread count within existing instances before adding new ones.</div>
+
+      <h3>Peak Readiness Checklist</h3>
+      <ul>
+        <li>✅ Load test with realistic order volumes (JMeter / IBM Performance Tester)</li>
+        <li>✅ Run database REORG before the peak window</li>
+        <li>✅ Pre-scale om-app and om-agent pods before event start</li>
+        <li>✅ Review monitoring rules — tune alert thresholds to avoid alert storms</li>
+        <li>✅ Run PurgeOrder to minimise active table row counts</li>
+        <li>✅ Validate MQ capacity — queue depths, max inflight messages</li>
+        <li>✅ Test payment processor capacity separately</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S14: SECURITY -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s14">
+    <div class="section-header"><span class="icon">🔒</span> 14. Security</div>
+    <div class="section-body">
+      <div class="card-grid">
+        <div class="card"><h4>🔐 AuthN / AuthZ</h4><p>RBAC per organization; LDAP integration; SSO via SAML/OAuth (v10.x/OMOC); role-based API and screen access policies.</p></div>
+        <div class="card"><h4>🌐 Network</h4><p>Private endpoints for DB and MQ; OpenShift NetworkPolicy; TLS on all Routes; no public DB exposure.</p></div>
+        <div class="card"><h4>🐳 Container</h4><p>IBM UBI-based hardened images; OpenShift SCCs (Security Context Constraints); least-privilege service accounts.</p></div>
+        <div class="card"><h4>🔑 Secrets</h4><p>OpenShift Secrets or HashiCorp Vault; never hardcode credentials in images or ConfigMaps.</p></div>
+        <div class="card"><h4>💳 PCI-DSS</h4><p>Tokenize card data; never store raw PANs; PII masking in logs; encryption at rest and in transit (TLS everywhere).</p></div>
+        <div class="card"><h4>📝 Audit</h4><p>Sterling OMS maintains a built-in audit trail for order modifications; configure retention per compliance requirements.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S15: Q&A CHEAT SHEET -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s15">
+    <div class="section-header"><span class="icon">💬</span> 15. Interview Q&amp;A Cheat Sheet</div>
+    <div class="section-body">
+      <div class="info"><strong>How to use</strong> Click any question to expand the model answer. These cover the most frequently asked architect-level Sterling OMS interview topics.</div>
+
+      <details><summary>Q1 — What is the difference between Schedule and Release?<span></span></summary>
+      <div class="details-body"><p><strong>Schedule</strong> is a <em>soft</em> allocation. The sourcing engine selects the best ship node and tentatively commits inventory. The order moves to Scheduled status and a YFS_TASK_Q entry is created for ReleaseOrder. Inventory can still be reallocated (e.g., via IBA).</p><p><strong>Release</strong> is a <em>hard</em> allocation. The demand quantity is sent to the fulfillment node. Inventory is permanently committed. The warehouse or store begins physical pick/pack/ship. Reversing this requires a changeOrder or cancel workflow.</p></div></details>
+
+      <details><summary>Q2 — Explain the three container images in Sterling OMS.<span></span></summary>
+      <div class="details-body"><ul><li><strong>om-app</strong>: Application server handling synchronous HTTP/REST traffic, embedded with IBM WebSphere Liberty.</li><li><strong>om-agent</strong>: Handles all asynchronous traffic — workflow agents (ScheduleOrder, ReleaseOrder) and Integration Servers that listen on JMS queues.</li><li><strong>om-base</strong>: Build-time base image. Customizations and extensions are loaded here. Used to rebuild om-app and om-agent in the CI/CD pipeline via S2I.</li></ul></div></details>
+
+      <details><summary>Q3 — What is a Dirty Node and how do you clear it?<span></span></summary>
+      <div class="details-body"><p>When a ship node's ATP drops to zero for a specific item, the item-node combination is flagged as a <strong>dirty node</strong>. The sourcing engine excludes it from future order evaluations for that item. It remains dirty until either: (a) a positive inventory supply is received via <code>adjustInventory</code> API, or (b) the hold is explicitly removed via the <code>InventoryNodeControl</code> API.</p></div></details>
+
+      <details><summary>Q4 — What is YFS_TASK_Q and what happens when you manually schedule an order?<span></span></summary>
+      <div class="details-body"><p>YFS_TASK_Q is the central database table driving all asynchronous agent processing. Every pending agent task creates a row. The AVAILABLE_DATE column controls when the task is eligible for pickup.</p><p>When you manually schedule or release from the UI, the task_q entry is <strong>NOT automatically removed</strong>. You must call <code>registerTaskComplete</code> or <code>manageTaskQ</code> API to remove it. Failing to do so causes the ScheduleOrder or ReleaseOrder agent to reprocess the already-handled order, leading to duplicate processing or errors.</p></div></details>
+
+      <details><summary>Q5 — What is a Hub Rule and what is its key limitation?<span></span></summary>
+      <div class="details-body"><p>A Hub Rule is the pipeline determination component within a process type. It evaluates conditions on a document at creation time and routes it to the appropriate pipeline. <strong>Key limitation</strong>: only attributes available on the document at creation time can be used. Attributes populated later in the flow are not accessible during hub rule evaluation. This is a common design trap — if a routing attribute is only known post-creation, the hub rule cannot use it.</p></div></details>
+
+      <details><summary>Q6 — How do you delay order scheduling by 5 hours after creation?<span></span></summary>
+      <div class="details-body"><p>Set the <code>EarliestScheduleDate</code> attribute on the order header to <code>OrderDate + 5 hours</code> at order creation. This maps to the <code>AVAILABLE_DATE</code> column in YFS_TASK_Q. The ScheduleOrder agent reads AVAILABLE_DATE and will not pick up the task until that timestamp is reached.</p></div></details>
+
+      <details><summary>Q7 — What is the CDT and why does OMOC need it?<span></span></summary>
+      <div class="details-body"><p>CDT (Configuration Deployment Tool) is the mechanism for migrating OMS configuration artifacts between OMOC environments (DEV → TEST → STAGING → PROD). Since OMOC is a fully managed SaaS platform with no direct server file access, CDT is the only safe, controlled method to export and import pipelines, services, APIs, rules, user exits, and UI modifications. It ensures upgrade safety and environment consistency.</p></div></details>
+
+      <details><summary>Q8 — How do you extend the Sterling OMS database?<span></span></summary>
+      <div class="details-body"><ol><li>Define custom columns (prefixed <code>EXTN_</code>) on existing tables in <code>Extensions.xml</code></li><li>Create hang-off tables (many-to-one FK to core table) for extended rows per entity</li><li>Create independent custom tables for entirely new data domains</li><li>Build the <code>Entities.jar</code> using the Entity Definition Framework</li><li>Modify API Output Templates to include new fields in responses</li><li>Create services to access extended data via Extended Database APIs</li></ol><p>Never modify core product table definitions directly.</p></div></details>
+
+      <details><summary>Q9 — Walk me through a Ship-from-Store order flow end to end.<span></span></summary>
+      <div class="details-body"><ol><li>Customer places order on eCommerce site</li><li>eCommerce platform publishes order message to IBM MQ</li><li>Integration Server consumes JMS message → calls <code>createOrder</code> with FulfillmentType=SHIP</li><li>Order created in "Ordered" status; Hub Rule routes to Sales Order pipeline</li><li>ScheduleOrder agent picks up from TASK_Q → sourcing engine evaluates SHIP distribution group → selects nearest store with SFS capability and ATP → order moves to "Scheduled"</li><li>ReleaseOrder agent hard-allocates → sends demand to store → status "Released" → "Sent to Node"</li><li>Store associate receives order in Store Engagement app, picks item, packs, ships</li><li>Store calls <code>confirmShipment</code> API → order moves to "Shipped" (9000)</li><li>Customer receives shipping notification via SendNotification agent</li><li><code>createInvoice</code> called → payment captured → order settled</li></ol></div></details>
+
+      <details><summary>Q10 — How does EOF message processing work?<span></span></summary>
+      <div class="details-body"><p>For bulk inventory feeds, all messages in a batch share the same <code>YantraMessageGroupID</code>. After the last batch record, the external system sends an <strong>EOF (End of Feed)</strong> message with the same group ID. When the Integration Server receives the EOF message, it checks for any reprocessable messages with the same group ID before finalising the batch — ensuring no records are missed due to failures or out-of-order delivery.</p></div></details>
+
+      <details><summary>Q11 — What are the key performance tuning levers for agents?<span></span></summary>
+      <div class="details-body"><ol><li>Define <code>serverProfiles</code> in the OMS operator to separate workloads by resource requirements</li><li>Tune thread counts based on profiled throughput — not intuition</li><li>Separate heavy agents (ScheduleOrder) from lighter ones into different profiles</li><li>Do NOT spawn additional untuned agent instances — this causes DB/MQ resource exhaustion and cascading failures</li><li>Run PurgeOrder regularly to keep TASK_Q and active order tables small</li></ol></div></details>
+
+      <details><summary>Q12 — What databases does Sterling OMS 10.x support and which is preferred for cloud?<span></span></summary>
+      <div class="details-body"><p>Sterling OMS 10.x supports <strong>IBM Db2</strong>, <strong>Oracle Database</strong>, and <strong>PostgreSQL</strong>. For cloud deployments, <strong>PostgreSQL</strong> is the recommended choice. On Azure, Azure Database for PostgreSQL (flexible server) is specifically endorsed by both Microsoft and IBM for Sterling OMS 10.x deployments, offering managed HA, auto-scaling, and simplicity of operations.</p></div></details>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- S16: ADRs -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section" id="s16">
+    <div class="section-header"><span class="icon">📋</span> 16. Architecture Decision Records (ADRs)</div>
+    <div class="section-body">
+      <div class="note"><strong>What are ADRs?</strong> Architecture Decision Records document the key design choices made during a Sterling OMS implementation — the context, options considered, decision made, and trade-offs. These are common discussion topics at architect-level interviews.</div>
+
+      <details class="teal-block"><summary>ADR-001 — Database: PostgreSQL vs. Db2 for Cloud Deployment<span></span></summary>
+      <div class="details-body">
+        <h4>Context</h4><p>Selecting the backend database for Sterling OMS 10.x deployment on Azure/AWS for a retail client.</p>
+        <h4>Options Considered</h4>
+        <ul><li><strong>IBM Db2</strong>: Native Sterling OMS database; strong performance history; higher operational complexity on cloud VMs</li><li><strong>Oracle Database</strong>: Widely used in enterprise; high cost; licensing complexity</li><li><strong>PostgreSQL</strong>: Open-source; fully managed options on Azure/AWS; lower cost; Sterling 10.x first-class support</li></ul>
+        <h4>Decision</h4><p>✅ <strong>PostgreSQL (Azure Database for PostgreSQL — Flexible Server)</strong></p>
+        <h4>Rationale</h4><p>Sterling OMS 10.x added first-class PostgreSQL support. Managed PostgreSQL eliminates DBA overhead for patching, backups, and HA. Flexible server provides zone-redundant HA and read replicas. Significantly lower TCO than Db2 or Oracle on cloud.</p>
+        <h4>Trade-offs</h4><p>Team must develop PostgreSQL operational expertise. Some Db2-specific query optimizations may need rewriting. <code>max_connections</code> must be carefully sized for agent concurrency.</p>
+      </div></details>
+
+      <details class="teal-block"><summary>ADR-002 — Sync vs. Async Integration for Order Ingestion<span></span></summary>
+      <div class="details-body">
+        <h4>Context</h4><p>eCommerce platform needs to send orders to Sterling OMS. Decision on integration pattern for order ingestion.</p>
+        <h4>Options Considered</h4>
+        <ul><li><strong>Synchronous REST API</strong>: Direct call from eCommerce → om-app; immediate confirmation</li><li><strong>Asynchronous JMS (MQ)</strong>: eCommerce → IBM MQ → Integration Server → OMS; decoupled</li></ul>
+        <h4>Decision</h4><p>✅ <strong>Asynchronous JMS via IBM MQ</strong></p>
+        <h4>Rationale</h4><p>Decouples eCommerce platform from OMS availability. During OMS maintenance or peak load, messages queue in MQ and are processed once OMS recovers. MQ provides guaranteed delivery, which synchronous HTTP cannot. Peak order volumes during flash sales will not overwhelm OMS directly.</p>
+        <h4>Trade-offs</h4><p>Order confirmation to customer is slightly delayed (seconds). Adds MQ operational complexity. Error handling requires DLQ (Dead Letter Queue) monitoring and replay capability.</p>
+      </div></details>
+
+      <details class="teal-block"><summary>ADR-003 — OMOC SaaS vs. Self-Managed OpenShift<span></span></summary>
+      <div class="details-body">
+        <h4>Context</h4><p>Client evaluating whether to use IBM's fully managed OMOC SaaS offering or self-manage Sterling OMS containers on their own OpenShift cluster.</p>
+        <h4>Options Considered</h4>
+        <ul><li><strong>OMOC SaaS</strong>: IBM manages all infra, upgrades, HA, backups; customisation via guardrails + CDT</li><li><strong>Self-Managed OpenShift</strong>: Full control over deployment, customisation, upgrade scheduling; customer owns operations</li></ul>
+        <h4>Decision</h4><p>✅ <strong>Self-Managed OpenShift on AWS (ROSA)</strong> — for this client</p>
+        <h4>Rationale</h4><p>Client has deep custom business logic that exceeds OMOC guardrail boundaries. Existing OpenShift platform team in-house. Client requires control over upgrade windows due to downstream WMS integration dependencies.</p>
+        <h4>Trade-offs</h4><p>Client bears full operational responsibility: patching, REORG, HA management, capacity planning. Requires dedicated OpenShift and Sterling OMS expertise. IBM support is still available but client manages the platform.</p>
+      </div></details>
+
+      <details class="teal-block"><summary>ADR-004 — Fulfillment Type Design for Omnichannel<span></span></summary>
+      <div class="details-body">
+        <h4>Context</h4><p>Designing the fulfillment type taxonomy for a retailer supporting SHIP, BOPIS, SFS, and Drop Ship across 500 stores and 5 DCs.</p>
+        <h4>Decision</h4>
+        <ul>
+          <li><code>SHIP</code> → Distribution Group: DC-Only (5 DCs) — Standard home delivery</li>
+          <li><code>BOPIS</code> → Distribution Group: All-Stores (500 stores) — Customer pickup</li>
+          <li><code>SFS</code> → Distribution Group: SFS-Enabled-Stores (300 stores flagged for SFS) — Ship from store</li>
+          <li><code>DROPSHIP</code> → Distribution Group: Approved-Vendors (50 vendor nodes)</li>
+        </ul>
+        <h4>Rationale</h4><p>Clear separation ensures sourcing engine evaluates only appropriate candidates per scenario. Avoids routing BOPIS orders to DCs or SFS orders to non-SFS-capable stores. Each group can be independently managed as store capabilities change.</p>
+        <h4>Trade-offs</h4><p>Need a process to manage store flagging in OMS as stores gain/lose SFS capability. Configuration overhead increases with more fulfillment types, but clarity and correctness outweigh this cost.</p>
+      </div></details>
+    </div>
+  </div>
+
+  </div><!-- end .content -->
+</div><!-- end #main -->
+
+<script>
+// ── MERMAID INIT ───────────────────────────────────────────
+mermaid.initialize({
+  startOnLoad:true,
+  theme:'base',
+  themeVariables:{
+    primaryColor:'#0d2b55',primaryTextColor:'#ffffff',
+    primaryBorderColor:'#1565c0',lineColor:'#f5a623',
+    secondaryColor:'#e3f2fd',tertiaryColor:'#f0f5ff',
+    background:'#ffffff',mainBkg:'#ffffff'
+  }
+});
+
+// ── SIDEBAR TOGGLE (mobile) ────────────────────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  var sb=document.getElementById('sidebar');
+  var btn=document.getElementById('sidebar-toggle');
+  if(sb.classList.contains('open') && !sb.contains(e.target) && e.target!==btn){
+    sb.classList.remove('open');
+  }
+});
+
+// ── ACTIVE NAV LINK ON SCROLL ─────────────────────────────
+var sections=document.querySelectorAll('.section');
+var navLinks=document.querySelectorAll('#sidenav a');
+window.addEventListener('scroll',function(){
+  var scrollY=window.scrollY+80;
+  sections.forEach(function(sec){
+    if(sec.offsetTop<=scrollY && sec.offsetTop+sec.offsetHeight>scrollY){
+      navLinks.forEach(function(l){l.classList.remove('active');});
+      var link=document.querySelector('#sidenav a[href="#'+sec.id+'"]');
+      if(link)link.classList.add('active');
+    }
+  });
+},{passive:true});
+</script>
+</body>
+</html>
