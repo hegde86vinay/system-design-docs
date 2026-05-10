@@ -408,6 +408,13 @@
     <a class="nav-item" onclick="goTo(event,'q6')"><span class="num">Q6</span>Modify After Release</a>
     <a class="nav-item" onclick="goTo(event,'q7')"><span class="num">Q7</span>Kafka in OMS</a>
     <a class="nav-item" onclick="goTo(event,'q8')"><span class="num">Q8</span>Reducing DB Contention</a>
+    <a class="nav-item" onclick="goTo(event,'q9')"><span class="num">Q9</span>Performance Tuning</a>
+    <a class="nav-item" onclick="goTo(event,'q10')"><span class="num">Q10</span>Threads vs Instances</a>
+    <a class="nav-item" onclick="goTo(event,'q11')"><span class="num">Q11</span>SQL vs NoSQL</a>
+    <a class="nav-item" onclick="goTo(event,'q12')"><span class="num">Q12</span>Kafka Deep Dive</a>
+    <a class="nav-item" onclick="goTo(event,'q13')"><span class="num">Q13</span>Kafka Concurrency</a>
+    <a class="nav-item" onclick="goTo(event,'q14')"><span class="num">Q14</span>Kafka Consumer Resilience</a>
+    <a class="nav-item" onclick="goTo(event,'q15')"><span class="num">Q15</span>Sterling Availability</a>
 
     <div class="sidebar-section">Closing</div>
     <a class="nav-item" onclick="goTo(event,'cheat')"><span class="num">★</span>Interview Cheat Sheet</a>
@@ -1958,6 +1965,406 @@ After TASK_Q partitioning + bulk APIs:
             <li><em>"Where do you start with limited budget?"</em> → externalize reservations first — single biggest contention killer with localized blast radius</li>
           </ul>
 
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q9: PERFORMANCE TUNING ============== -->
+    <section class="section" id="q9">
+      <div class="section-header">
+        <span class="section-num">Q9</span>
+        <h2>How do you identify and mitigate performance issues in Sterling OMS and microservices?</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Systematic identification + Sterling-specific + microservices-specific tuning</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Part A — Generic Observability Framework</h3>
+            <p>I use a layered diagnostic approach: <strong>observe → hypothesize → isolate → fix → validate</strong>, anchored in the three pillars of observability: metrics, logs, and distributed traces.</p>
+            <ol>
+              <li><strong>Define the symptom precisely.</strong> Is it latency (P95/P99 spiked)? Throughput (TPS dropped)? Error rate? Resource saturation? Get the numbers first.</li>
+              <li><strong>Check the four golden signals</strong> (Google SRE book): Latency, Traffic, Errors, Saturation. Correlate with deploys, traffic spikes, config changes, or downstream dependency issues.</li>
+              <li><strong>Isolate the bottleneck layer:</strong> application tier (thread contention, GC pauses), database tier (slow queries, lock contention), network tier, or an external dependency.</li>
+              <li><strong>Use distributed tracing</strong> (Jaeger, OpenTelemetry) to find the hot span. In microservices the bottleneck is often a downstream call, not the service you're looking at.</li>
+              <li><strong>Profile and fix:</strong> Thread dumps (jstack), heap dumps (MAT), CPU profiling (async-profiler), query EXPLAIN plans. Validate fixes with load testing (Gatling, k6).</li>
+            </ol>
+
+            <h3>Part B — Sterling OMS-Specific Tuning</h3>
+            <h4>1. Agent Tuning (#1 lever in Sterling)</h4>
+            <div class="callout callout-info">
+              <div class="callout-title">Sterling Agent Config</div>
+              <p>Sterling processes orders through agents pulling from <code>YFS_TASK_Q</code>. Tune <code>NUM_THREADS</code>, <code>BATCH_SIZE</code>, and <code>TRIGGER_INTERVAL</code> per agent type. Too many threads = DB connection exhaustion. Too few = throughput bottleneck. Start at 5–10 threads, load test, increase until DB becomes the bottleneck. <strong>Never co-locate agent types</strong> in one JVM — a Release Agent crash shouldn't take down scheduling.</p>
+            </div>
+            <h4>2. Database Optimization</h4>
+            <ul>
+              <li><strong>YFS_TASK_Q is the hottest table.</strong> Mitigate via frequent purging, partitioning by TASK_Q_KEY, and proper indexing on <code>(AVAILABLE_DATE, TASK_Q_KEY)</code>.</li>
+              <li>Enable <code>yfs.debug.sql=Y</code> to capture actual queries; analyze with Oracle AWR or pg_stat_statements. Look for full table scans on ORDER_HEADER, ORDER_LINE, INVENTORY_ITEM.</li>
+              <li>Tune WAS connection pool: <code>maxConnections</code>, <code>connectionTimeout</code>, <code>statementCacheSize</code>. A common mistake: fewer connections than agent threads configured.</li>
+              <li>Avoid excessive CDT extensions on hot entities — each extension adds a JOIN at runtime.</li>
+            </ul>
+            <h4>3. JVM &amp; XML Pipeline Tuning</h4>
+            <ul>
+              <li>Tune <code>-Xms/-Xmx</code> (4–8 GB for agent JVMs), use G1GC. GC pauses &gt;500ms signal heap too small or a memory leak from large XML payloads.</li>
+              <li><strong>XML parsing is a common bottleneck.</strong> Use <code>getDocumentFor</code> lazily, minimize <code>getOrderDetails</code> calls, and always apply output templates — a call without a template on a 500-line order returns 2 MB of XML.</li>
+            </ul>
+
+            <h3>Part C — Microservices-Specific Tuning</h3>
+            <ul>
+              <li><strong>Network latency dominates.</strong> 5 sequential service calls = 5× RTT. Parallelize independent calls with <code>CompletableFuture</code>, use async/event-driven flows.</li>
+              <li><strong>Serialization overhead:</strong> JSON ser/deser is often 10–20% of request time. For internal calls, consider protobuf/gRPC (3–10× faster).</li>
+              <li><strong>Caching (Redis/Caffeine):</strong> Cache frequently-read data with cache-aside pattern. Use event-driven invalidation for strong consistency.</li>
+              <li><strong>Horizontal scaling:</strong> Auto-scale pods based on CPU, memory, and custom metrics (queue depth, latency) via Kubernetes HPA.</li>
+            </ul>
+            <div class="callout callout-success">
+              <div class="callout-title">Interview framing</div>
+              <p>Frame in 3 layers: (1) generic observability framework → (2) Sterling-specific tuning with table/agent/template details → (3) microservices-specific tuning with network/serialization/scaling. This shows you can operate in both worlds.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q10: THREADS VS INSTANCES ============== -->
+    <section class="section" id="q10">
+      <div class="section-header">
+        <span class="section-num">Q10</span>
+        <h2>When would you choose multiple threads vs multiple instances?</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Shared-state coordination cost vs infrastructure overhead — with Sterling and microservices examples</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Decision Matrix</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Factor</th><th>Favor Threads</th><th>Favor Instances</th></tr></thead>
+                <tbody>
+                  <tr><td>Shared state needed?</td><td>Yes → threads share heap</td><td>No → stateless, scale out</td></tr>
+                  <tr><td>Fault isolation critical?</td><td>Less critical → threads OK</td><td>Critical → separate JVMs</td></tr>
+                  <tr><td>Work type</td><td>CPU-bound, short tasks</td><td>I/O-bound, long-lived</td></tr>
+                  <tr><td>DB connection cost</td><td>High → share pool via threads</td><td>Low → each instance gets pool</td></tr>
+                  <tr><td>Sterling OMS</td><td>Default: threads within agent</td><td>Scale: replicas when threads max out</td></tr>
+                  <tr><td>Microservices</td><td>Parallel fan-out within request</td><td>Default: pod scaling via HPA</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Sterling OMS — Threads-First Architecture</h3>
+            <div class="callout callout-info">
+              <div class="callout-title">Sterling Threading Model</div>
+              <p>Sterling agents are <strong>inherently multi-threaded within a single JVM</strong>. All threads within one agent JVM share the WAS connection pool — 1 instance with 20 threads = 1 connection pool vs 10 instances with 2 threads each = 10 connection pools. Each thread picks tasks from <code>YFS_TASK_Q</code> using <code>SELECT FOR UPDATE SKIP LOCKED</code>. This works well up to ~20–30 threads per agent. Beyond that, DB contention degrades throughput.</p>
+              <p style="margin-top:8px;">When threads maxed out, spin up a second agent JVM on another host. Both instances pick from the same <code>YFS_TASK_Q</code> — the <code>SKIP LOCKED</code> mechanism prevents double-processing.</p>
+            </div>
+            <div class="callout callout-danger">
+              <div class="callout-title">Classic Anti-Pattern</div>
+              <p>Running all agent types in a single "uber" agent JVM with 100 threads. When one agent type has a runaway thread, it starves all others. <strong>Always isolate by agent type.</strong></p>
+            </div>
+
+            <h3>Microservices — Instances-First Architecture</h3>
+            <p>In microservices, <strong>default to scaling out with more pods, not more threads.</strong></p>
+            <ul>
+              <li><strong>Stateless by design:</strong> All state lives in the data store — no efficiency gain from thread-local shared state.</li>
+              <li><strong>Fault isolation:</strong> One crashed pod doesn't affect others. One bad thread can crash the entire JVM.</li>
+              <li><strong>I/O-bound work:</strong> Most microservices spend 80% waiting on I/O. More threads hit the I/O bottleneck; more instances = more parallel I/O capacity.</li>
+            </ul>
+            <h4>When microservices DO use threads</h4>
+            <ul>
+              <li>Fanning out to 3 downstream APIs in parallel using <code>CompletableFuture</code> or virtual threads (Java 21+).</li>
+              <li>Kafka consumers: thread pool sized to partition count within an instance; scale instances for more.</li>
+              <li>CPU-intensive processing (PDF generation, ML inference): use a thread pool sized to core count, scale instances on CPU utilization.</li>
+            </ul>
+            <div class="callout callout-success">
+              <div class="callout-title">Key insight</div>
+              <p>In containerized Sterling: threads inside each pod for efficient resource use + instances (pod replicas) for fault isolation and horizontal scale. It's <strong>threads AND instances</strong>, not one or the other.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q11: SQL VS NOSQL ============== -->
+    <section class="section" id="q11">
+      <div class="section-header">
+        <span class="section-num">Q11</span>
+        <h2>How do you choose SQL vs NoSQL? Examples in Sterling OMS and surrounding services.</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>5-dimension framework + polyglot persistence in OMS modernization</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Decision Framework — 5 Dimensions</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Dimension</th><th>Favor SQL</th><th>Favor NoSQL</th></tr></thead>
+                <tbody>
+                  <tr><td>Data model</td><td>Highly relational, normalized, many JOINs</td><td>Document, key-value, wide-column; denormalized reads</td></tr>
+                  <tr><td>Consistency</td><td>Strong ACID (order state transitions)</td><td>Eventual consistency OK (catalogs, sessions)</td></tr>
+                  <tr><td>Query patterns</td><td>Ad-hoc queries, complex JOINs, reporting</td><td>Known access patterns, primary-key lookups</td></tr>
+                  <tr><td>Scale</td><td>Vertical + read replicas</td><td>Horizontal sharding across nodes</td></tr>
+                  <tr><td>Schema</td><td>Known, stable, enforced</td><td>Evolves rapidly, varies per document</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Sterling OMS Core — SQL Is Non-Negotiable</h3>
+            <div class="callout callout-info">
+              <div class="callout-title">Sterling DB Architecture</div>
+              <p>Sterling has 700+ tables with complex FK relationships. A <code>changeOrder</code> API call atomically updates the order line, adjusts inventory allocation, recalculates totals, and enqueues an agent task — all-or-nothing. NoSQL can't do multi-entity ACID transactions efficiently. Supported DBs: Oracle, DB2, PostgreSQL (10.x+).</p>
+            </div>
+
+            <h3>Where NoSQL Makes Sense Around Sterling</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Service / Use Case</th><th>DB Choice</th><th>Why</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Real-Time Inventory (RTAM/GIV)</strong></td><td class="rec">Redis + DynamoDB/Cassandra</td><td>High-read, low-write; lookup by SKU+Node; no JOINs needed. Redis for sub-ms hot-path reads.</td></tr>
+                  <tr><td><strong>Product Catalog / Item Master</strong></td><td class="rec">MongoDB or DynamoDB</td><td>Variable schema — a shirt has color/size, electronics have voltage/wattage. Document DB stores each product's own attribute set.</td></tr>
+                  <tr><td><strong>Customer 360 / Profile</strong></td><td class="rec">DynamoDB or Cassandra</td><td>Single-key reads at massive scale (100K+ RPS). No JOINs, no cross-entity transactions.</td></tr>
+                  <tr><td><strong>Order Event Store / Audit</strong></td><td class="rec">Cassandra + S3</td><td>Append-only, write-heavy, time-series. Never UPDATE — only INSERT and READ by orderId+timestamp. Cassandra's LSM-tree is ideal.</td></tr>
+                  <tr><td><strong>Search / Order Lookup</strong></td><td class="rec">Elasticsearch</td><td>Full-text search across order notes, addresses, names. SQL's LIKE '%term%' doesn't scale.</td></tr>
+                  <tr><td><strong>Order State Machine (new svc)</strong></td><td class="rec">PostgreSQL</td><td>Back to SQL — order state transitions need ACID. If building a custom orchestration service (Temporal.io), you need transactional guarantees.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout callout-success">
+              <div class="callout-title">The modernization narrative</div>
+              <p>In a Strangler Fig migration, each extracted service gets the right database for its access pattern. Inventory → DynamoDB, Catalog → MongoDB, Events → Cassandra, Order State → PostgreSQL. <strong>Polyglot persistence is the natural outcome of OMS modernization.</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q12: KAFKA DEEP DIVE ============== -->
+    <section class="section" id="q12">
+      <div class="section-header">
+        <span class="section-num">Q12</span>
+        <h2>Explain Kafka in detail — Producers, Consumers, and Partitions.</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Distributed commit log mechanics anchored in OMS event examples</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Core Abstraction — Topics and Partitions</h3>
+            <ul>
+              <li>A <strong>topic</strong> is a named stream of records (e.g., <code>order-events</code>, <code>inventory-updates</code>).</li>
+              <li>Each topic is divided into <strong>partitions</strong> — ordered, immutable sequences of records each with a monotonically increasing <strong>offset</strong>.</li>
+              <li>Partitions are the <strong>unit of parallelism</strong>. A topic with 12 partitions can have up to 12 consumers reading in parallel within a group.</li>
+              <li>Each partition has a <strong>leader replica</strong> and N <strong>follower replicas</strong> (replication factor typically 3). All reads/writes go to the leader.</li>
+            </ul>
+
+            <h3>Producers</h3>
+            <ul>
+              <li><strong>Partition selection:</strong> If a message key is provided (e.g., <code>orderId</code>), Kafka hashes it (<code>murmur2</code>) → <code>partition = hash(key) % numPartitions</code>. All messages with the same key go to the same partition = ordering guaranteed per key. No key = round-robin.</li>
+              <li><strong>Durability (<code>acks</code>):</strong> <code>acks=0</code> (fire and forget), <code>acks=1</code> (leader only), <code>acks=all</code> (all ISRs — use for order events).</li>
+              <li><strong>Batching:</strong> Producers batch records by partition (<code>linger.ms</code>, <code>batch.size</code>) and compress (<code>snappy</code>, <code>lz4</code>) — higher throughput at the cost of individual message latency.</li>
+              <li><strong>Idempotent producer:</strong> <code>enable.idempotence=true</code> — deduplicates retries via producer ID + sequence number. Essential for exactly-once semantics.</li>
+            </ul>
+
+            <h3>Consumers and Consumer Groups</h3>
+            <ul>
+              <li><strong>Consumer group:</strong> Each partition is assigned to exactly one consumer within a group. Multiple groups each get all messages (pub-sub). One group processes each message once (queue).</li>
+              <li><strong>Partition assignment:</strong> 12 partitions / 4 consumers = 3 partitions each. Adding a 5th triggers rebalancing. <strong>More consumers than partitions = idle consumers.</strong></li>
+              <li><strong>Offset management:</strong> Offsets committed to <code>__consumer_offsets</code> topic. Manual commit after processing (<code>commitSync()</code>) is safer than auto-commit.</li>
+              <li><strong>Rebalancing strategies:</strong> Use <code>CooperativeStickyAssignor</code> for incremental rebalance (no stop-the-world pauses).</li>
+            </ul>
+
+            <h3>End-to-End OMS Example</h3>
+            <div class="callout callout-info">
+              <div class="callout-title">order-events topic — 12 partitions, keyed by orderId</div>
+              <p><strong>Producer</strong> (Order Service): <code>OrderCreated</code> event with key=<code>orderId</code>. All events for the same order (Created → Modified → Shipped → Cancelled) go to the same partition → per-order event ordering guaranteed.</p>
+              <p style="margin-top:8px;"><strong>Consumer Group 1</strong> (Inventory Service, 4 instances): Each consumes 3 partitions — decrements available inventory. <strong>Consumer Group 2</strong> (Notification Service, 2 instances): Sends confirmation emails. <strong>Consumer Group 3</strong> (Analytics, 1 instance): Writes to S3/Data Lake. Each group is fully independent.</p>
+            </div>
+            <div class="callout callout-success">
+              <div class="callout-title">Interview anchor</div>
+              <p>"orderId as the partition key gives us per-order sequential processing with cross-order parallelism — exactly what a distributed OMS needs."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q13: KAFKA CONCURRENCY ============== -->
+    <section class="section" id="q13">
+      <div class="section-header">
+        <span class="section-num">Q13</span>
+        <h2>How do you manage concurrency in Kafka? What is the role of partitions?</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Partitions = unit of concurrency. Three levels: partition, instance, in-consumer threading.</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Core Rule</h3>
+            <p><strong>Within a consumer group, each partition is consumed by exactly one consumer. One partition = one consumer = one sequential processing stream. Max concurrency = number of partitions.</strong></p>
+
+            <h3>Three Levels of Concurrency</h3>
+            <h4>Level 1 — Partition-Level (Native Kafka)</h4>
+            <ul>
+              <li>Choose partition count at topic creation. Rule of thumb: <code>max expected consumer instances × 2–3</code>. For up to 8 consumers: 24 partitions.</li>
+              <li><strong>Hot partition problem:</strong> 80% of traffic → 3 of 12 partitions (whale customer). Mitigate: compound key (<code>customerId + orderId</code> hash) or random suffix for high-volume keys.</li>
+            </ul>
+            <h4>Level 2 — Consumer Instance-Level</h4>
+            <ul>
+              <li>Add more pods to the consumer group (up to partition count). Use <code>CooperativeStickyAssignor</code> to avoid stop-the-world rebalances.</li>
+              <li><strong>Scaling beyond partitions requires increasing partition count</strong> — but this changes key-to-partition mapping, breaking ordering for in-flight messages. Plan the initial count carefully.</li>
+            </ul>
+            <h4>Level 3 — In-Consumer Thread Pool (Advanced)</h4>
+            <ul>
+              <li>Consumer thread polls messages → dispatches to a thread pool for CPU-intensive processing. Maintain per-key ordering by routing messages with the same key to the same worker thread (consistent hashing).</li>
+              <li>Commit offsets only after all workers complete the batch. High complexity — prefer scaling instances unless you have a strong reason.</li>
+            </ul>
+
+            <h3>Concurrency vs Ordering — The Trade-off</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Strategy</th><th>Concurrency</th><th>Ordering</th><th>Complexity</th></tr></thead>
+                <tbody>
+                  <tr><td>1 partition, 1 consumer</td><td>None</td><td>Total ordering</td><td>Simple</td></tr>
+                  <tr><td>N partitions, N consumers, keyed</td><td>High</td><td>Per-key ordering</td><td>Moderate</td></tr>
+                  <tr><td>N partitions, no key (round-robin)</td><td>Highest</td><td>No ordering</td><td>Simple</td></tr>
+                  <tr><td>N partitions + in-consumer thread pool</td><td>Very high</td><td>Per-key if routed correctly</td><td>High</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout callout-info">
+              <div class="callout-title">OMS Example</div>
+              <p><strong>order-events (12 partitions, keyed by orderId):</strong> Inventory Service has 4 consumer instances × 3 partitions each = 4 orders processed simultaneously. Within each partition, events for a single order are always sequential — <code>OrderShipped</code> never processes before <code>OrderCreated</code>.</p>
+              <p style="margin-top:8px;"><strong>inventory-snapshots (24 partitions, keyed by SKU+NodeId):</strong> Higher partition count for high-volume inventory updates. 8 Availability Service consumer instances × 3 partitions each. Per-SKU ordering ensures no stale snapshot overwrites a newer one.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q14: KAFKA CONSUMER RESILIENCE ============== -->
+    <section class="section" id="q14">
+      <div class="section-header">
+        <span class="section-num">Q14</span>
+        <h2>Microservice consuming from Kafka calls an external service that is down. How do you manage this + bad data?</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Circuit breaker + retry + backpressure + DLQ as a layered system</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Part A — External Service Down</h3>
+            <h4>Layer 1 — Circuit Breaker (Resilience4j)</h4>
+            <ul>
+              <li><strong>CLOSED:</strong> Normal operation. Trips to OPEN after N failures (e.g., 5 failures in 10s).</li>
+              <li><strong>OPEN:</strong> All calls short-circuited immediately — no HTTP call made. Fallback returned instantly. Prevents bombarding the downed service. Stays open for a configured timeout (e.g., 30s).</li>
+              <li><strong>HALF-OPEN:</strong> After timeout, allows N probe requests. Success → CLOSED. Failure → back to OPEN.</li>
+            </ul>
+            <h4>Layer 2 — Retry with Exponential Backoff + Jitter</h4>
+            <ul>
+              <li>Before tripping the circuit: retry with exponential backoff (1s → 2s → 4s) + ±500ms jitter to avoid thundering herd. Max 3 retries.</li>
+              <li><strong>Only retry on transient failures</strong> (5xx, timeout, connection refused). Do NOT retry on 4xx — that's bad data.</li>
+            </ul>
+            <h4>Layer 3 — Backpressure on the Consumer</h4>
+            <ul>
+              <li><strong>Pause consumption (preferred):</strong> <code>consumer.pause(partitions)</code> — stops polling but maintains group membership (heartbeats continue). When circuit recovers, call <code>consumer.resume(partitions)</code>. Kafka retains messages — no loss.</li>
+              <li><strong>Retry topic:</strong> Produce to <code>order-events-retry</code> with a delayed consumer. Main consumer continues processing other messages.</li>
+            </ul>
+            <h4>Layer 4 — Dead Letter Queue (DLQ)</h4>
+            <ul>
+              <li>After all retries + circuit breaker timeout: send to <code>order-events-dlq</code> with original message, error reason, timestamp, retry count, source partition/offset.</li>
+              <li>A monitoring pipeline watches the DLQ. Ops team replays DLQ messages after recovery. <strong>Never silently drop a message.</strong></li>
+            </ul>
+
+            <h3>Part B — Bad Data (Poison Pill)</h3>
+            <ul>
+              <li><strong>Schema validation at the consumer boundary:</strong> Validate against Avro/JSON Schema via Schema Registry before calling any external service. Validation failure → DLQ immediately. Never retry bad data.</li>
+              <li><strong>Distinguish transient vs permanent:</strong> 5xx/timeout = transient (retry). 4xx/deserialization failure = permanent (DLQ immediately).</li>
+              <li><strong>Head-of-line blocking:</strong> One poison pill at offset 100 blocks all of 101, 102, etc. After N retries, move to DLQ, <strong>commit the offset</strong>, and continue processing. Never let one bad message block the partition.</li>
+              <li>Use Spring Kafka's <code>DefaultErrorHandler</code> + <code>DeadLetterPublishingRecoverer</code> for production-ready retry + DLQ routing.</li>
+            </ul>
+
+            <h3>Complete Decision Tree</h3>
+            <pre>Message consumed from Kafka
+  ├── Schema validation FAIL → DLQ (permanent, no retry)
+  └── Schema validation PASS
+        ├── Circuit Breaker OPEN → Pause consumer (backpressure)
+        │                          OR produce to retry topic
+        └── Circuit CLOSED/HALF-OPEN → Call external service
+              ├── Success → Commit offset → Next message
+              ├── Transient failure (5xx/timeout) → Retry with backoff
+              │     ├── Retry succeeds → Commit offset → Next message
+              │     └── Retries exhausted → DLQ → Commit offset
+              └── Permanent failure (4xx) → DLQ → Commit offset</pre>
+            <div class="callout callout-success">
+              <div class="callout-title">Interview signal</div>
+              <p>Name the poison pill / head-of-line blocking problem explicitly — it shows you've dealt with this in production, not just read the docs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== Q15: STERLING AVAILABILITY ============== -->
+    <section class="section" id="q15">
+      <div class="section-header">
+        <span class="section-num">Q15</span>
+        <h2>Explain the high-level concepts of availability in IBM Sterling OMS.</h2>
+      </div>
+      <div class="content">
+        <div class="qa-block">
+          <div class="qa-question" onclick="toggleQA(this)">
+            <span class="qa-q-text"><span class="qa-num">APPROACH</span>Two dimensions: System HA + Inventory Availability (GIV/ATP). Cover both.</span>
+            <span class="qa-toggle">+</span>
+          </div>
+          <div class="qa-answer open">
+            <h3>Dimension 1 — System Availability (HA Architecture)</h3>
+            <h4>Application Tier HA</h4>
+            <ul>
+              <li><strong>WAS ND clustering:</strong> Multiple cluster members across hosts. <code>om-app</code> servers handle API/UI requests (stateless, load-balanced via IHS+WAS plugin or F5). <code>om-agent</code> servers handle background agents — if one dies, others pick up tasks from <code>YFS_TASK_Q</code>.</li>
+              <li><strong>Session management:</strong> Database session persistence with Oracle. If a cluster member dies, users are picked up by another member.</li>
+            </ul>
+            <h4>Database Tier HA</h4>
+            <ul>
+              <li><strong>Oracle RAC:</strong> Multiple Oracle instances on shared storage (ASM). One instance fails, others continue. Provides HA + read scalability.</li>
+              <li><strong>PostgreSQL (Sterling 10.x):</strong> Streaming replication with automatic failover (Patroni, pgBouncer).</li>
+              <li><strong>Cross-region DR:</strong> Oracle Data Guard / DB2 GDPC. RTO 15–60 min, RPO near-zero for synchronous replication.</li>
+            </ul>
+            <h4>Containerized Sterling (K8s / OpenShift)</h4>
+            <ul>
+              <li><code>om-app</code> runs as a Deployment with N replicas + Service + Ingress/Route. K8s handles pod restart, rolling updates, and health checks (liveness + readiness probes).</li>
+              <li><code>om-agent-*</code> runs as separate Deployments per agent type. HPA can scale agent replicas based on <code>YFS_TASK_Q</code> depth via custom Prometheus metrics.</li>
+            </ul>
+
+            <h3>Dimension 2 — Inventory Availability (GIV / ATP)</h3>
+            <div class="callout callout-info">
+              <div class="callout-title">Core Concepts</div>
+              <p><strong>GIV (Global Inventory Visibility):</strong> Consolidated inventory across all nodes (warehouses, stores, DCs, 3PLs). Tracks on-hand, allocated, in-transit, reserved, returned.</p>
+              <p style="margin-top:8px;"><strong>ATP (Available to Promise):</strong> <code>ATP = On-Hand − Allocated − Reserved + In-Transit − Safety Stock</code>. Computed per <code>(ItemID, ShipNode, UOM)</code>.</p>
+              <p style="margin-top:8px;"><strong>RTAM (Real-Time Availability Monitor):</strong> Processes inventory changes and publishes availability updates downstream (e-commerce, marketplace). Two modes: synchronous (<code>getAvailability</code> API — accurate, hits DB) or asynchronous (pre-computed snapshots — fast, for high-volume reads).</p>
+            </div>
+            <h4>Availability in a Modernized Architecture</h4>
+            <div class="callout callout-success">
+              <div class="callout-title">First capability to extract from Sterling</div>
+              <p>Inventory availability is the first service to extract because: read-to-write ratio is 100:1 or 1000:1 (perfect for CQRS), e-commerce needs sub-50ms lookups at 50K+ RPS (Sterling's synchronous DB query can't scale to this), and the Inventory Availability Service consumes inventory change events from Sterling via CDC/Debezium or MQ→Kafka bridge.</p>
+              <p style="margin-top:8px;"><strong>Sterling remains the system of record for inventory transactions; the new service is a read-optimized CQRS projection.</strong></p>
+            </div>
+            <div class="callout callout-warn">
+              <div class="callout-title">Interview depth signal</div>
+              <p>Most candidates only answer system HA. A senior architect covering BOTH system availability AND inventory availability (GIV, ATP, RTAM, promising) + the modernization angle signals deep domain understanding. Finish with: "In a modern architecture, we extract inventory availability into a CQRS-based service with sub-50ms reads, while Sterling remains the transactional system of record."</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
